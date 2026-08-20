@@ -9,7 +9,17 @@ class RingUser(BaseTable):
     access_token: str
     refresh_token: str
     expires_at: float
+    status: str
 
+    def ui_safe(self):
+        return {
+            'account_id': self.account_id,
+            'access_token': self.access_token[:10] + '*' * len(self.access_token),
+            'refresh_token': self.refresh_token[:10] + '*' * len(self.refresh_token),
+            'expires_at': self.expires_at,
+            'status': self.status,
+
+        }
     def _refresh_token_if_needed(self):
         pass
 

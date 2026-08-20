@@ -1,10 +1,11 @@
 import time
 
 import flask_dictabase
-from flask import Flask, request
+from flask import Flask, jsonify
 from flask_jobs import JobScheduler
 
 import ring_token_endpoints
+from ring_user import RingUser
 
 app = Flask('Is Your Room Clean')
 app.db = flask_dictabase.Dictabase(app)
@@ -25,7 +26,8 @@ def index():
 @app.route('/dashboard')
 def dashboard():
     # Ring calls this the "App Homepage"
-    return 'Dashboard pladeholder'
+    ring_users = list(app.db.FindAll(RingUser, _limit=25))
+    return jsonify([u.ui_safe() for u in ring_users])
 
 
 @app.route('/test')
