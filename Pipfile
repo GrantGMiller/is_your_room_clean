@@ -8,6 +8,7 @@ flask = "*"
 flask-dictabase = "*"
 flask-jobs = "*"
 requests = "*"
+gunicorn = "*"
 
 [dev-packages]
 

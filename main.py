@@ -24,6 +24,7 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
+    # Ring calls this the "App Homepage"
     return 'Dashboard pladeholder'
 
 
