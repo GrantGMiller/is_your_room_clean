@@ -9,6 +9,7 @@ flask-dictabase = "*"
 flask-jobs = "*"
 requests = "*"
 gunicorn = "*"
+urllib3 = "==1.26.6"
 
 [dev-packages]
 
