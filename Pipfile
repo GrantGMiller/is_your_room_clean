@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 flask = "*"
+flask-dictabase = "*"
+flask-jobs = "*"
+requests = "*"
 
 [dev-packages]
 
