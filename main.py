@@ -5,6 +5,7 @@ from flask import Flask, jsonify
 from flask_jobs import JobScheduler
 
 import ring_token_endpoints
+import ring_webhook_helper
 from ring_user import RingUser
 
 app = Flask('Is Your Room Clean')
@@ -16,7 +17,7 @@ app.jobs = JobScheduler(
 )
 
 ring_token_endpoints.setup(app)
-
+ring_webhook_helper.setup(app)
 
 @app.route('/')
 def index():
@@ -35,9 +36,6 @@ def test():
     return 'The time is ' + time.asctime()
 
 
-@app.route('/webhook')
-def webhook():
-    return 'webhook placeholder'
 
 
 if __name__ == '__main__':

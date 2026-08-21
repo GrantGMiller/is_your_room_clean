@@ -1,19 +1,21 @@
-import os
-import hmac
 import hashlib
-import config
+import hmac
+from typing import cast
 
 from flask import Flask, request, jsonify
+from flask_dictabase import BaseTable, Dictabase
+from flask_jobs import JobScheduler
 
+import config
 
 # Store this in an environment variable, not in source control.
 HMAC_KEY = config.RING_HMAC_SIGNATURE_KEY
 
 
 def verify_ring_webhook_signature(
-    signing_key: str,
-    raw_body: bytes,
-    received_signature: str,
+        signing_key: str,
+        raw_body: bytes,
+        received_signature: str,
 ) -> bool:
     """
     Verify a Ring webhook HMAC-SHA256 signature.
@@ -42,108 +44,88 @@ def verify_ring_webhook_signature(
     )
 
 
-def store_webhook(payload):
-    """
-    TODO: Store the webhook in the database.
 
-    You probably want to store at least:
-      - request_id
-      - event_id
-      - event_type
-      - account_id
-      - device_id
-      - received_at
-      - payload
+def setup(app: Flask):
+    app.db = cast(Dictabase, app.db)
+    app.jobs = cast(JobScheduler, app.jobs)
 
-    Make request_id unique so duplicate Ring deliveries
-    can be safely ignored.
-    """
+    @app.route("/webhook", methods=["POST"])
+    def webhook():
+        # IMPORTANT:
+        # Use request.get_data() rather than request.json here.
+        # The HMAC must be calculated against the exact raw bytes
+        # Ring sent.
+        raw_body = request.get_data()
 
-    # Example:
-    #
-    # webhook = Webhook(
-    #     request_id=payload["meta"]["request_id"],
-    #     event_id=payload["data"]["id"],
-    #     event_type=payload["data"]["type"],
-    #     account_id=payload["meta"]["account_id"],
-    #     payload=payload,
-    # )
-    #
-    # db.session.add(webhook)
-    # db.session.commit()
+        # Get Ring's signature.
+        signature = request.headers.get("X-Signature")
 
+        # Authenticate the webhook BEFORE parsing/processing it.
+        if not verify_ring_webhook_signature(
+                HMAC_KEY,
+                raw_body,
+                signature,
+        ):
+            return jsonify({
+                "error": "Invalid signature"
+            }), 401
+
+        # Now that the message is authenticated, parse the JSON.
+        try:
+            payload = request.get_json()
+        except Exception:
+            return jsonify({
+                "error": "Invalid JSON"
+            }), 400
+
+        if not payload:
+            return jsonify({
+                "error": "Empty payload"
+            }), 400
+
+        # Basic payload validation.
+        meta = payload.get("meta", {})
+        data = payload.get("data", {})
+
+        request_id = meta.get("request_id")
+        account_id = meta.get("account_id")
+        event_id = data.get("id")
+        event_type = data.get("type")
+
+        if not request_id or not event_id or not event_type:
+            return jsonify({
+                "error": "Invalid webhook payload"
+            }), 400
+
+        #  Check whether request_id has already been processed.
+        if app.db.FindOne(RingWebhook, request_id=request_id):
+            return jsonify({"status": "already_processed"}), 200
+
+        # Store the authenticated webhook.
+        app.db.New(
+            RingWebhook,
+            request_id=request_id,
+            account_id=account_id,
+            data=data,
+        )
+
+        app.jobs.AddJob(
+            func=process_webhook,
+            args=(request_id,),
+            name=f"Webhook {request_id}",
+        )
+
+        return jsonify({
+            "status": "processed"
+        }), 200
+
+
+class RingWebhook(BaseTable):
+    request_id: str
+    account_id: str
+    data: dict
+
+
+def process_webhook(request_id):
+    # todo
     pass
-
-
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    # IMPORTANT:
-    # Use request.get_data() rather than request.json here.
-    # The HMAC must be calculated against the exact raw bytes
-    # Ring sent.
-    raw_body = request.get_data()
-
-    # Get Ring's signature.
-    signature = request.headers.get("X-Signature")
-
-    # Authenticate the webhook BEFORE parsing/processing it.
-    if not verify_ring_webhook_signature(
-        HMAC_KEY,
-        raw_body,
-        signature,
-    ):
-        return jsonify({
-            "error": "Invalid signature"
-        }), 401
-
-    # Now that the message is authenticated, parse the JSON.
-    try:
-        payload = request.get_json()
-    except Exception:
-        return jsonify({
-            "error": "Invalid JSON"
-        }), 400
-
-    if not payload:
-        return jsonify({
-            "error": "Empty payload"
-        }), 400
-
-    # Basic payload validation.
-    meta = payload.get("meta", {})
-    data = payload.get("data", {})
-
-    request_id = meta.get("request_id")
-    account_id = meta.get("account_id")
-    event_id = data.get("id")
-    event_type = data.get("type")
-
-    if not request_id or not event_id or not event_type:
-        return jsonify({
-            "error": "Invalid webhook payload"
-        }), 400
-
-    # TODO: Check whether request_id has already been processed.
-    #
-    # if webhook_exists(request_id):
-    #     return jsonify({"status": "already_processed"}), 200
-
-    # Store the authenticated webhook.
-    store_webhook(payload)
-
-    # TODO: Eventually dispatch the event to your application.
-    #
-    # if event_type == "motion_detected":
-    #     handle_motion_detected(payload)
-    #
-    # elif event_type == "button_press":
-    #     handle_button_press(payload)
-    #
-    # elif event_type == "device_added":
-    #     handle_device_added(payload)
-    #
-    # etc.
-
-    return jsonify({
-        "status": "processed"
-    }), 200
