@@ -1,6 +1,6 @@
 import time
+import uuid
 from pathlib import Path
-from typing import Optional
 
 import requests
 from flask_dictabase import BaseTable
@@ -8,6 +8,7 @@ from flask_dictabase import BaseTable
 import config
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
+AVA_BASE_URL = "https://api.amazonvision.com"
 
 
 class RingUser(BaseTable):
@@ -16,6 +17,9 @@ class RingUser(BaseTable):
     refresh_token: str
     expires_at: float
     status: str
+    email: str
+    login_url: str
+    login_url_expires_at: int  # epoch seconds
 
     def ui_safe(self):
         return {
@@ -26,6 +30,31 @@ class RingUser(BaseTable):
             'status': self['status'],
 
         }
+
+    def get_login_url(self):
+        self['login_url'] = f'{config.SERVER_HOST_URL}/magic_link/{uuid.uuid4()}'
+        #link is only valid for X minutes
+        self['login_url_expires_at'] = time.time() + (10*60)
+        return self['login_url']
+
+    def get_email(self):
+        if self.get('email', None):
+            return self['email']
+        else:
+            """
+            Calls Ring's /v1/users/me directly with a raw access token (no
+            RingUser/db lookup involved) and returns the email from the response.
+            Useful at token-exchange time, before a RingUser row even exists yet.
+            https://developer.amazon.com/docs/ring/api-documentation.html#access-tokens
+            """
+
+            resp = self.make_authenticated_request(
+                f"{AVA_BASE_URL}/v1/users/me",
+            )
+            resp.raise_for_status()
+            email = resp.json()["data"]["attributes"]["email"]
+            self['email'] = email.lower()
+            return email
 
     def _refresh_token_if_needed(self):
         """
@@ -88,10 +117,10 @@ class RingUser(BaseTable):
         resp.raise_for_status()
         return resp.json().get('data', [])
 
-    def get_snapshot(self, device, save_path: Optional[Path] = None):
+    def get_snapshot(self, device, save_dir: Path):
         """
         Fetches the most recent still-frame image for a device.
-        https://developer.amazon.com/docs/ring/api-documentation.html
+        https://developer.amazon.com/docs/ring/api-documentation.html#download-flow
         (Image Snapshots API)
 
         POST /v1/devices/{device_id}/media/image/download
@@ -107,12 +136,18 @@ class RingUser(BaseTable):
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device),
             method='POST',
-            json={'type': 'latest_in_range'},
+            json={
+                'type': 'latest_in_range',
+                "image_options": {
+                    "format": "jpeg",
+                    "resolution": {"width": 1920, "height": 1080}
+                }
+            },
         )
         resp.raise_for_status()
 
-        if save_path:
-            with open(save_path, 'wb') as f:
-                f.write(resp.content)
+        save_path = save_dir / f'{uuid.uuid4()}.jpg'
+        with open(save_path, 'wb') as f:
+            f.write(resp.content)
 
-        return resp.content
+        return save_path

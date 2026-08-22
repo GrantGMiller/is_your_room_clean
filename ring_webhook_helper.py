@@ -45,12 +45,15 @@ def verify_ring_webhook_signature(
 
 
 
-def setup(app: Flask):
+def setup(a: Flask):
+    global app
+    app = a
     app.db = cast(Dictabase, app.db)
     app.jobs = cast(JobScheduler, app.jobs)
 
     @app.route("/webhook", methods=["POST"])
     def webhook():
+        # https://developer.amazon.com/docs/ring/api-documentation.html#webhook-v11-payload-structure
         # IMPORTANT:
         # Use request.get_data() rather than request.json here.
         # The HMAC must be calculated against the exact raw bytes
@@ -128,4 +131,35 @@ class RingWebhook(BaseTable):
 
 def process_webhook(request_id):
     # todo
-    pass
+    global app
+    app.db = cast(Dictabase, app.db)
+    with app.app_context():
+        webhook = app.db.FindOne(RingWebhook, request_id=request_id)
+        if not webhook:
+            return
+
+            # Route to appropriate handler
+            # if event_type == 'motion_detected':
+            #     handle_motion_detection(payload)
+            # elif event_type == 'button_press':
+            #     handle_button_press(payload)
+            # elif event_type == 'device_added':
+            #     handle_device_addition(payload)
+            # elif event_type == 'device_removed':
+            #     handle_device_removal(payload)
+            # elif event_type == 'device_online':
+            #     handle_device_online(payload)
+            # elif event_type == 'device_offline':
+            #     handle_device_offline(payload)
+            # elif event_type == 'app_integration_added':
+            #     handle_app_integration_added(payload)
+            # elif event_type == 'app_integration_removed':
+            #     handle_app_integration_removed(payload)
+            # elif event_type == 'subscription_activated':
+            #     handle_subscription_activated(payload)
+            # elif event_type == 'subscription_deactivated':
+            #     handle_subscription_deactivated(payload)
+            # else:
+            #     return jsonify({'error': 'Unknown event type'}), 400
+
+

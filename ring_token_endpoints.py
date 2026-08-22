@@ -27,7 +27,7 @@ from typing import cast
 
 import flask_dictabase
 import requests
-from flask import Flask, jsonify, redirect, request
+from flask import Flask, jsonify, redirect, request, session
 
 import config
 from ring_user import RingUser
@@ -148,6 +148,10 @@ def setup(a: Flask):
             },
             json={"status": "completed"},
         )
+
+        # save the user account_id to the session cookie so that the dashboard url knows which user is viewing
+        session['account_id'] = ring_user['account_id']
+
         if patch_response.status_code != 200:
             return jsonify({"error": "failed to complete integration", "detail": patch_response.text}), 502
 
@@ -163,6 +167,25 @@ def setup(a: Flask):
         (e.g. your app's dashboard, or a mobile deep link if on mobile web).
         """
         return redirect('/dashboard')
+
+    @app.route('/magic_link/<uid>')
+    def magic_link(uid):
+        now_timestamp = time.time()
+        ring_user = app.db.FindOne(
+            RingUser,
+            login_url=f'{config.SERVER_HOST_URL}/magic_link/{uid}'
+        )
+        if not ring_user:
+            return 'User not found', 404
+        elif ring_user['login_url_expires_at'] < now_timestamp:
+            # success, log this user in
+            session['account_id'] = ring_user['account_id']
+            return redirect('/dashboard')
+        else:
+            # the timestamp may have been expired
+            # route them to the dashboard to initiate a new magic link
+            return redirect('/dashboard')
+
 
 
 # --- Helpers -----------------------------------------------------------
