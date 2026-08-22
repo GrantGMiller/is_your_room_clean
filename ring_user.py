@@ -35,7 +35,7 @@ class RingUser(BaseTable):
         if not self.get('login_url', None):
             return self.get_new_login_url()
         else:
-            return self.get['login_url']
+            return self.get('login_url')
 
     def get_new_login_url(self):
         self['login_url'] = f'{config.SERVER_HOST_URL}/magic_link/{uuid.uuid4()}'
