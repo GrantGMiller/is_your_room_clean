@@ -55,6 +55,7 @@ def send_login_email():
             email=email.lower()
         )
         if user:
+            user.get_new_login_url()
             app.jobs.AddJob(
                 func=SendEmail_SMTP,
                 kwargs={
@@ -62,7 +63,10 @@ def send_login_email():
                     'smtpUsername ': config.SES_USERNAME,
                     'smtpPassword': config.SES_PASSWORD,
                     'to': email,
-                    'frm': 'admin@domainservices.biz'
+                    'frm': 'admin@domainservices.biz',
+                    'subject': 'Login with a Magic Link',
+                    'body': f'Click this link to login.\r{user.get_last_login_url()}',
+                    'html': f'<a href="{user.get_last_login_url()}">Click here to login.</a>',
                 }
             )
 

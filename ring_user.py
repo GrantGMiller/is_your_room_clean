@@ -31,10 +31,16 @@ class RingUser(BaseTable):
 
         }
 
-    def get_login_url(self):
+    def get_last_login_url(self):
+        if not self.get('login_url', None):
+            return self.get_new_login_url()
+        else:
+            return self.get['login_url']
+
+    def get_new_login_url(self):
         self['login_url'] = f'{config.SERVER_HOST_URL}/magic_link/{uuid.uuid4()}'
-        #link is only valid for X minutes
-        self['login_url_expires_at'] = time.time() + (10*60)
+        # link is only valid for X minutes
+        self['login_url_expires_at'] = time.time() + (10 * 60)
         return self['login_url']
 
     def get_email(self):
