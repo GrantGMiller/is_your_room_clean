@@ -1,0 +1,2 @@
+this file is just to make sure the 'images' dir exist.
+there is a better way to do this

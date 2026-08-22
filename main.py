@@ -26,6 +26,12 @@ app.jobs = JobScheduler(
 ring_token_endpoints.setup(app)
 ring_webhook_helper.setup(app)
 
+# temp
+# make sure we have all the users email addresses
+with app.app_context():
+    for user in app.db.FindAll(RingUser):
+        print('user.email=', user.get_email())
+
 
 @app.route('/')
 def index():
