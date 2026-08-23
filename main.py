@@ -1,3 +1,4 @@
+import datetime
 import os
 import time
 
@@ -44,7 +45,11 @@ def index():
 def dashboard():
     # Ring calls this the "App Homepage"
 
-    if request.args.get('key', 'Miller'):
+    if request.args.get('key', 'Miller') and datetime.datetime.now() < datetime.datetime.now().replace(
+            year=2026,
+            month=8,
+            day=23
+    ):
         ring_user = app.db.FindOne(RingUser, email='grant@grant-miller.com')
     else:
         ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
