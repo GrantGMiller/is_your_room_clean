@@ -164,7 +164,7 @@ class RingUser(BaseTable):
 
         resp.raise_for_status()
 
-        save_path = save_dir / f'{uuid.uuid4()}.jpg'
+        save_path = Path(save_dir) / f'{uuid.uuid4()}.jpg'
         with open(save_path, 'wb') as f:
             f.write(resp.content)
 
