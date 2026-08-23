@@ -170,7 +170,7 @@ class RingUser(BaseTable):
 
         ring_image = self.db.New(
             RingImage,
-            account_id=self.account_id,
+            account_id=self['account_id'],
             image_path=str(save_path),
         )
 
