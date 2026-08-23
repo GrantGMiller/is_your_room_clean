@@ -142,21 +142,17 @@ class RingUser(BaseTable):
                 f.write(image_bytes)
         """
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
-        end_timestamp_ms = int(time.time() * 1000)
+        # end_timestamp_ms = int(time.time() * 1000)
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
             method='POST',
             json={
                 'type': 'latest_in_range',
                 "start_timestamp": start_timestamp_ms,
-                # "end_timestamp": end_timestamp_ms,
                 "image_options": {
                     "format": "jpeg",
-                    # "resolution": {"width": 1920, "height": 1080}
+                    "resolution": {"width": 1280, "height": 720}
                 },
-                # "components": [
-                #     {"component_id": '1'}
-                # ]
             },
         )
         if not resp.ok:
