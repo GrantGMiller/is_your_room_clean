@@ -18,6 +18,7 @@ if not os.path.exists('images'):
     os.mkdir('images')
 
 app = Flask('Is Your Room Clean')
+app.secret_key = config.SECRET_KEY
 app.db = Dictabase(app)
 app.jobs = JobScheduler(
     app,
