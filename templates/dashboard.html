@@ -6,7 +6,7 @@
 </head>
 <body>
     {% for device in ring_user.get_devices() %}
-        <img src="{{images/ring_user.get_snapshot(device['id'])}}"/>
+        <img src="image/{{ring_user.get_snapshot(device['id'])}}"/>
         <br>
     {% endfor %}
 </body>
