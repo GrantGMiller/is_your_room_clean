@@ -68,10 +68,10 @@ def send_login_email():
                 func=SendEmail_SMTP,
                 kwargs={
                     'smtpServerURL': config.SES_SMTP_SERVER,
-                    'smtpUsername ': config.SES_USERNAME,
+                    'smtpUsername': config.SES_USERNAME,
                     'smtpPassword': config.SES_PASSWORD,
                     'to': email,
-                    'frm': 'admin@domainservices.biz',
+                    'frm': config.ADMINS[0],
                     'subject': 'Login with a Magic Link',
                     'body': f'Click this link to login.\r{user.get_last_login_url()}',
                     'html': f'<a href="{user.get_last_login_url()}">Click here to login.</a>',
@@ -97,7 +97,7 @@ def test():
 
 
 def send_slack_error(job):
-    send_slack_message('Error:', str(dict(job)))
+    send_slack_message('Error:', job)
 
 
 if __name__ == '__main__':
