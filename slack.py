@@ -16,6 +16,7 @@ def setup(a):
     @app.route('/slack_test')
     def slack_test():
         send_slack_message('The time is ' + time.asctime())
+        return 'sent slack message'
 
 
 def send_slack_message(*a):
@@ -39,9 +40,9 @@ def do_send_slack_notification(msg, **kwargs):
     else:  # linux
         if 'beta' in config.SERVER_HOST_URL:
             if datetime.datetime.now().date() > datetime.date(
-                    year=2022,
+                    year=2026,
                     month=8,
-                    day=5  # today
+                    day=24 # today
             ):  # dont send me beta notifications perpetually
                 return
             msg = f'***  {config.SERVER_HOST_URL}  *** \r\n' + msg
