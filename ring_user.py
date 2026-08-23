@@ -148,14 +148,14 @@ class RingUser(BaseTable):
             json={
                 'type': 'latest_in_range',
                 "start_timestamp": start_timestamp_ms,
-                "end_timestamp": end_timestamp_ms,
+                # "end_timestamp": end_timestamp_ms,
                 "image_options": {
                     "format": "jpeg",
                     # "resolution": {"width": 1920, "height": 1080}
                 },
-                "components": [
-                    {"component_id": '1'}
-                ]
+                # "components": [
+                #     {"component_id": '1'}
+                # ]
             },
         )
         if not resp.ok:
