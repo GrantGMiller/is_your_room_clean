@@ -138,6 +138,9 @@ def process_webhook(request_id):
         if not webhook:
             return
 
+        if webhook['type'] in ['motion_detected']:
+            return
+
         send_slack_message(webhook)
         # Route to appropriate handler
         # if event_type == 'motion_detected':
