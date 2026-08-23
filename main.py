@@ -2,7 +2,7 @@ import datetime
 import os
 import time
 
-from flask import render_template, session, Flask, request, redirect
+from flask import render_template, session, Flask, request, redirect, send_file
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
@@ -10,7 +10,7 @@ from flask_tools import IsValidEmail, SendEmail_SMTP
 import config
 import ring_token_endpoints
 import ring_webhook_helper
-from ring_user import RingUser
+from ring_user import RingUser, RingImage
 from slack import send_slack_message, setup as slack_setup
 
 if not os.path.exists('images'):
@@ -98,6 +98,19 @@ def send_login_email():
     return render_template(
         'email_input.html',
         message='Invalid Email Address'
+    )
+
+
+@app.route('/image/<image_id>')
+def image(image_id):
+    image = app.db.FindOne(
+        RingImage,
+        id=image_id,
+        account_id=session.get('account_id', None),
+    )
+    return send_file(
+        image['image_path'],
+        mimetype='image/jpeg',
     )
 
 

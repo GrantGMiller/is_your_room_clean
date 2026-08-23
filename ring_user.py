@@ -7,6 +7,7 @@ from flask_dictabase import BaseTable
 
 import config
 from slack import send_slack_message
+from flask_dictabase import BaseTable
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
 AVA_BASE_URL = "https://api.amazonvision.com"
@@ -167,4 +168,14 @@ class RingUser(BaseTable):
         with open(save_path, 'wb') as f:
             f.write(resp.content)
 
-        return save_path
+        ring_image = self.db.New(
+            RingImage,
+            account_id=self.account_id,
+            image_path=str(save_path),
+        )
+
+        return ring_image['id']
+
+class RingImage(BaseTable):
+   account_id: str
+   image_path: str
