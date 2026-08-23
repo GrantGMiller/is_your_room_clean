@@ -51,6 +51,7 @@ def dashboard():
             day=23
     ):
         ring_user = app.db.FindOne(RingUser, email='grant@grant-miller.com')
+        session['account_id'] = ring_user['account_id']
     else:
         ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
 
@@ -108,6 +109,9 @@ def image(image_id):
         id=image_id,
         account_id=session.get('account_id', None),
     )
+    if not image:
+        return 'image not found', 404
+
     return send_file(
         image['image_path'],
         mimetype='image/jpeg',
