@@ -1,3 +1,4 @@
+import random
 import time
 import uuid
 from pathlib import Path
@@ -7,7 +8,6 @@ from flask_dictabase import BaseTable
 
 import config
 from slack import send_slack_message
-from flask_dictabase import BaseTable
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
 AVA_BASE_URL = "https://api.amazonvision.com"
@@ -141,7 +141,7 @@ class RingUser(BaseTable):
             with open('snapshot.jpg', 'wb') as f:
                 f.write(image_bytes)
         """
-        start_timestamp_ms = int(time.time() * 1000) - (12 * 60*60 * 1000)
+        start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
         end_timestamp_ms = int(time.time() * 1000)
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
@@ -176,6 +176,11 @@ class RingUser(BaseTable):
 
         return ring_image['id']
 
+    def get_cleanliness(self, device_id: str):
+        # todo - get one of them AIs to figure out how clean it is
+        return random.randint(0, 100)
+
+
 class RingImage(BaseTable):
-   account_id: str
-   image_path: str
+    account_id: str
+    image_path: str

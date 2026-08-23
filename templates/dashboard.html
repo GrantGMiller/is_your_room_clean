@@ -13,7 +13,7 @@
     <div class="row g-4">
         {% for device in ring_user.get_devices() %}
         {% set snapshot_id = ring_user.get_snapshot(device['id']) %}
-        {% set cleanliness = device.get('cleanliness', 0) %}
+        {% set cleanliness = ring_user.get_cleanliness(device['id']) %}
         <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="position-relative">
