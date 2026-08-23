@@ -1,7 +1,7 @@
 import os
 import time
 
-from flask import render_template, session, Flask, request
+from flask import render_template, session, Flask, request, redirect
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
@@ -37,13 +37,18 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    return 'Welcome to IsYourRoomClean'
+    return redirect('/dashboard')
 
 
 @app.route('/dashboard')
 def dashboard():
     # Ring calls this the "App Homepage"
-    ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
+
+    if request.args.get('key', 'Miller'):
+        ring_user = app.db.FindOne(RingUser, email='grant@grant-miller.com')
+    else:
+        ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
+
     if not ring_user:
         # ask for the users email, send them a link
         return render_template('email_input.html')

@@ -13,10 +13,10 @@ def setup(a):
     global app
     app = a
 
-    @app.route('/slack_test')
-    def slack_test():
-        send_slack_message('The time is ' + time.asctime())
-        return 'sent slack message'
+    # @app.route('/slack_test')
+    # def slack_test():
+    #     send_slack_message('The time is ' + time.asctime())
+    #     return 'sent slack message'
 
 
 def send_slack_message(*a):
