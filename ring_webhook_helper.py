@@ -7,6 +7,7 @@ from flask_dictabase import BaseTable, Dictabase
 from flask_jobs import JobScheduler
 
 import config
+from slack import send_slack_message
 
 # Store this in an environment variable, not in source control.
 HMAC_KEY = config.RING_HMAC_SIGNATURE_KEY
@@ -42,7 +43,6 @@ def verify_ring_webhook_signature(
         expected_signature,
         received_signature,
     )
-
 
 
 def setup(a: Flask):
@@ -138,28 +138,27 @@ def process_webhook(request_id):
         if not webhook:
             return
 
-            # Route to appropriate handler
-            # if event_type == 'motion_detected':
-            #     handle_motion_detection(payload)
-            # elif event_type == 'button_press':
-            #     handle_button_press(payload)
-            # elif event_type == 'device_added':
-            #     handle_device_addition(payload)
-            # elif event_type == 'device_removed':
-            #     handle_device_removal(payload)
-            # elif event_type == 'device_online':
-            #     handle_device_online(payload)
-            # elif event_type == 'device_offline':
-            #     handle_device_offline(payload)
-            # elif event_type == 'app_integration_added':
-            #     handle_app_integration_added(payload)
-            # elif event_type == 'app_integration_removed':
-            #     handle_app_integration_removed(payload)
-            # elif event_type == 'subscription_activated':
-            #     handle_subscription_activated(payload)
-            # elif event_type == 'subscription_deactivated':
-            #     handle_subscription_deactivated(payload)
-            # else:
-            #     return jsonify({'error': 'Unknown event type'}), 400
-
-
+        send_slack_message(webhook)
+        # Route to appropriate handler
+        # if event_type == 'motion_detected':
+        #     handle_motion_detection(payload)
+        # elif event_type == 'button_press':
+        #     handle_button_press(payload)
+        # elif event_type == 'device_added':
+        #     handle_device_addition(payload)
+        # elif event_type == 'device_removed':
+        #     handle_device_removal(payload)
+        # elif event_type == 'device_online':
+        #     handle_device_online(payload)
+        # elif event_type == 'device_offline':
+        #     handle_device_offline(payload)
+        # elif event_type == 'app_integration_added':
+        #     handle_app_integration_added(payload)
+        # elif event_type == 'app_integration_removed':
+        #     handle_app_integration_removed(payload)
+        # elif event_type == 'subscription_activated':
+        #     handle_subscription_activated(payload)
+        # elif event_type == 'subscription_deactivated':
+        #     handle_subscription_deactivated(payload)
+        # else:
+        #     return jsonify({'error': 'Unknown event type'}), 400

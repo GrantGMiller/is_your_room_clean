@@ -1,3 +1,4 @@
+import datetime
 import time
 import uuid
 from pathlib import Path
@@ -123,7 +124,7 @@ class RingUser(BaseTable):
         resp.raise_for_status()
         return resp.json().get('data', [])
 
-    def get_snapshot(self, device, save_dir: Path = 'images'):
+    def get_snapshot(self, device_id: str, save_dir: Path = 'images'):
         """
         Fetches the most recent still-frame image for a device.
         https://developer.amazon.com/docs/ring/api-documentation.html#download-flow
@@ -139,15 +140,19 @@ class RingUser(BaseTable):
             with open('snapshot.jpg', 'wb') as f:
                 f.write(image_bytes)
         """
+        start_dt = datetime.datetime.now() - datetime.timedelta(hours=1)
+        end_dt = datetime.datetime.now()
         resp = self.make_authenticated_request(
-            'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device),
+            'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
             method='POST',
             json={
                 'type': 'latest_in_range',
+                "start_timestamp": start_dt.timestamp() * 1000,
+                "end_timestamp": end_dt.timestamp() * 1000,
                 "image_options": {
                     "format": "jpeg",
-                    "resolution": {"width": 1920, "height": 1080}
-                }
+                    # "resolution": {"width": 1920, "height": 1080}
+                },
             },
         )
         resp.raise_for_status()
