@@ -58,6 +58,7 @@ def dashboard():
         # ask for the users email, send them a link
         return render_template('email_input.html')
 
+    send_slack_message(ring_user.get_devices())
     return render_template(
         'dashboard.html',
         ring_user=ring_user
