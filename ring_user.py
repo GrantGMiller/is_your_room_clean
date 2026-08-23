@@ -1,4 +1,3 @@
-import datetime
 import time
 import uuid
 from pathlib import Path
@@ -141,15 +140,15 @@ class RingUser(BaseTable):
             with open('snapshot.jpg', 'wb') as f:
                 f.write(image_bytes)
         """
-        start_dt = datetime.datetime.now() - datetime.timedelta(days=1)
-        end_dt = datetime.datetime.now()
+        start_timestamp_ms = int(time.time() * 1000) - (14 * 24 * 3600 * 1000)
+        end_timestamp_ms = int(time.time() * 1000)
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
             method='POST',
             json={
                 'type': 'latest_in_range',
-                # "start_timestamp": int(start_dt.timestamp() * 1000),
-                # "end_timestamp": int(end_dt.timestamp() * 1000),
+                "start_timestamp": start_timestamp_ms,
+                "end_timestamp": end_timestamp_ms,
                 "image_options": {
                     "format": "jpeg",
                     # "resolution": {"width": 1920, "height": 1080}
