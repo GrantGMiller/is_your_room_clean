@@ -7,6 +7,7 @@ import requests
 from flask_dictabase import BaseTable
 
 import config
+from slack import send_slack_message
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
 AVA_BASE_URL = "https://api.amazonvision.com"
@@ -153,8 +154,14 @@ class RingUser(BaseTable):
                     "format": "jpeg",
                     # "resolution": {"width": 1920, "height": 1080}
                 },
+                "components": [
+                    {"component_id": '1'}
+                ]
             },
         )
+        if not resp.ok:
+            send_slack_message(resp.headers, resp.text)
+
         resp.raise_for_status()
 
         save_path = save_dir / f'{uuid.uuid4()}.jpg'
