@@ -148,8 +148,8 @@ class RingUser(BaseTable):
             method='POST',
             json={
                 'type': 'latest_in_range',
-                "start_timestamp": start_dt.timestamp() * 1000,
-                "end_timestamp": end_dt.timestamp() * 1000,
+                "start_timestamp": int(start_dt.timestamp() * 1000),
+                "end_timestamp": int(end_dt.timestamp() * 1000),
                 "image_options": {
                     "format": "jpeg",
                     # "resolution": {"width": 1920, "height": 1080}
