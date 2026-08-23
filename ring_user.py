@@ -141,7 +141,7 @@ class RingUser(BaseTable):
             with open('snapshot.jpg', 'wb') as f:
                 f.write(image_bytes)
         """
-        start_dt = datetime.datetime.now() - datetime.timedelta(days=2)
+        start_dt = datetime.datetime.now() - datetime.timedelta(days=1)
         end_dt = datetime.datetime.now()
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
