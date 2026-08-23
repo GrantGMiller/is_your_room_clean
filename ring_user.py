@@ -123,7 +123,7 @@ class RingUser(BaseTable):
         resp.raise_for_status()
         return resp.json().get('data', [])
 
-    def get_snapshot(self, device, save_dir: Path):
+    def get_snapshot(self, device, save_dir: Path = 'images'):
         """
         Fetches the most recent still-frame image for a device.
         https://developer.amazon.com/docs/ring/api-documentation.html#download-flow
