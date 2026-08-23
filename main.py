@@ -10,6 +10,7 @@ import config
 import ring_token_endpoints
 import ring_webhook_helper
 from ring_user import RingUser
+from slack import send_slack_message, setup as slack_setup
 
 if not os.path.exists('images'):
     # this will hold the ring camera screenshots
@@ -25,6 +26,7 @@ app.jobs = JobScheduler(
 
 ring_token_endpoints.setup(app)
 ring_webhook_helper.setup(app)
+slack_setup(app)
 
 # temp
 # make sure we have all the users email addresses
@@ -73,7 +75,8 @@ def send_login_email():
                     'subject': 'Login with a Magic Link',
                     'body': f'Click this link to login.\r{user.get_last_login_url()}',
                     'html': f'<a href="{user.get_last_login_url()}">Click here to login.</a>',
-                }
+                },
+                errorCallback=send_slack_error
             )
 
         # note, if the user was not found, we dont actually send an email, but dont tell them that
@@ -82,10 +85,19 @@ def send_login_email():
             email=email,
         )
 
+    return render_template(
+        'email_input.html',
+        message='Invalid Email Address'
+    )
+
 
 @app.route('/test')
 def test():
     return 'The time is ' + time.asctime()
+
+
+def send_slack_error(job):
+    send_slack_message('Error:', str(dict(job)))
 
 
 if __name__ == '__main__':
