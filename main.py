@@ -10,6 +10,7 @@ from flask_tools import IsValidEmail, SendEmail_SMTP
 import config
 import ring_token_endpoints
 import ring_webhook_helper
+from ai_cleanliness import evaluate_cleanliness
 from ring_user import RingUser, RingImage
 from slack import send_slack_message, setup as slack_setup
 
@@ -113,10 +114,50 @@ def image(image_id):
     if not image:
         return 'image not found', 404
 
+    if image.get('cleanliness', None) is None:
+        app.jobs.AddJob(
+            func=score_cleanliness,
+            kwargs={
+                'image_id': image_id,
+            }
+        )
+
     return send_file(
         image['image_path'],
         mimetype='image/jpeg',
     )
+
+
+@app.route('/image/<image_id>/summary')
+def image_summary(image_id):
+    image = app.db.FindOne(
+        RingImage,
+        id=image_id,
+        account_id=session.get('account_id', None),
+    )
+    if image and image.get('summary', None) is not None:
+        return image['summary']
+
+    return 'summary not ready', 404
+
+
+def score_cleanliness(image_id):
+    with app.app_context():
+        image = app.db.FindOne(
+            RingImage,
+            id=image_id,
+        )
+        if image and image.get('cleanliness', None) is None and not image.get('scoring_in_progress', False):
+            image['scoring_in_progress'] = True
+            with open(
+                    image['image_path'],
+                    'rb'
+            ) as f:
+                image_bytes = f.read()
+
+            res = evaluate_cleanliness(image_bytes=image_bytes)
+            image['cleanliness'] = res['cleanliness']
+            image['summary'] = res['summary']
 
 
 @app.route('/test')

@@ -54,12 +54,77 @@
                         Refresh
                     </button>
                 </div>
+                <p class="text-muted small mb-0 summary-text" id="summary-{{ device['id'] }}"
+                   data-snapshot-id="{{ snapshot_id }}">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Analyzing room...
+                </p>
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
+<script>
+    function pollSummary(snapshotId, targetEl) {
+        fetch('/image/' + snapshotId + '/summary')
+            .then(function (resp) {
+                if (resp.status === 404) {
+                    // Not ready yet -- try again in 5 seconds
+                    setTimeout(function () { pollSummary(snapshotId, targetEl); }, 5000);
+                    return null;
+                }
+                if (!resp.ok) {
+                    throw new Error('Unexpected status ' + resp.status);
+                }
+                return resp.json();
+            })
+            .then(function (data) {
+                if (data === null) return; // still waiting on the 404 retry
+                targetEl.textContent = data.summary;
+            })
+            .catch(function (err) {
+                console.error('Failed to load summary for snapshot', snapshotId, err);
+                targetEl.textContent = 'Unable to load summary.';
+            });
+    }
 
+    document.querySelectorAll('.summary-text').forEach(function (el) {
+        pollSummary(el.dataset.snapshotId, el);
+    });
+
+    document.querySelectorAll('.refresh-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var deviceId = btn.dataset.deviceId;
+            var img = document.getElementById('snapshot-' + deviceId);
+            var badge = document.getElementById('badge-' + deviceId);
+            var summaryEl = document.getElementById('summary-' + deviceId);
+
+            btn.disabled = true;
+
+            fetch('/refresh_snapshot/' + deviceId, { method: 'POST' })
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    img.src = '/image/' + data.snapshot_id + '?t=' + Date.now();
+                    badge.textContent = data.cleanliness + '% clean';
+                    badge.className = 'badge position-absolute bottom-0 end-0 m-2 fs-6 ' +
+                        (data.cleanliness >= 70 ? 'text-bg-success'
+                            : data.cleanliness >= 40 ? 'text-bg-warning'
+                            : 'text-bg-danger');
+
+                    summaryEl.dataset.snapshotId = data.snapshot_id;
+                    summaryEl.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyzing room...';
+                    pollSummary(data.snapshot_id, summaryEl);
+                })
+                .catch(function (err) {
+                    console.error('Failed to refresh snapshot', err);
+                })
+                .finally(function () {
+                    btn.disabled = false;
+                });
+        });
+    });
+</script>
 </body>
 </html>

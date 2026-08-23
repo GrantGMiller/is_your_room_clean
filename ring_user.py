@@ -1,4 +1,3 @@
-import random
 import time
 import uuid
 from pathlib import Path
@@ -12,6 +11,8 @@ from slack import send_slack_message
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
 AVA_BASE_URL = "https://api.amazonvision.com"
 
+IMAGE_REQUEST_TIMEOUT = 60  # only request an image every X seconds
+
 
 class RingUser(BaseTable):
     account_id: str
@@ -22,6 +23,7 @@ class RingUser(BaseTable):
     email: str
     login_url: str
     login_url_expires_at: int  # epoch seconds
+    last_image_timestamp: dict  # keep track of the last image requested, only request a new image every IMAGE_REQUEST_TIMEOUT seconds
 
     def ui_safe(self):
         return {
@@ -141,6 +143,20 @@ class RingUser(BaseTable):
             with open('snapshot.jpg', 'wb') as f:
                 f.write(image_bytes)
         """
+
+        # if an image was requested less than X seconds ago, just return the last image
+        latest_images = self.db.FindAll(
+            RingImage,
+            device_id=device_id,
+            _orderBy='timestamp_ms',
+            _limit=1,
+            _reverse=True,
+        )
+        if latest_images and (latest_images[0].get('timestamp_ms', 0) or 0) > (time.time() * 1000) - (IMAGE_REQUEST_TIMEOUT * 1000):
+            return latest_images[0]['id']
+
+        # the existing images are too old, request a new image
+
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
         # end_timestamp_ms = int(time.time() * 1000)
         resp = self.make_authenticated_request(
@@ -167,16 +183,19 @@ class RingUser(BaseTable):
         ring_image = self.db.New(
             RingImage,
             account_id=self['account_id'],
+            devide_id=device_id,
             image_path=str(save_path),
+            timestamp_epoch_ms=time.time() * 1000,
         )
 
         return ring_image['id']
 
-    def get_cleanliness(self, device_id: str):
-        # todo - get one of them AIs to figure out how clean it is
-        return random.randint(0, 100)
-
 
 class RingImage(BaseTable):
     account_id: str
+    device_id: str
     image_path: str
+    cleanliness: int  # 0-100 (100 means perfectly clean)
+    summary: str  # description of the cleanliness
+    scoring_in_progress: bool  # true when the request has already been sent to the ai for scoring
+    timestamp_epoch_ms: int  # when the image was requested
