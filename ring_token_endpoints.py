@@ -170,7 +170,7 @@ def setup(a: Flask):
 
     @app.route('/magic_link/<uid>')
     def magic_link(uid):
-        app.logger.error('magic link=' + uid)
+        app.logger.error('incoming magic link=' + uid)
         now_timestamp = time.time()
         ring_user = app.db.FindOne(
             RingUser,
