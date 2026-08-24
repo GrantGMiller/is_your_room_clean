@@ -31,6 +31,7 @@ from flask import Flask, jsonify, redirect, request, session, flash
 
 import config
 from ring_user import RingUser
+from slack import send_slack_message
 
 # --- Partner credentials (issued once, in the Ring Developer Portal) ---
 CLIENT_ID = config.RING_CLIENT_ID
@@ -170,7 +171,7 @@ def setup(a: Flask):
 
     @app.route('/magic_link/<uid>')
     def magic_link(uid):
-        app.logger.info('incoming magic link=' + uid)
+        send_slack_message('incoming magic link=' + uid)
         now_timestamp = time.time()
 
         login_url = f'{config.SERVER_HOST_URL}magic_link/{uid}'
@@ -181,29 +182,29 @@ def setup(a: Flask):
         )
 
         if not ring_user:
-            app.logger.info('no ring user found')
+            send_slack_message('no ring user found')
             all_users = app.db.FindAll(RingUser)
-            app.logger.info([u.get('login_url', None) for u in all_users])
-            app.logger.info('login_url=', login_url)
+            send_slack_message([u.get('login_url', None) for u in all_users])
+            send_slack_message('login_url=', login_url)
 
         print('ring_user=', ring_user)
 
         if not ring_user:
-            app.logger.info('ring user=', str(ring_user))
-            app.logger.info('magic link user not found', uid)
+            send_slack_message('ring user=', str(ring_user))
+            send_slack_message('magic link user not found', uid)
             flash('User Not Found', 'danger')
             return redirect('/dashboard')
 
         elif ring_user['login_url_expires_at'] > now_timestamp:
             # success, log this user in
-            app.logger.info('user found and magic link NOT expired', uid)
+            send_slack_message('user found and magic link NOT expired', uid)
             session['account_id'] = ring_user['account_id']
             return redirect('/dashboard')
 
         else:
             # the timestamp may have been expired
             # route them to the dashboard to initiate a new magic link
-            app.logger.info(
+            send_slack_message(
                 'user found but link probably expired',
                 ring_user.get('login_url_expires_at', None),
                 uid)
