@@ -69,204 +69,214 @@ with app.app_context():
         )
 
 
-    @app.route('/')
-    def index():
-        return redirect('/dashboard')
+@app.route('/')
+def index():
+    return redirect('/dashboard')
 
 
-    @app.route('/dashboard')
-    def dashboard():
-        # Ring calls this the "App Homepage"
+@app.route('/dashboard')
+def dashboard():
+    # Ring calls this the "App Homepage"
 
-        if request.args.get('key', None) == 'fake' and datetime.datetime.now() < datetime.datetime.now().replace(
-                year=2026,
-                month=8,
-                day=25
-        ):
-            ring_user = app.db.FindOne(RingUser, account_id='fake')
-            if ring_user:
-                session['account_id'] = ring_user['account_id']
-        else:
-            ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
-
-        if not ring_user:
-            # ask for the users email, send them a link
-            return render_template('email_input.html')
-
-        return render_template(
-            'dashboard.html',
-            ring_user=ring_user
-        )
-
-
-    @app.route('/send_login_email', methods=['GET', 'POST'])
-    def send_login_email():
-        email = request.form.get('email', None)
-        if IsValidEmail(email):
-            user = app.db.FindOne(
-                RingUser,
-                email=email.lower()
-            )
-            if user:
-                user.get_new_login_url()
-                app.jobs.AddJob(
-                    func=SendEmail_SMTP,
-                    kwargs={
-                        'smtpServerURL': config.SES_SMTP_SERVER,
-                        'smtpUsername': config.SES_USERNAME,
-                        'smtpPassword': config.SES_PASSWORD,
-                        'to': email,
-                        'frm': config.ADMINS[0],
-                        'subject': 'Login with a Magic Link',
-                        'body': f'Click this link to login.\r{user.get_last_login_url()}',
-                        'html': f'<a href="{user.get_last_login_url()}">Click here to login.</a>',
-                    },
-                    errorCallback=send_slack_error
-                )
-
-            # note, if the user was not found, we dont actually send an email, but dont tell them that
-            return render_template(
-                'email_sent.html',
-                email=email,
-            )
-
-        return render_template(
-            'email_input.html',
-            message='Invalid Email Address'
-        )
-
-
-    @app.route('/image/<image_id>')
-    def image(image_id):
-        image = app.db.FindOne(
-            RingImage,
-            id=image_id,
-            account_id=session.get('account_id', None),
-        )
-        if not image:
-            return 'image not found', 404
-
-        if image.get('cleanliness', None) is None:
-            app.jobs.AddJob(
-                func=score_cleanliness,
-                kwargs={
-                    'image_id': image_id,
-                },
-                errorCallback=send_slack_error
-            )
-
-        return send_file(
-            image['image_path'],
-            mimetype='image/jpeg',
-        )
-
-
-    @app.route('/image/<image_id>/summary')
-    def image_summary(image_id):
-        img: RingImage = app.db.FindOne(
-            RingImage,
-            id=image_id,
-            account_id=session.get('account_id', None),
-        )
-        if img and img.get('summary', None) is not None:
-            return img.ui_safe()
-
-        if img.get('isError', False):
-            return jsonify(img), 500
-
-        return 'summary not ready', 404
-
-
-    def score_cleanliness(image_id):
-        with app.app_context():
-            image = app.db.FindOne(
-                RingImage,
-                id=image_id,
-            )
-            if image and image.get('cleanliness', None) is None and not image.get('scoring_in_progress', False):
-                image['scoring_in_progress'] = True
-                with open(
-                        image['image_path'],
-                        'rb'
-                ) as f:
-                    image_bytes = f.read()
-
-                try:
-                    res = evaluate_cleanliness(image_bytes=image_bytes)
-                    image['cleanliness'] = res['cleanliness']
-                    image['summary'] = res['summary']
-                except Exception as e:
-                    image['isError'] = True
-                    image['error'] = str(e)
-                    raise e  # raise so that the error is sent via slack
-
-
-    @app.route('/job/<job_id>')
-    def job(job_id):
-        if not datetime.datetime.now() < datetime.datetime.now().replace(
-                year=2026,
-                month=8,
-                day=24,
-        ):
-            return 'too late'
-
-        job = app.jobs.GetJob(job_id)
-        ret = {}
-        for key, value in job.items():
-            ret[key] = str(value)
-
-        return jsonify(ret)
-
-
-    @app.route('/api-key')
-    def apikey():
+    if request.args.get('key', None) == 'fake' and datetime.datetime.now() < datetime.datetime.now().replace(
+            year=2026,
+            month=8,
+            day=25
+    ):
+        ring_user = app.db.FindOne(RingUser, account_id='fake')
+        if ring_user:
+            session['account_id'] = ring_user['account_id']
+    else:
         ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
-        if not ring_user:
-            flash('unknown user', 'warning')
-            redirect('/dashboard')
 
-        return render_template(
-            'api-key.html',
-            api_key=user.api_key,
-            new_api_key=new_api_key  # pass if this is a new key
+    if not ring_user:
+        # ask for the users email, send them a link
+        return render_template('email_input.html')
+
+    return render_template(
+        'dashboard.html',
+        ring_user=ring_user
+    )
+
+
+@app.route('/send_login_email', methods=['GET', 'POST'])
+def send_login_email():
+    email = request.form.get('email', None)
+    if IsValidEmail(email):
+        user = app.db.FindOne(
+            RingUser,
+            email=email.lower()
         )
-
-
-    @app.route('/contact', methods=['GET', 'POST'])
-    def contact():
-        if request.method == 'GET':
-            return render_template('contact_us.html')
-
-        elif request.method == 'POST':
-            flash('Thank you. Your message has been sent to our support staff.', 'success')
-            message = json.dumps(request.form, indent=4, )
-            print('message=', message)
+        if user:
+            user.get_new_login_url()
             app.jobs.AddJob(
                 func=SendEmail_SMTP,
                 kwargs={
                     'smtpServerURL': config.SES_SMTP_SERVER,
                     'smtpUsername': config.SES_USERNAME,
                     'smtpPassword': config.SES_PASSWORD,
-                    'to': config.ADMINS[0],
+                    'to': email,
                     'frm': config.ADMINS[0],
-                    'subject': 'A user has requested help.',
-                    'body': message,
+                    'subject': 'Login with a Magic Link',
+                    'body': f'Click this link to login.\r{user.get_last_login_url()}',
+                    'html': f'<a href="{user.get_last_login_url()}">Click here to login.</a>',
                 },
                 errorCallback=send_slack_error
             )
-            send_slack_message(message)
 
-        return redirect('/dashboard')
+        # note, if the user was not found, we dont actually send an email, but dont tell them that
+        return render_template(
+            'email_sent.html',
+            email=email,
+        )
+
+    return render_template(
+        'email_input.html',
+        message='Invalid Email Address'
+    )
 
 
-    @app.route('/test')
-    def test():
-        return 'The time is ' + time.asctime()
+@app.route('/image/<image_id>')
+def image(image_id):
+    image = app.db.FindOne(
+        RingImage,
+        id=image_id,
+        account_id=session.get('account_id', None),
+    )
+    if not image:
+        return 'image not found', 404
+
+    if image.get('cleanliness', None) is None:
+        app.jobs.AddJob(
+            func=score_cleanliness,
+            kwargs={
+                'image_id': image_id,
+            },
+            errorCallback=send_slack_error
+        )
+
+    return send_file(
+        image['image_path'],
+        mimetype='image/jpeg',
+    )
 
 
-    def send_slack_error(job):
-        send_slack_message('Error:', job)
+@app.route('/image/<image_id>/summary')
+def image_summary(image_id):
+    img: RingImage = app.db.FindOne(
+        RingImage,
+        id=image_id,
+        account_id=session.get('account_id', None),
+    )
+    if img and img.get('summary', None) is not None:
+        return img.ui_safe()
+
+    if img.get('isError', False):
+        return jsonify(img), 500
+
+    return 'summary not ready', 404
 
 
-    if __name__ == '__main__':
-        app.run(port=3888, debug=True)
+def score_cleanliness(image_id):
+    with app.app_context():
+        image = app.db.FindOne(
+            RingImage,
+            id=image_id,
+        )
+        if image and image.get('cleanliness', None) is None and not image.get('scoring_in_progress', False):
+            image['scoring_in_progress'] = True
+            with open(
+                    image['image_path'],
+                    'rb'
+            ) as f:
+                image_bytes = f.read()
+
+            try:
+                res = evaluate_cleanliness(image_bytes=image_bytes)
+                image['cleanliness'] = res['cleanliness']
+                image['summary'] = res['summary']
+            except Exception as e:
+                image['isError'] = True
+                image['error'] = str(e)
+                raise e  # raise so that the error is sent via slack
+
+
+@app.route('/job/<job_id>')
+def job(job_id):
+    if not datetime.datetime.now() < datetime.datetime.now().replace(
+            year=2026,
+            month=8,
+            day=24,
+    ):
+        return 'too late'
+
+    job = app.jobs.GetJob(job_id)
+    ret = {}
+    for key, value in job.items():
+        ret[key] = str(value)
+
+    return jsonify(ret)
+
+
+@app.route('/api-key')
+def apikey():
+    ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
+    if not ring_user:
+        flash('unknown user', 'warning')
+        redirect('/dashboard')
+
+    return render_template(
+        'api-key.html',
+        api_key=user.api_key,
+        new_api_key=new_api_key  # pass if this is a new key
+    )
+
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'GET':
+        return render_template('contact_us.html')
+
+    elif request.method == 'POST':
+        flash('Thank you. Your message has been sent to our support staff.', 'success')
+        message = json.dumps(request.form, indent=4, )
+        print('message=', message)
+        app.jobs.AddJob(
+            func=SendEmail_SMTP,
+            kwargs={
+                'smtpServerURL': config.SES_SMTP_SERVER,
+                'smtpUsername': config.SES_USERNAME,
+                'smtpPassword': config.SES_PASSWORD,
+                'to': config.ADMINS[0],
+                'frm': config.ADMINS[0],
+                'subject': 'A user has requested help.',
+                'body': message,
+            },
+            errorCallback=send_slack_error
+        )
+        send_slack_message(message)
+
+    return redirect('/dashboard')
+
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+
+@app.route('/test')
+def test():
+    return 'The time is ' + time.asctime()
+
+
+def send_slack_error(job):
+    send_slack_message('Error:', job)
+
+
+if __name__ == '__main__':
+    app.run(port=3888, debug=True)
