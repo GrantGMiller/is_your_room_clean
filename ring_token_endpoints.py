@@ -177,7 +177,7 @@ def setup(a: Flask):
             login_url=f'{config.SERVER_HOST_URL}/magic_link/{uid}'
         )
 
-        app.logger.error('ring user=', ring_user.ui_safe())
+        app.logger.error('ring user=', str(ring_user.ui_safe()))
 
         if not ring_user:
             app.logger.error('magic link user not found', uid)
