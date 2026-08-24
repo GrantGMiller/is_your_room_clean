@@ -27,7 +27,7 @@ from typing import cast
 
 import flask_dictabase
 import requests
-from flask import Flask, jsonify, redirect, request, session
+from flask import Flask, jsonify, redirect, request, session, flash
 
 import config
 from ring_user import RingUser
@@ -172,16 +172,21 @@ def setup(a: Flask):
     def magic_link(uid):
         app.logger.error('incoming magic link=' + uid)
         now_timestamp = time.time()
+
+        login_url = f'{config.SERVER_HOST_URL}magic_link/{uid}'
+
         ring_user: RingUser = app.db.FindOne(
             RingUser,
-            login_url=f'{config.SERVER_HOST_URL}/magic_link/{uid}'
+            login_url=login_url
         )
 
-        app.logger.error('ring user=', str(ring_user.ui_safe()))
+        print('ring_user=', ring_user)
 
         if not ring_user:
+            app.logger.error('ring user=', str(ring_user))
             app.logger.error('magic link user not found', uid)
-            return 'User not found', 404
+            flash('User Not Found', 'danger')
+            return redirect('/dashboard')
 
         elif ring_user['login_url_expires_at'] < now_timestamp:
             # success, log this user in

@@ -39,13 +39,17 @@ with app.app_context():
             day=25
     ):
         # create a fake user to test with
-        ring_user = app.db.NewOrFind(
+        ring_user:RingUser = app.db.NewOrFind(
             RingUser,
             account_id='fake',
             email='grant@grant-miller.com',
         )
+        print('magic link=', ring_user.get_new_login_url())
         ring_user['expires_at'] = (datetime.datetime.now() + datetime.timedelta(days=10)).timestamp()
         ring_user['access_token'] = 'fake'
+        ring_user['refresh_token'] = 'fake'
+        ring_user['status'] = 'confirmed'
+
         app.db.NewOrFind(
             RingImage,
             account_id='fake',
