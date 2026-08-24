@@ -170,7 +170,7 @@ def setup(a: Flask):
 
     @app.route('/magic_link/<uid>')
     def magic_link(uid):
-        app.info.error('incoming magic link=' + uid)
+        app.logger.info('incoming magic link=' + uid)
         now_timestamp = time.time()
 
         login_url = f'{config.SERVER_HOST_URL}magic_link/{uid}'
@@ -181,10 +181,10 @@ def setup(a: Flask):
         )
 
         if not ring_user:
-            app.info.error('no ring user found')
+            app.logger.info('no ring user found')
             all_users = app.db.FindAll(RingUser)
-            app.info.error([u.get('login_url', None) for u in all_users])
-            app.info.error('login_url=', login_url)
+            app.logger.info([u.get('login_url', None) for u in all_users])
+            app.logger.info('login_url=', login_url)
 
         print('ring_user=', ring_user)
 
