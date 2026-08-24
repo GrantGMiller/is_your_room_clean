@@ -1,6 +1,7 @@
 import time
 import uuid
 from pathlib import Path
+from typing import Optional
 
 import requests
 from flask import flash
@@ -25,6 +26,7 @@ class RingUser(BaseTable):
     login_url: str
     login_url_expires_at: int  # epoch seconds
     last_image_timestamp: dict  # keep track of the last image requested, only request a new image every IMAGE_REQUEST_TIMEOUT seconds
+    api_key: Optional[str]
 
     def ui_safe(self):
         return {
