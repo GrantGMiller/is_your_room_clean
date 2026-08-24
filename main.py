@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import sys
 import time
@@ -39,7 +40,7 @@ with app.app_context():
             day=25
     ):
         # create a fake user to test with
-        ring_user:RingUser = app.db.NewOrFind(
+        ring_user: RingUser = app.db.NewOrFind(
             RingUser,
             account_id='fake',
             email='grant@grant-miller.com',
@@ -231,9 +232,31 @@ with app.app_context():
         )
 
 
-    @app.route('/contact')
+    @app.route('/contact', methods=['GET', 'POST'])
     def contact():
-        return render_template('contact_us.html')
+        if request.method == 'GET':
+            return render_template('contact_us.html')
+
+        elif request.method == 'POST':
+            flash('Thank you. Your message has been sent to our support staff.', 'success')
+            message = json.dumps(request.form, indent=4, )
+            print('message=', message)
+            app.jobs.AddJob(
+                func=SendEmail_SMTP,
+                kwargs={
+                    'smtpServerURL': config.SES_SMTP_SERVER,
+                    'smtpUsername': config.SES_USERNAME,
+                    'smtpPassword': config.SES_PASSWORD,
+                    'to': config.ADMINS[0],
+                    'frm': config.ADMINS[0],
+                    'subject': 'A user has requested help.',
+                    'body': message,
+                },
+                errorCallback=send_slack_error
+            )
+            send_slack_message(message)
+
+        return redirect('/dashboard')
 
 
     @app.route('/test')
