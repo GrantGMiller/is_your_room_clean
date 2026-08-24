@@ -166,6 +166,7 @@ def score_cleanliness(image_id):
             except Exception as e:
                 image['isError'] = True
                 image['error'] = str(e)
+                raise e
 
 
 @app.route('/job/<job_id>')
