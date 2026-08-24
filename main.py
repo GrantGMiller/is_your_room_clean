@@ -2,7 +2,7 @@ import datetime
 import os
 import time
 
-from flask import render_template, session, Flask, request, redirect, send_file
+from flask import render_template, session, Flask, request, redirect, send_file, jsonify
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
@@ -159,6 +159,19 @@ def score_cleanliness(image_id):
             res = evaluate_cleanliness(image_bytes=image_bytes)
             image['cleanliness'] = res['cleanliness']
             image['summary'] = res['summary']
+
+
+@app.route('/job/<job_id>')
+def job(job_id):
+    if not datetime.datetime.now() < datetime.datetime.now().replace(
+            year=2026,
+            month=8,
+            day=24,
+    ):
+        return 'too late'
+
+    job = app.jobs.GetJob(job_id)
+    return jsonify(job)
 
 
 @app.route('/test')
