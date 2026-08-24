@@ -67,7 +67,7 @@
                     return null;
                 }
                 if (!resp.ok) {
-                    throw new Error('Unexpected status ' + resp.status);
+                    throw new Error('Error ' + resp.status);
                 }
                 return resp.json();
             })

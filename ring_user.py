@@ -152,7 +152,8 @@ class RingUser(BaseTable):
             _limit=1,
             _reverse=True,
         ))
-        if latest_images and (latest_images[0].get('timestamp_ms', 0) or 0) > (time.time() * 1000) - (IMAGE_REQUEST_TIMEOUT * 1000):
+        if latest_images and (latest_images[0].get('timestamp_ms', 0) or 0) > (time.time() * 1000) - (
+                IMAGE_REQUEST_TIMEOUT * 1000):
             return latest_images[0]['id']
 
         # the existing images are too old, request a new image
@@ -199,3 +200,7 @@ class RingImage(BaseTable):
     summary: str  # description of the cleanliness
     scoring_in_progress: bool  # true when the request has already been sent to the ai for scoring
     timestamp_epoch_ms: int  # when the image was requested
+    isError: bool
+    error: str
+
+

@@ -141,6 +141,8 @@ def image_summary(image_id):
             'summary': img['summary'],
             'cleanliness': img['cleanliness'],
         }
+    if img.get('isError', False):
+        return 'Error generating summary', 500
 
     return 'summary not ready', 404
 
@@ -159,9 +161,13 @@ def score_cleanliness(image_id):
             ) as f:
                 image_bytes = f.read()
 
-            res = evaluate_cleanliness(image_bytes=image_bytes)
-            image['cleanliness'] = res['cleanliness']
-            image['summary'] = res['summary']
+            try:
+                res = evaluate_cleanliness(image_bytes=image_bytes)
+                image['cleanliness'] = res['cleanliness']
+                image['summary'] = res['summary']
+            except Exception as e:
+                image['isError'] = True
+                image['error'] = str(e)
 
 
 @app.route('/job/<job_id>')
