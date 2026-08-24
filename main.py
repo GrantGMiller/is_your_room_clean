@@ -171,7 +171,11 @@ def job(job_id):
         return 'too late'
 
     job = app.jobs.GetJob(job_id)
-    return jsonify(job)
+    ret = {}
+    for key, value in job.items():
+        ret[key] = str(value)
+
+    return jsonify(ret)
 
 
 @app.route('/test')
