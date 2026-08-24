@@ -48,7 +48,7 @@
 <!--                        Refresh-->
 <!--                    </button>-->
 <!--                </div>-->
-                <p class="text-muted small m-1 summary-text" id="summary-{{ device['id'] }}"
+                <p class="text-muted m-2 summary-text" id="summary-{{ device['id'] }}"
                    data-snapshot-id="{{ snapshot_id }}">
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     Analyzing room...
@@ -57,6 +57,9 @@
         </div>
         {% endfor %}
     </div>
+    <a class='btn btn-primary m-1' href="ring://">
+    Open Ring App
+</a>
 </div>
 
 <script>
@@ -131,9 +134,7 @@
         });
     });
 </script>
-<a class='btn btn-primary m-1' href="ring://">
-    Open Ring App
-</a>
+
 
 
 </body>
