@@ -75,7 +75,16 @@
             .then(function (data) {
                 if (data === null) return; // still waiting on the 404 retry
                 targetEl.textContent = data.summary;
-                $('#badge-' + data.device_id).textContent = `${data.cleanliness}% Clean`
+
+                const cEl = document.getElementById('badge-' + data.device_id)
+                cEl.textContent = `${data.cleanliness}% Clean`
+                if (data.cleanliness < 40){
+                    cEl.classList.add('text-bg-danger')
+                } else if (data.cleanliness < 70){
+                    cEl.classList.add('text-bg-warning')
+                } else {
+                    cEl.classList.add('text-bg-success')
+                }
             })
             .catch(function (err) {
                 console.error('Failed to load summary for snapshot', snapshotId, err);
