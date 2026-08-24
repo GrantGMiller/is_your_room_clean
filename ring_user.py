@@ -203,4 +203,5 @@ class RingImage(BaseTable):
     isError: bool
     error: str
 
-
+    def ui_safe(self):
+        return dict(self)

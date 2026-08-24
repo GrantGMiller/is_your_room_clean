@@ -58,12 +58,13 @@
 </div>
 
 <script>
+    const LOOP_TIME_MS = 10000
     function pollSummary(snapshotId, targetEl) {
         fetch('/image/' + snapshotId + '/summary')
             .then(function (resp) {
                 if (resp.status === 404) {
                     // Not ready yet -- try again in 5 seconds
-                    setTimeout(function () { pollSummary(snapshotId, targetEl); }, 5000);
+                    setTimeout(function () { pollSummary(snapshotId, targetEl); }, LOOP_TIME_MS);
                     return null;
                 }
                 if (!resp.ok) {

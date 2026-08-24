@@ -131,16 +131,14 @@ def image(image_id):
 
 @app.route('/image/<image_id>/summary')
 def image_summary(image_id):
-    img = app.db.FindOne(
+    img: RingImage = app.db.FindOne(
         RingImage,
         id=image_id,
         account_id=session.get('account_id', None),
     )
     if img and img.get('summary', None) is not None:
-        return {
-            'summary': img['summary'],
-            'cleanliness': img['cleanliness'],
-        }
+        return img.ui_safe()
+
     if img.get('isError', False):
         return 'Error generating summary', 500
 
