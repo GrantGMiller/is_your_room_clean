@@ -17,6 +17,20 @@ MODEL = 'gemini-3.7-flash'
 GEMINI_URL = (
     'https://generativelanguage.googleapis.com/v1beta/interactions'
 )
+RESPONSE_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "cleanliness": {
+            "type": "INTEGER",
+            "description": "0-100, where 100 is spotless",
+        },
+        "summary": {
+            "type": "STRING",
+            "description": "One short sentence describing the mess, if any",
+        },
+    },
+    "required": ["cleanliness", "summary"],
+}
 
 PROMPT = """You are evaluating a photo of a room for tidiness, for a parental
 chore-tracking app. Look at the floor, surfaces, and bed (if visible) for
@@ -57,6 +71,14 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
                 "mime_type": mime_type,
             },
         ],
+        "response_format": [
+            {
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": RESPONSE_SCHEMA,
+            }
+        ],
+
     }
 
     response = requests.post(
