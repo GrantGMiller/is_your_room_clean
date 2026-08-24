@@ -119,7 +119,8 @@ def image(image_id):
             func=score_cleanliness,
             kwargs={
                 'image_id': image_id,
-            }
+            },
+            errorCallback=send_slack_error
         )
 
     return send_file(
