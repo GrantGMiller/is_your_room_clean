@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 
 import requests
+from flask import flash
 from flask_dictabase import BaseTable
 
 import config
@@ -100,6 +101,7 @@ class RingUser(BaseTable):
     def make_authenticated_request(self, *args, method='GET', **kwargs):
         headers = kwargs.pop('headers', {})
         headers['Authorization'] = 'Bearer {}'.format(self.get_valid_access_token())
+
         return requests.request(method, *args, headers=headers, **kwargs)
 
     def get_devices(self, include='status,capabilities'):
@@ -124,7 +126,13 @@ class RingUser(BaseTable):
             'https://api.amazonvision.com/v1/devices',
             params={'include': include},
         )
-        resp.raise_for_status()
+
+        if not resp.ok:
+            self.app.logger.error(str(resp))
+            send_slack_message('error 131:', resp.status_code, resp.headers, resp.reason, str(resp.text))
+            flash(resp.reason, 'danger')
+            return []
+
         return resp.json().get('data', [])
 
     def get_snapshot(self, device_id: str, save_dir: Path = 'images'):

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>API Key - Is Your Room Clean</title>
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+</head>
+
+<body class="bg-light">
+{% include "flash_messages.html" %}
+<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">Is Your Room Clean</a>
+
+        <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/api-key">API Key</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/contact">Contact Us</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+
+                    <h1 class="h3 mb-3">API Key</h1>
+
+                    <p class="text-muted">
+                        Your API key allows applications to access your
+                        Is Your Room Clean account.
+                    </p>
+
+                    {% if new_api_key %}
+
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Save your API key now.</strong>
+                        This is the only time the complete API key will
+                        be displayed.
+                    </div>
+
+                    <label class="form-label fw-semibold">
+                        Your new API key
+                    </label>
+
+                    <div class="input-group mb-4">
+                        <input
+                                type="text"
+                                class="form-control font-monospace"
+                                value="{{ new_api_key }}"
+                                id="newApiKey"
+                                readonly
+                        >
+                        <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                onclick="copyApiKey()"
+                        >
+                            Copy
+                        </button>
+                    </div>
+
+                    <div id="copyMessage" class="text-success small mb-4"
+                         style="display: none;">
+                        API key copied to clipboard.
+                    </div>
+
+                    {% elif api_key %}
+
+                    <label class="form-label fw-semibold">
+                        Your API key
+                    </label>
+
+                    <div class="input-group mb-3">
+                        <input
+                                type="text"
+                                class="form-control font-monospace"
+                                value="{{ api_key[:8] }}••••••••••••"
+                                readonly
+                        >
+                    </div>
+
+                    <p class="text-muted small mb-4">
+                        Your API key is hidden for security.
+                        Generating a new key will invalidate your existing key.
+                    </p>
+
+                    {% else %}
+
+                    <div class="alert alert-secondary" role="alert">
+                        You don't currently have an API key.
+                    </div>
+
+                    {% endif %}
+
+
+                    <div class="d-flex gap-2">
+
+                        {% if api_key %}
+                        <form
+                                method="POST"
+                                action="/api-key/delete"
+                                onsubmit="return confirm('Are you sure you want to delete your API key?');"
+                        >
+                            <button
+                                    type="submit"
+                                    class="btn btn-outline-danger"
+                            >
+                                Delete API Key
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        <form
+                                method="POST"
+                                action="/api-key/generate"
+                                onsubmit="return confirm('Generating a new API key will invalidate your existing key. Continue?');"
+                        >
+                            <button
+                                    type="submit"
+                                    class="btn btn-primary"
+                            >
+                                {% if api_key %}
+                                Generate New API Key
+                                {% else %}
+                                Generate API Key
+                                {% endif %}
+                            </button>
+                        </form>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyApiKey() {
+        const input = document.getElementById('newApiKey');
+
+        navigator.clipboard.writeText(input.value)
+            .then(function () {
+                const message = document.getElementById('copyMessage');
+                message.style.display = 'block';
+
+                setTimeout(function () {
+                    message.style.display = 'none';
+                }, 3000);
+            })
+            .catch(function (err) {
+                console.error('Failed to copy API key:', err);
+            });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
