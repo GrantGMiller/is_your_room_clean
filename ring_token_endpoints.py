@@ -172,10 +172,13 @@ def setup(a: Flask):
     def magic_link(uid):
         app.logger.error('incoming magic link=' + uid)
         now_timestamp = time.time()
-        ring_user = app.db.FindOne(
+        ring_user: RingUser = app.db.FindOne(
             RingUser,
             login_url=f'{config.SERVER_HOST_URL}/magic_link/{uid}'
         )
+
+        app.logger.error('ring user=', ring_user.ui_safe())
+
         if not ring_user:
             app.logger.error('magic link user not found', uid)
             return 'User not found', 404
@@ -191,7 +194,6 @@ def setup(a: Flask):
             # route them to the dashboard to initiate a new magic link
             app.logger.error('no matching magic link found', uid)
             return redirect('/dashboard')
-
 
 
 # --- Helpers -----------------------------------------------------------
