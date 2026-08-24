@@ -147,7 +147,7 @@ class RingUser(BaseTable):
         # if an image was requested less than X seconds ago, just return the last image
         latest_images = list(self.app.db.FindAll(
             RingImage,
-            device_id=device_id,
+            # device_id=device_id,
             # _orderBy='timestamp_ms',
             # _limit=1,
             # _reverse=True,
