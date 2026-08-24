@@ -131,13 +131,16 @@ def image(image_id):
 
 @app.route('/image/<image_id>/summary')
 def image_summary(image_id):
-    image = app.db.FindOne(
+    img = app.db.FindOne(
         RingImage,
         id=image_id,
         account_id=session.get('account_id', None),
     )
-    if image and image.get('summary', None) is not None:
-        return image['summary']
+    if img and img.get('summary', None) is not None:
+        return {
+            'summary': img['summary'],
+            'cleanliness': img['cleanliness'],
+        }
 
     return 'summary not ready', 404
 
