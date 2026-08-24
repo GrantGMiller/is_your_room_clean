@@ -79,7 +79,8 @@ with app.app_context():
                 day=25
         ):
             ring_user = app.db.FindOne(RingUser, account_id='fake')
-            session['account_id'] = ring_user['account_id']
+            if ring_user:
+                session['account_id'] = ring_user['account_id']
         else:
             ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
 
