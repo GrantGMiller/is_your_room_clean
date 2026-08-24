@@ -180,6 +180,12 @@ def setup(a: Flask):
             login_url=login_url
         )
 
+        if not ring_user:
+            app.logger.error('no ring user found')
+            all_users = app.db.FindAll(RingUser)
+            app.logger.error([u.get('login_url', None) for u in all_users])
+            app.logger.error('login_url=', login_url)
+
         print('ring_user=', ring_user)
 
         if not ring_user:
@@ -188,16 +194,19 @@ def setup(a: Flask):
             flash('User Not Found', 'danger')
             return redirect('/dashboard')
 
-        elif ring_user['login_url_expires_at'] < now_timestamp:
+        elif ring_user['login_url_expires_at'] > now_timestamp:
             # success, log this user in
-            app.logger.error('magic link found but expired', uid)
+            app.logger.error('user found and magic link NOT expired', uid)
             session['account_id'] = ring_user['account_id']
             return redirect('/dashboard')
 
         else:
             # the timestamp may have been expired
             # route them to the dashboard to initiate a new magic link
-            app.logger.error('no matching magic link found', uid)
+            app.logger.error(
+                'user found but link probably expired',
+                ring_user.get('login_url_expires_at', None),
+                uid)
             return redirect('/dashboard')
 
 
