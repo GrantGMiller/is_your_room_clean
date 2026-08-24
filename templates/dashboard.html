@@ -75,6 +75,7 @@
             .then(function (data) {
                 if (data === null) return; // still waiting on the 404 retry
                 targetEl.textContent = data.summary;
+                $('#badge-{{ data.device_id}}').textContent = '' + data.cleanliness + '% Clean;
             })
             .catch(function (err) {
                 console.error('Failed to load summary for snapshot', snapshotId, err);
