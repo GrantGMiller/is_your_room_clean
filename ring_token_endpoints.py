@@ -170,20 +170,26 @@ def setup(a: Flask):
 
     @app.route('/magic_link/<uid>')
     def magic_link(uid):
+        app.logger.error('magic link=' + uid)
         now_timestamp = time.time()
         ring_user = app.db.FindOne(
             RingUser,
             login_url=f'{config.SERVER_HOST_URL}/magic_link/{uid}'
         )
         if not ring_user:
+            app.logger.error('magic link user not found', uid)
             return 'User not found', 404
+
         elif ring_user['login_url_expires_at'] < now_timestamp:
             # success, log this user in
+            app.logger.error('magic link found but expired', uid)
             session['account_id'] = ring_user['account_id']
             return redirect('/dashboard')
+
         else:
             # the timestamp may have been expired
             # route them to the dashboard to initiate a new magic link
+            app.logger.error('no matching magic link found', uid)
             return redirect('/dashboard')
 
 
