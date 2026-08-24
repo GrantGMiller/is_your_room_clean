@@ -11,7 +11,7 @@ from slack import send_slack_message
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
 AVA_BASE_URL = "https://api.amazonvision.com"
 
-IMAGE_REQUEST_TIMEOUT = 60 * 60  # (seconds) only request an image every X seconds
+IMAGE_REQUEST_TIMEOUT = 15 * 60  # (seconds) only request an image every X seconds
 
 
 class RingUser(BaseTable):
