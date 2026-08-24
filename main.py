@@ -140,7 +140,7 @@ def image_summary(image_id):
         return img.ui_safe()
 
     if img.get('isError', False):
-        return 'Error generating summary', 500
+        return jsonify(img), 500
 
     return 'summary not ready', 404
 
