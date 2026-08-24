@@ -166,7 +166,7 @@ def score_cleanliness(image_id):
             except Exception as e:
                 image['isError'] = True
                 image['error'] = str(e)
-                raise e
+                raise e # raise so that the error is sent via slack
 
 
 @app.route('/job/<job_id>')
