@@ -12,7 +12,9 @@ import requests
 
 import config
 
-MODEL = 'gemini-3.7-flash'
+# MODEL = 'gemini-3.7-flash'
+MODEL = 'gemini-3.1-flash-lite'
+# MODEL = 'gemini-2.5-flash-lite' # needs different GEMINI_URL
 
 GEMINI_URL = (
     'https://generativelanguage.googleapis.com/v1beta/interactions'
@@ -69,6 +71,7 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
                 "type": "image",
                 "data": encoded_image,
                 "mime_type": mime_type,
+                "resolution": "low", # hopefully cost less tokens
             },
         ],
         "response_format": [
