@@ -73,7 +73,7 @@ with app.app_context():
     def dashboard():
         # Ring calls this the "App Homepage"
 
-        if request.args.get('key', 'fake') and datetime.datetime.now() < datetime.datetime.now().replace(
+        if request.args.get('key', None) == 'fake' and datetime.datetime.now() < datetime.datetime.now().replace(
                 year=2026,
                 month=8,
                 day=25
