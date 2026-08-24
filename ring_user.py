@@ -148,9 +148,9 @@ class RingUser(BaseTable):
         latest_images = list(self.db.FindAll(
             RingImage,
             device_id=device_id,
-            _orderBy='timestamp_ms',
-            _limit=1,
-            _reverse=True,
+            # _orderBy='timestamp_ms',
+            # _limit=1,
+            # _reverse=True,
         ))
         self.app.logger.error('lastest images=' + str(latest_images))
         if latest_images and (latest_images[0].get('timestamp_ms', 0) or 0) > (time.time() * 1000) - (
