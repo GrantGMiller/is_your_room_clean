@@ -35,12 +35,12 @@
         <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="position-relative">
-                   {# <img
+                    <img
                             src="/get_snapshot/{{device['id'}}"
                             class="card-img-top"
                             id="snapshot-{{ device['id'] }}"
                             alt="{{ device['attributes']['name'] }} snapshot"
-                    />#}
+                    />
 
                     <span
                             class="badge position-absolute bottom-0 end-0 m-2 fs-6"
@@ -128,7 +128,7 @@
     }
 
     document.querySelectorAll(".summary-text").forEach(function (el) {
-      pollSummary(el.dataset.snapshotId, el);
+      //pollSummary(el.dataset.snapshotId, el);
     });
 </script>
 </body>
