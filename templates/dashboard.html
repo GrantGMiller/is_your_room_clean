@@ -14,24 +14,25 @@
 
     <div class="row g-4">
         {% set devices = ring_user.get_devices() %}
-        {% if devices | length < 1%}
+        {% if devices | length < 1 %}
         <span class="text">
             No devices found. <a
                href="ring://">Click here to make sure you have shared your devices with this app.</a>
         </span>
         <img class='img-fluid img-thumbnail w-50 align-items-center' src="/static/enable_cameras.png"/>
         {% endif %}
+
         {% for device in devices %}
-        {% set snapshot_id = ring_user.get_snapshot(device['id']) %}
         <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="position-relative">
                     <img
-                            src="image/{{snapshot_id}}"
+                            src="get_snapshot/{{device['id'}}"
                             class="card-img-top"
                             id="snapshot-{{ device['id'] }}"
                             alt="{{ device['attributes']['name'] }} snapshot"
                     >
+
                     <span
                             class="badge position-absolute bottom-0 end-0 m-2 fs-6"
                             id="badge-{{ device['id'] }}"
@@ -57,7 +58,7 @@
                 <!--                    </button>-->
                                 </div>
                 <p class="text-muted m-2 summary-text" id="summary-{{ device['id'] }}"
-                   data-snapshot-id="{{ snapshot_id }}">
+                   data-snapshot-id="snapshot_{{ device['id'] }}">
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     Analyzing room...
                 </p>
@@ -109,38 +110,8 @@
         pollSummary(el.dataset.snapshotId, el);
     });
 
-    document.querySelectorAll('.refresh-btn').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            var deviceId = btn.dataset.deviceId;
-            var img = document.getElementById('snapshot-' + deviceId);
-            var badge = document.getElementById('badge-' + deviceId);
-            var summaryEl = document.getElementById('summary-' + deviceId);
 
-            btn.disabled = true;
 
-            fetch('/refresh_snapshot/' + deviceId, { method: 'POST' })
-                .then(function (resp) { return resp.json(); })
-                .then(function (data) {
-                    img.src = '/image/' + data.snapshot_id + '?t=' + Date.now();
-                    badge.textContent = data.cleanliness + '% clean';
-                    badge.className = 'badge position-absolute bottom-0 end-0 m-2 fs-6 ' +
-                        (data.cleanliness >= 70 ? 'text-bg-success'
-                            : data.cleanliness >= 40 ? 'text-bg-warning'
-                            : 'text-bg-danger');
-
-                    summaryEl.dataset.snapshotId = data.snapshot_id;
-                    summaryEl.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyzing room...';
-                    pollSummary(data.snapshot_id, summaryEl);
-                })
-                .catch(function (err) {
-                    console.error('Failed to refresh snapshot', err);
-                })
-                .finally(function () {
-                    btn.disabled = false;
-                });
-        });
-    });
 </script>
 
 

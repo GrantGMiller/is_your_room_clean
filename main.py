@@ -76,6 +76,17 @@ def index():
     return redirect('/dashboard')
 
 
+@app.route('/get_snapshot/<device_id>')
+def get_snapshot(device_id):
+    ring_user: RingUser = get_current_user()
+    if ring_user:
+        img_id = ring_user.get_snapshot(device_id)
+        img: RingImage = app.db.FindOne(RingImage, id=img_id)
+        if img:
+            return send_file(img['image_path'])
+    return 'image not found', 404
+
+
 @app.route('/dashboard')
 def dashboard():
     # Ring calls this the "App Homepage"
