@@ -120,6 +120,7 @@ def dashboard():
         ring_user=ring_user
     )
 
+
 @app.route('/send_login_email', methods=['GET', 'POST'])
 def send_login_email():
     email = request.form.get('email', None)
@@ -303,6 +304,12 @@ def not_found_error(error):
 @app.route('/test')
 def test():
     return 'The time is ' + time.asctime()
+
+
+@app.route('/get_grant')
+def get_grant():
+    ring_user = get_current_user()
+    return jsonify(ring_user)
 
 
 def send_slack_error(job):
