@@ -115,9 +115,8 @@ def dashboard():
         # ask for the users email, send them a link
         return render_template('email_input.html')
 
-    return jsonify(ring_user)
     return render_template(
-        'dashboard.html',
+        'test.html',
         ring_user=ring_user
     )
 
