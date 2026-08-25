@@ -140,6 +140,7 @@ def setup(a: Flask):
         if post_response.status_code != 200:
             return jsonify({"error": "account link failed", "detail": post_response.text}), 502
 
+        send_slack_message('New User:', ring_user['email'])
         # Step 2: mark integration fully configured/completed
         patch_response = requests.patch(
             f"{AVA_BASE_URL}/v1/accounts/me/app-integrations",

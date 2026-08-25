@@ -90,12 +90,12 @@ def dashboard():
         ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
 
     if not ring_user:
-        send_slack_message(
-            'form=', request.form,
-            ', args=', request.args,
-            ', headers=', request.headers
-
-        )
+        # send_slack_message(
+        #     'form=', request.form,
+        #     ', args=', request.args,
+        #     ', headers=', request.headers
+        #
+        # )
         # ask for the users email, send them a link
         return render_template('email_input.html')
 
