@@ -119,7 +119,6 @@ def dashboard():
         ring_user=ring_user
     )
 
-@flask_login.login_required
 @app.route('/send_login_email', methods=['GET', 'POST'])
 def send_login_email():
     email = request.form.get('email', None)
