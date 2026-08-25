@@ -1,118 +1,132 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Is Your Room Clean</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-{% include "flash_messages.html" %}
-{% include "navbar.html" %}
-<div class="container py-5">
-    <h1 class="h3 mb-4">Room Cleanliness Dashboard</h1>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
+    <div class="container py-5">
+      <h1 class="h3 mb-4">Room Cleanliness Dashboard</h1>
 
-    <div class="row g-4">
-        {% set devices = ring_user.get_devices() %}
-        {% if devices | length < 1 %}
+      <div class="row g-4">
+        {% set devices = ring_user.get_devices() %} {% if devices | length < 1
+        %}
         <span class="text">
-            No devices found. <a
-                href="ring://">Click here to make sure you have shared your devices with this app.</a>
+          No devices found.
+          <a href="ring://"
+            >Click here to make sure you have shared your devices with this
+            app.</a
+          >
         </span>
-        <img class='img-fluid img-thumbnail w-50 align-items-center' src="/static/enable_cameras.png"/>
-        {% endif %}
-
-        {% for device in devices %}
+        <img
+          class="img-fluid img-thumbnail w-50 align-items-center"
+          src="/static/enable_cameras.png"
+        />
+        {% endif %} {% for device in devices %}
         <div class="col-12 col-sm-6 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="position-relative">
-                    <img
-                            src="get_snapshot/{{device['id'}}"
-                            class="card-img-top"
-                            id="snapshot-{{ device['id'] }}"
-                            alt="{{ device['attributes']['name'] }} snapshot"
-                    >
+          <div class="card shadow-sm h-100">
+            <div class="position-relative">
+              <img
+                src="get_snapshot/{{device['id'}}"
+                class="card-img-top"
+                id="snapshot-{{ device['id'] }}"
+                alt="{{ device['attributes']['name'] }} snapshot"
+              />
 
-                    <span
-                            class="badge position-absolute bottom-0 end-0 m-2 fs-6"
-                            id="badge-{{ device['id'] }}"
-                    >
-
-                            </span>
-                </div>
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <h2 class="h6 mb-0">{{ device['attributes']['name'] }}</h2>
-                    <!--                    <button-->
-                    <!--                            type="button"-->
-                    <!--                            class="btn btn-sm btn-outline-primary refresh-btn"-->
-                    <!--                            data-device-id="{{ device['id'] }}"-->
-                    <!--                            disabled="true"-->
-                    <!--                    >-->
-                    <!--                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"-->
-                    <!--                             viewBox="0 0 16 16">-->
-                    <!--                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>-->
-                    <!--                            <path fill-rule="evenodd"-->
-                    <!--                                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>-->
-                    <!--                        </svg>-->
-                    <!--                        Refresh-->
-                    <!--                    </button>-->
-                </div>
-                <p class="text-muted m-2 summary-text" id="summary-{{ device['id'] }}"
-                   data-snapshot-id="snapshot-{{ device['id'] }}">
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Analyzing room...
-                </p>
+              <span
+                class="badge position-absolute bottom-0 end-0 m-2 fs-6"
+                id="badge-{{ device['id'] }}"
+              >
+              </span>
             </div>
+            <div
+              class="card-body d-flex justify-content-between align-items-center"
+            >
+              <h2 class="h6 mb-0">{{ device['attributes']['name'] }}</h2>
+              <!--                    <button-->
+              <!--                            type="button"-->
+              <!--                            class="btn btn-sm btn-outline-primary refresh-btn"-->
+              <!--                            data-device-id="{{ device['id'] }}"-->
+              <!--                            disabled="true"-->
+              <!--                    >-->
+              <!--                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"-->
+              <!--                             viewBox="0 0 16 16">-->
+              <!--                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>-->
+              <!--                            <path fill-rule="evenodd"-->
+              <!--                                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>-->
+              <!--                        </svg>-->
+              <!--                        Refresh-->
+              <!--                    </button>-->
+            </div>
+            <p
+              class="text-muted m-2 summary-text"
+              id="summary-{{ device['id'] }}"
+              data-snapshot-id="snapshot-{{ device['id'] }}"
+            >
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Analyzing room...
+            </p>
+          </div>
         </div>
         {% endfor %}
+      </div>
+      <a class="btn btn-primary m-1" href="ring://"> Open Ring App </a>
     </div>
-    <a class='btn btn-primary m-1' href="ring://">
-        Open Ring App
-    </a>
-</div>
 
-<script>
-    const LOOP_TIME_MS = 10000
-    function pollSummary(snapshotId, targetEl) {
-        fetch('/image/' + snapshotId + '/summary')
-            .then(function (resp) {
-                if (resp.status === 404) {
-                    // Not ready yet -- try again in 5 seconds
-                    setTimeout(function () { pollSummary(snapshotId, targetEl); }, LOOP_TIME_MS);
-                    return null;
-                }
-                if (!resp.ok) {
-                    throw new Error('Error ' + resp.status);
-                }
-                return resp.json();
-            })
-            .then(function (data) {
-                if (data === null) return; // still waiting on the 404 retry
-                targetEl.textContent = data.summary;
+    <script>
+      const LOOP_TIME_MS = 10000;
+      function pollSummary(snapshotId, targetEl) {
+        fetch("/image/" + snapshotId + "/summary")
+          .then(function (resp) {
+            if (resp.status === 404) {
+              // Not ready yet -- try again in 5 seconds
+              setTimeout(function () {
+                pollSummary(snapshotId, targetEl);
+              }, LOOP_TIME_MS);
+              return null;
+            }
+            if (!resp.ok) {
+              throw new Error("Error " + resp.status);
+            }
+            return resp.json();
+          })
+          .then(function (data) {
+            if (data === null) return; // still waiting on the 404 retry
+            targetEl.textContent = data.summary;
 
-                const cEl = document.getElementById('badge-' + data.device_id)
-                cEl.textContent = `${data.cleanliness}% Clean`
-                if (data.cleanliness < 40){
-                    cEl.classList.add('text-bg-danger')
-                } else if (data.cleanliness < 70){
-                    cEl.classList.add('text-bg-warning')
-                } else {
-                    cEl.classList.add('text-bg-success')
-                }
-            })
-            .catch(function (err) {
-                console.error('Failed to load summary for snapshot', snapshotId, err);
-                targetEl.textContent = 'Unable to load summary.';
-            });
-    }
+            const cEl = document.getElementById("badge-" + data.device_id);
+            cEl.textContent = `${data.cleanliness}% Clean`;
+            if (data.cleanliness < 40) {
+              cEl.classList.add("text-bg-danger");
+            } else if (data.cleanliness < 70) {
+              cEl.classList.add("text-bg-warning");
+            } else {
+              cEl.classList.add("text-bg-success");
+            }
+          })
+          .catch(function (err) {
+            console.error(
+              "Failed to load summary for snapshot",
+              snapshotId,
+              err,
+            );
+            targetEl.textContent = "Unable to load summary.";
+          });
+      }
 
-    document.querySelectorAll('.summary-text').forEach(function (el) {
+      document.querySelectorAll(".summary-text").forEach(function (el) {
         pollSummary(el.dataset.snapshotId, el);
-    });
-
-
-</script>
-
-
-</body>
+      });
+    </script>
+  </body>
 </html>
