@@ -44,7 +44,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
             'refresh_token': self['refresh_token'][:10] + '*' * len(self['refresh_token']),
             'expires_at': self['expires_at'],
             'status': self['status'],
-
+            'api_key': '*' * len(self['api_key']),
         }
 
     def get_last_login_url(self):
@@ -249,8 +249,6 @@ def setup(a: Flask):
         return app.db.FindOne(RingUser, id=int(user_id))
 
 
-
-
 def get_current_user():
     with app.app_context():
         # return user object if logged in, else return None
@@ -260,6 +258,7 @@ def get_current_user():
             return None
 
         return user
+
 
 def score_cleanliness(image_id):
     print('score_cleanliness id=', image_id)

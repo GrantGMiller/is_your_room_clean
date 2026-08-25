@@ -1,6 +1,8 @@
 import datetime
 import json
 import os
+import random
+import string
 import sys
 import time
 
@@ -172,8 +174,8 @@ def job(job_id):
     return jsonify(ret)
 
 
-@app.route('/api-key')
-def apikey():
+@app.route('/api')
+def api():
     ring_user = app.db.FindOne(
         RingUser,
         account_id=flask_login.current_user.get('account_id', None)
@@ -182,11 +184,28 @@ def apikey():
         flash('unknown user', 'warning')
         redirect('/dashboard')
 
+    current_api_key = ring_user.get('api_key', '') or ''
+    NUM_MASKED_CHARS = 5
+    masked_key = current_api_key[:NUM_MASKED_CHARS] + '*' * (len(current_api_key) - NUM_MASKED_CHARS)
     return render_template(
         'api-key.html',
-        api_key=user.api_key,
-        new_api_key=new_api_key  # pass if this is a new key
+        current_api_key_masked=masked_key,
     )
+
+
+@app.route('/get_new_api_key')
+def get_new_api_key():
+    ring_user = app.db.FindOne(
+        RingUser,
+        account_id=flask_login.current_user.get('account_id', None)
+    )
+    if not ring_user:
+        flash('unknown user', 'warning')
+        redirect('/dashboard')
+
+    new_api_key = ''.join(random.choice(string.hexdigits) for _ in range(256))
+    ring_user['api_key'] = new_api_key
+    return new_api_key
 
 
 @app.route('/contact', methods=['GET', 'POST'])
