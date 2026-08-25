@@ -92,6 +92,7 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
         },
         json=payload,
     )
+    print('evaluate_cleanliness response=', response)
 
     response.raise_for_status()
 

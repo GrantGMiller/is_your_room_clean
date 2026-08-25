@@ -9,12 +9,14 @@ from flask import flash, Flask
 from flask_dictabase import BaseTable, Dictabase
 
 import config
+import slack
+from ai_cleanliness import evaluate_cleanliness
 from slack import send_slack_message
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
 AVA_BASE_URL = "https://api.amazonvision.com"
 
-IMAGE_REQUEST_TIMEOUT = 15 * 60  # (seconds) only request an image every X seconds
+IMAGE_REQUEST_TIMEOUT = 1 * 60  # (seconds) only request an image every X seconds
 
 
 class RingUser(flask_login.UserMixin, BaseTable):
@@ -208,6 +210,14 @@ class RingUser(flask_login.UserMixin, BaseTable):
             timestamp_epoch_ms=time.time() * 1000,
         )
 
+        self.app.jobs.AddJob(
+            func=score_cleanliness,
+            kwargs={
+                'image_id': ring_image['id'],
+            },
+            errorCallback=slack.send_slack_message
+        )
+
         return ring_image['id']
 
 
@@ -250,3 +260,30 @@ def get_current_user():
             return None
 
         return user
+
+def score_cleanliness(image_id):
+    print('score_cleanliness id=', image_id)
+    with app.app_context():
+        app.db = cast(Dictabase, app.db)
+        image = app.db.FindOne(
+            RingImage,
+            id=image_id,
+        )
+        if image and image.get('cleanliness', None) is None and not image.get('scoring_in_progress', False):
+            image['scoring_in_progress'] = True
+            with open(
+                    image['image_path'],
+                    'rb'
+            ) as f:
+                image_bytes = f.read()
+
+            try:
+                res = evaluate_cleanliness(image_bytes=image_bytes)
+                print('score_cleanliness id=', image_id, ', res=', res)
+                image['cleanliness'] = res['cleanliness']
+                image['summary'] = res['summary']
+            except Exception as e:
+                print('score_cleanliness error=', e)
+                image['isError'] = True
+                image['error'] = str(e)
+                raise e  # raise so that the error is sent via slack

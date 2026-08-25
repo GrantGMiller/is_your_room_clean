@@ -11,6 +11,7 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
 <body class="bg-light">
+{% include "js_css.html" %}
 {% include "flash_messages.html" %}
 {% include "navbar.html" %}
 <div class="container py-5">
@@ -35,15 +36,13 @@
         <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="position-relative">
-                    "{{device['id'}}"
-                    {#<img
-<!--                            src="/get_snapshot/{{device['id'}}"-->
-<!--                            src="/image/42"-->
+                    <img
+                            src="/get_snapshot/{{device['id']}}"
                             class="card-img-top"
                             id="snapshot-{{ device['id'] }}"
                             alt="{{ device['attributes']['name'] }} snapshot"
-                            onload="pollSummary({{device['id']}}, document.getElementById('snapshot-{{ device['id'] }}'))"
-                    />#}
+                            onload="fetchSummary('{{ device['id'] }}');"
+                    />
 
                     <span
                             class="badge position-absolute bottom-0 end-0 m-2 fs-6"
@@ -91,45 +90,52 @@
 
 <script>
     const LOOP_TIME_MS = 10000;
-    function pollSummary(device_id, targetEl) {
-      fetch("/image/" + device_id + "/summary")
-        .then(function (resp) {
-          if (resp.status === 404) {
-            // Not ready yet -- try again in 5 seconds
-            setTimeout(function () {
-              pollSummary(device_id, targetEl);
-            }, LOOP_TIME_MS);
-            return null;
-          }
-          if (!resp.ok) {
-            throw new Error("Error " + resp.status);
-          }
-          return resp.json();
-        })
-        .then(function (data) {
-          if (data === null) return; // still waiting on the 404 retry
-          targetEl.textContent = data.summary;
 
-          const cEl = document.getElementById("badge-" + data.device_id);
-          cEl.textContent = `${data.cleanliness}% Clean`;
-          if (data.cleanliness < 40) {
-            cEl.classList.add("text-bg-danger");
-          } else if (data.cleanliness < 70) {
-            cEl.classList.add("text-bg-warning");
-          } else {
-            cEl.classList.add("text-bg-success");
-          }
-        })
-        .catch(function (err) {
-          console.error(
-            "Failed to load summary for snapshot",
-            device_id,
-            err,
-          );
-          targetEl.textContent = "Unable to load summary.";
-        });
+    function fetchSummary(deviceId) {
+        const summaryEl = document.getElementById("summary-" + deviceId);
+        const badgeEl = document.getElementById("badge-" + deviceId);
+
+        fetch("/image/" + deviceId)
+            .then(async function (resp) {
+                if (!resp.ok) {
+                    throw new Error("Error " + resp.status);
+                }
+                const data = await resp.json()
+                console.info('data=', data)
+                if (data.summary == null){
+                    throw new Error('Error missing summary')
+                }
+                return data
+            })
+            .then(function (data) {
+                summaryEl.textContent = data.summary;
+
+                badgeEl.textContent = `${data.cleanliness}% Clean`;
+
+                if (data.cleanliness < 40) {
+                    badgeEl.classList.add("text-bg-danger");
+                } else if (data.cleanliness < 70) {
+                    badgeEl.classList.add("text-bg-warning");
+                } else {
+                    badgeEl.classList.add("text-bg-success");
+                }
+            })
+            .catch(function (err) {
+                console.error(
+                    "Failed to load summary for device",
+                    deviceId,
+                    err
+                );
+
+                summaryEl.textContent = "Analyzing room...";
+
+                // Try again in 10 seconds
+
+                setTimeout(function () {
+                    fetchSummary(deviceId);
+                }, LOOP_TIME_MS);
+            });
     }
-
 
 </script>
 </body>
