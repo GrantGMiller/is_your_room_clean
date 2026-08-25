@@ -40,6 +40,7 @@
                             class="card-img-top"
                             id="snapshot-{{ device['id'] }}"
                             alt="{{ device['attributes']['name'] }} snapshot"
+                            onload="pollSummary({{device['id']}}, document.getElementById('snapshot-{{ device['id'] }}')"
                     />
 
                     <span
@@ -88,13 +89,13 @@
 
 <script>
     const LOOP_TIME_MS = 10000;
-    function pollSummary(snapshotId, targetEl) {
-      fetch("/image/" + snapshotId + "/summary")
+    function pollSummary(device_id, targetEl) {
+      fetch("/image/" + device_id + "/summary")
         .then(function (resp) {
           if (resp.status === 404) {
             // Not ready yet -- try again in 5 seconds
             setTimeout(function () {
-              pollSummary(snapshotId, targetEl);
+              pollSummary(device_id, targetEl);
             }, LOOP_TIME_MS);
             return null;
           }
@@ -120,16 +121,14 @@
         .catch(function (err) {
           console.error(
             "Failed to load summary for snapshot",
-            snapshotId,
+            device_id,
             err,
           );
           targetEl.textContent = "Unable to load summary.";
         });
     }
 
-    document.querySelectorAll(".summary-text").forEach(function (el) {
-      //pollSummary(el.dataset.snapshotId, el);
-    });
+
 </script>
 </body>
 </html>
