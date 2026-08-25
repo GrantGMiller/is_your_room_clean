@@ -84,6 +84,7 @@ def get_snapshot(device_id):
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
         if img:
             return send_file(img['image_path'])
+
     return 'image not found', 404
 
 

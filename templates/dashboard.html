@@ -36,7 +36,8 @@
             <div class="card shadow-sm h-100">
                 <div class="position-relative">
                     <img
-                            src="/get_snapshot/{{device['id'}}"
+                            {#src="/get_snapshot/{{device['id'}}"#}
+                            src="/image/42"
                             class="card-img-top"
                             id="snapshot-{{ device['id'] }}"
                             alt="{{ device['attributes']['name'] }} snapshot"
