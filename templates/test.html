@@ -6,6 +6,8 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
 <body>
-{{ ring_user }}
+{% for key, value in ring_user.items() }}
+'{{key}}': '{{value}}'
+{% endfor %}
 </body>
 </html>
