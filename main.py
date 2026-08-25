@@ -115,7 +115,7 @@ def dashboard():
         return render_template('email_input.html')
 
     return render_template(
-        'dashboard.html',
+        'test.html',
         ring_user=ring_user
     )
 
