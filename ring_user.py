@@ -124,6 +124,7 @@ class RingUser(BaseTable):
         `include` controls which related resources get embedded per item
         (comma-separated), e.g. 'status,capabilities'.
         """
+
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices',
             params={'include': include},

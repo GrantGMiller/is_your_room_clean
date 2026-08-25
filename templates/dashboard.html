@@ -13,7 +13,15 @@
     <h1 class="h3 mb-4">Room Cleanliness Dashboard</h1>
 
     <div class="row g-4">
-        {% for device in ring_user.get_devices() %}
+        {% set devices = ring_user.get_devices() %}
+        {% if devices | length < 1%}
+        <span class="text">
+            No devices found. <a
+               href="ring://">Click here to make sure you have shared your devices with this app.</a>
+        </span>
+        <img class='img-fluid img-thumbnail w-50 align-items-center' src="/static/enable_cameras.png"/>
+        {% endif %}
+        {% for device in devices %}
         {% set snapshot_id = ring_user.get_snapshot(device['id']) %}
         <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">

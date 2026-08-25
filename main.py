@@ -275,6 +275,13 @@ def terms():
     return render_template('terms.html')
 
 
+@app.errorhandler(Exception)
+def not_found_error(error):
+    flash('An error has occurred. This has been sent to our support staff.', 'danger')
+    send_slack_error(error)
+    return redirect('/dashboard')
+
+
 @app.route('/test')
 def test():
     return 'The time is ' + time.asctime()
