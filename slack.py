@@ -38,16 +38,7 @@ def do_send_slack_notification(msg, **kwargs):
     if sys.platform.startswith('win') or sys.platform.startswith('darwin'):
         msg = '***DEV***\r\n' + msg
     else:  # linux
-        if 'beta' in config.SERVER_HOST_URL:
-            if datetime.datetime.now().date() > datetime.date(
-                    year=2026,
-                    month=8,
-                    day=24 # today
-            ):  # dont send me beta notifications perpetually
-                return
-            msg = f'***  {config.SERVER_HOST_URL}  *** \r\n' + msg
-        else:
-            msg = f'***  {config.SERVER_HOST_URL}  *** \r\n' + msg
+        msg = f'***  {config.SERVER_HOST_URL}  *** \r\n' + msg
 
     requests.post(
         url=config.SLACK_NOTIFICATION_URL,
