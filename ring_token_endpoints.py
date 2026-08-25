@@ -201,6 +201,7 @@ def setup(a: Flask):
             # success, log this user in
             send_slack_message('user found and magic link NOT expired', uid)
             flask_login.login_user(ring_user)
+            ring_user['login_url_expires_at'] = now_timestamp  # the link is now expired so they cant use it twice
             return redirect('/dashboard')
 
         else:
