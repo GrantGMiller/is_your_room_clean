@@ -102,7 +102,7 @@ def dashboard():
     else:
         ring_user = get_current_user()
 
-    app.logger.info('111 ring_user=' + str(ring_user))
+    app.logger.error('111 ring_user=' + str(ring_user))
 
     if not ring_user:
         # send_slack_message(
