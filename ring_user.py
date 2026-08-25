@@ -239,6 +239,8 @@ def setup(a: Flask):
         return app.db.FindOne(RingUser, id=int(user_id))
 
 
+
+
 def get_current_user():
     with app.app_context():
         # return user object if logged in, else return None
