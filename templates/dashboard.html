@@ -35,14 +35,15 @@
         <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">
                 <div class="position-relative">
-                    <img
+                    "/get_snapshot/{{device['id'}}"
+                    {#<img
 <!--                            src="/get_snapshot/{{device['id'}}"-->
 <!--                            src="/image/42"-->
                             class="card-img-top"
                             id="snapshot-{{ device['id'] }}"
                             alt="{{ device['attributes']['name'] }} snapshot"
                             onload="pollSummary({{device['id']}}, document.getElementById('snapshot-{{ device['id'] }}'))"
-                    />
+                    />#}
 
                     <span
                             class="badge position-absolute bottom-0 end-0 m-2 fs-6"
