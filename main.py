@@ -4,7 +4,8 @@ import os
 import sys
 import time
 
-from flask import render_template, session, Flask, request, redirect, send_file, jsonify, flash
+import flask_login
+from flask import render_template, Flask, request, redirect, send_file, jsonify, flash
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
@@ -13,7 +14,7 @@ import config
 import ring_token_endpoints
 import ring_webhook_helper
 from ai_cleanliness import evaluate_cleanliness
-from ring_user import RingUser, RingImage
+from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user
 from slack import send_slack_message, setup as slack_setup
 
 if not os.path.exists('images'):
@@ -32,6 +33,7 @@ app.jobs = JobScheduler(
 ring_token_endpoints.setup(app)
 ring_webhook_helper.setup(app)
 slack_setup(app)
+ring_user_setup(app)
 
 with app.app_context():
     if sys.platform == 'darwin' and datetime.datetime.now() < datetime.datetime.now().replace(
@@ -85,9 +87,11 @@ def dashboard():
     ):
         ring_user = app.db.FindOne(RingUser, account_id='fake')
         if ring_user:
-            session['account_id'] = ring_user['account_id']
+            flask_login.login_user(ring_user)
     else:
-        ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
+        ring_user = get_current_user()
+
+    print('111 ring_user=', ring_user)
 
     if not ring_user:
         # send_slack_message(
@@ -147,7 +151,7 @@ def image(image_id):
     image = app.db.FindOne(
         RingImage,
         id=image_id,
-        account_id=session.get('account_id', None),
+        account_id=flask_login.current_user.get('account_id', None)
     )
     if not image:
         return 'image not found', 404
@@ -172,7 +176,7 @@ def image_summary(image_id):
     img: RingImage = app.db.FindOne(
         RingImage,
         id=image_id,
-        account_id=session.get('account_id', None),
+        account_id=flask_login.current_user.get('account_id', None)
     )
     if img and img.get('summary', None) is not None:
         return img.ui_safe()
@@ -226,7 +230,10 @@ def job(job_id):
 
 @app.route('/api-key')
 def apikey():
-    ring_user = app.db.FindOne(RingUser, account_id=session.get('account_id', None))
+    ring_user = app.db.FindOne(
+        RingUser,
+        account_id=flask_login.current_user.get('account_id', None)
+    )
     if not ring_user:
         flash('unknown user', 'warning')
         redirect('/dashboard')

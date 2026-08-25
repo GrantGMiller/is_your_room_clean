@@ -1,11 +1,12 @@
 import time
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
+import flask_login
 import requests
-from flask import flash
-from flask_dictabase import BaseTable
+from flask import flash, Flask
+from flask_dictabase import BaseTable, Dictabase
 
 import config
 from slack import send_slack_message
@@ -16,7 +17,7 @@ AVA_BASE_URL = "https://api.amazonvision.com"
 IMAGE_REQUEST_TIMEOUT = 15 * 60  # (seconds) only request an image every X seconds
 
 
-class RingUser(BaseTable):
+class RingUser(flask_login.UserMixin, BaseTable):
     account_id: str
     access_token: str
     refresh_token: str
@@ -27,6 +28,12 @@ class RingUser(BaseTable):
     login_url_expires_at: int  # epoch seconds
     last_image_timestamp: dict  # keep track of the last image requested, only request a new image every IMAGE_REQUEST_TIMEOUT seconds
     api_key: Optional[str]
+
+    def get_id(self, *a, **k):
+        return self['id']
+
+    def __str__(self):
+        return BaseTable.__str__(self)
 
     def ui_safe(self):
         return {
@@ -217,3 +224,27 @@ class RingImage(BaseTable):
 
     def ui_safe(self):
         return dict(self)
+
+
+def setup(a: Flask):
+    global app
+    app = a
+    app.db = cast(Dictabase, app.db)
+
+    login_manager = flask_login.LoginManager()
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def user_loader(user_id):
+        return app.db.FindOne(RingUser, id=int(user_id))
+
+
+def get_current_user():
+    with app.app_context():
+        # return user object if logged in, else return None
+
+        user = flask_login.current_user
+        if user and user.is_anonymous:
+            return None
+
+        return user

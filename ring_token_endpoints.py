@@ -26,8 +26,9 @@ import time
 from typing import cast
 
 import flask_dictabase
+import flask_login
 import requests
-from flask import Flask, jsonify, redirect, request, session, flash
+from flask import Flask, jsonify, redirect, request, flash
 
 import config
 from ring_user import RingUser
@@ -151,8 +152,8 @@ def setup(a: Flask):
             json={"status": "completed"},
         )
 
-        # save the user account_id to the session cookie so that the dashboard url knows which user is viewing
-        session['account_id'] = ring_user['account_id']
+        # save the user account_id to the flask_login cookie so that the dashboard url knows which user is viewing
+        flask_login.login_user(ring_user)
 
         if patch_response.status_code != 200:
             return jsonify({"error": "failed to complete integration", "detail": patch_response.text}), 502
@@ -199,7 +200,7 @@ def setup(a: Flask):
         elif ring_user['login_url_expires_at'] > now_timestamp:
             # success, log this user in
             send_slack_message('user found and magic link NOT expired', uid)
-            session['account_id'] = ring_user['account_id']
+            flask_login.login_user(ring_user)
             return redirect('/dashboard')
 
         else:
