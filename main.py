@@ -17,6 +17,7 @@ import ring_token_endpoints
 import ring_webhook_helper
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user
 from slack import send_slack_message, setup as slack_setup
+import api
 
 if not os.path.exists('images'):
     # this will hold the ring camera screenshots
@@ -35,7 +36,7 @@ ring_token_endpoints.setup(app)
 ring_webhook_helper.setup(app)
 slack_setup(app)
 ring_user_setup(app)
-
+api.setup(app)
 
 @app.route('/')
 def index():
