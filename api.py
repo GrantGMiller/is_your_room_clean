@@ -8,12 +8,18 @@ from flask_dictabase import Dictabase
 
 from ring_user import RingUser, RingImage, get_current_user
 
+app = None
+
 
 def setup(a):
     global app
     app = a
     app.db = cast(Dictabase, app.db)
+    setup_api_endpoints(app)
+    setup_ui_endpoints(app)
 
+
+def setup_api_endpoints(app):
     @app.route('/api/get_devices', methods=['GET'])
     def api_get_devices():
         ring_user = get_user_from_api_request()
@@ -33,7 +39,8 @@ def setup(a):
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
         return jsonify(img)
 
-    #
+
+def setup_ui_endpoints(app):
     @app.route('/api')
     def api():
         ring_user: RingUser = get_current_user()
@@ -74,7 +81,7 @@ def setup(a):
 
 def get_user_from_api_request():
     if not request.headers.get('X-API-KEY', None):
-        # if the key is empty, returnnone
+        # if the key is empty, return none
         return None
 
     ring_user: RingUser = app.db.FindOne(
