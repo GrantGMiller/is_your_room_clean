@@ -80,6 +80,7 @@ def setup_ui_endpoints(app):
 
 
 def get_user_from_api_request():
+    app.db = cast(Dictabase, app.db)
     if not request.headers.get('X-API-KEY', None):
         # if the key is empty, return none
         return None
