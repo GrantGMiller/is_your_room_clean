@@ -50,14 +50,16 @@ def setup(a: Flask):
     app = a
     app.db = cast(flask_dictabase.Dictabase, app.db)
 
-    @app.route('/token_exchange', methods=['POST'])
+    @app.route("/token_exchange", methods=["POST"])
     def token_exchange():
         """
         Ring Backend POSTs an authorization code here after a user confirms
         the integration in the Ring AppStore. The code is single-use and
         expires in 60 seconds for one-way linking, so exchange it immediately.
         """
-        authorization_code = request.form.get('code') or (request.json or {}).get('code')
+        authorization_code = request.form.get("code") or (request.json or {}).get(
+            "code"
+        )
         if not authorization_code:
             return jsonify({"error": "missing 'code'"}), 400
 
@@ -72,7 +74,12 @@ def setup(a: Flask):
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         if token_response.status_code != 200:
-            return jsonify({"error": "token exchange failed", "detail": token_response.text}), 502
+            return (
+                jsonify(
+                    {"error": "token exchange failed", "detail": token_response.text}
+                ),
+                502,
+            )
 
         tokens = token_response.json()
 
@@ -83,7 +90,15 @@ def setup(a: Flask):
             headers={"Authorization": f"Bearer {tokens['access_token']}"},
         )
         if profile_response.status_code != 200:
-            return jsonify({"error": "failed to fetch user profile", "detail": profile_response.text}), 502
+            return (
+                jsonify(
+                    {
+                        "error": "failed to fetch user profile",
+                        "detail": profile_response.text,
+                    }
+                ),
+                502,
+            )
 
         attrs = profile_response.json()["data"]["attributes"]
         account_id = profile_response.json()["data"]["id"]
@@ -96,9 +111,9 @@ def setup(a: Flask):
             expires_at=time.time() + tokens["expires_in"],
         )
 
-        return '', 200
+        return "", 200
 
-    @app.route('/account_link')
+    @app.route("/account_link")
     def account_link():
         """
         Ring redirects the user's browser here with ?nonce=...&time=...
@@ -106,8 +121,8 @@ def setup(a: Flask):
         the nonce match itself is sufficient proof of identity, so we
         complete the link immediately -- no sign-in form, no user input.
         """
-        nonce = request.args.get('nonce')
-        time_param = request.args.get('time')
+        nonce = request.args.get("nonce")
+        time_param = request.args.get("time")
         if not nonce or not time_param:
             return "Missing nonce or time parameter", 400
 
@@ -134,14 +149,17 @@ def setup(a: Flask):
                 "Content-Type": "application/json",
             },
             json={
-                "account_identifier": mask_email(ring_user['email']),
+                "account_identifier": mask_email(ring_user["email"]),
                 "nonce": nonce,
             },
         )
         if post_response.status_code != 200:
-            return jsonify({"error": "account link failed", "detail": post_response.text}), 502
+            return (
+                jsonify({"error": "account link failed", "detail": post_response.text}),
+                502,
+            )
 
-        send_slack_message('New User:', ring_user['email'])
+        send_slack_message("New User:", ring_user["email"])
         # Step 2: mark integration fully configured/completed
         patch_response = requests.patch(
             f"{AVA_BASE_URL}/v1/accounts/me/app-integrations",
@@ -153,94 +171,106 @@ def setup(a: Flask):
         )
 
         # save the user account_id to the flask_login cookie so that the dashboard url knows which user is viewing
-        flask_login.login_user(ring_user)
+        flask_login.login_user(ring_user, remember=True)
 
         if patch_response.status_code != 200:
-            return jsonify({"error": "failed to complete integration", "detail": patch_response.text}), 502
+            return (
+                jsonify(
+                    {
+                        "error": "failed to complete integration",
+                        "detail": patch_response.text,
+                    }
+                ),
+                502,
+            )
 
         mark_ring_user_claimed(ring_user)
 
-        return redirect('/default_redirect')
+        return redirect("/default_redirect")
 
-    @app.route('/default_redirect')
+    @app.route("/default_redirect")
     def default_redirect():
         """
         Single entry point for post-linking / cross-platform routing.
         Route the user wherever makes sense once account linking is done
         (e.g. your app's dashboard, or a mobile deep link if on mobile web).
         """
-        return redirect('/dashboard')
+        return redirect("/dashboard")
 
-    @app.route('/magic_link/<uid>')
+    @app.route("/magic_link/<uid>")
     def magic_link(uid):
-        send_slack_message('incoming magic link=' + uid)
+        send_slack_message("incoming magic link=" + uid)
         now_timestamp = time.time()
 
-        login_url = f'{config.SERVER_HOST_URL}magic_link/{uid}'
+        login_url = f"{config.SERVER_HOST_URL}magic_link/{uid}"
 
-        ring_user: RingUser = app.db.FindOne(
-            RingUser,
-            login_url=login_url
-        )
+        ring_user: RingUser = app.db.FindOne(RingUser, login_url=login_url)
 
         if not ring_user:
-            send_slack_message('no ring user found')
+            send_slack_message("no ring user found")
             all_users = app.db.FindAll(RingUser)
-            send_slack_message([u.get('login_url', None) for u in all_users])
-            send_slack_message('login_url=', login_url)
+            send_slack_message([u.get("login_url", None) for u in all_users])
+            send_slack_message("login_url=", login_url)
 
-        print('ring_user=', ring_user)
+        print("ring_user=", ring_user)
 
         if not ring_user:
-            send_slack_message('ring user=', str(ring_user))
-            send_slack_message('magic link user not found', uid)
-            flash('User Not Found', 'danger')
-            return redirect('/dashboard')
+            send_slack_message("ring user=", str(ring_user))
+            send_slack_message("magic link user not found", uid)
+            flash("User Not Found", "danger")
+            return redirect("/dashboard")
 
-        elif ring_user['login_url_expires_at'] > now_timestamp:
+        elif ring_user["login_url_expires_at"] > now_timestamp:
             # success, log this user in
-            send_slack_message('user found and magic link NOT expired', uid)
-            flask_login.login_user(ring_user)
+            send_slack_message("user found and magic link NOT expired", uid)
+            flask_login.login_user(ring_user, remember=True)
             # ring_user['login_url_expires_at'] = now_timestamp  # the link is now expired so they cant use it twice
-            return redirect('/dashboard')
+            return redirect("/dashboard")
 
         else:
             # the timestamp may have been expired
             # route them to the dashboard to initiate a new magic link
             send_slack_message(
-                'user found but link probably expired',
-                ring_user.get('login_url_expires_at', None),
-                uid)
-            flash('Magic Link Expired', 'danger')
-            return redirect('/dashboard')
+                "user found but link probably expired",
+                ring_user.get("login_url_expires_at", None),
+                uid,
+            )
+            flash("Magic Link Expired", "danger")
+            return redirect("/dashboard")
 
 
 # --- Helpers -----------------------------------------------------------
 
+
 def compute_nonce(time_param, account_id, hmac_key=HMAC_KEY):
     """Recompute the nonce Ring generated, to match against unclaimed tokens."""
     payload = f"{time_param}:{account_id}"
-    mac = hmac.new(hmac_key.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256).digest()
-    return base64.urlsafe_b64encode(mac).rstrip(b'=').decode('utf-8')
+    mac = hmac.new(
+        hmac_key.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256
+    ).digest()
+    return base64.urlsafe_b64encode(mac).rstrip(b"=").decode("utf-8")
 
 
 def get_ring_user_from_nonce(received_nonce, time_param):
     for ring_user in get_unclaimed_ring_users():
-        computed_nonce = compute_nonce(time_param, ring_user['account_id'])
+        computed_nonce = compute_nonce(time_param, ring_user["account_id"])
         if hmac.compare_digest(computed_nonce, received_nonce):
             return ring_user
     return None
 
 
 def mask_email(email):
-    local, domain = email.split('@')
-    masked = local[0] + '***' + (local[-1] if len(local) > 2 else '')
+    local, domain = email.split("@")
+    masked = local[0] + "***" + (local[-1] if len(local) > 2 else "")
     return f"{masked}@{domain}"
 
 
 # --- Storage stubs -- replace with your actual persistence layer -------
 
-def store_unclaimed_token(account_id: str, email: str, access_token: str, refresh_token: str, expires_at: int):
+
+def store_unclaimed_token(
+    account_id: str, email: str, access_token: str, refresh_token: str, expires_at: int
+):
     app.db = cast(flask_dictabase.Dictabase, app.db)
     with app.app_context():
         app.db.New(
@@ -250,14 +280,14 @@ def store_unclaimed_token(account_id: str, email: str, access_token: str, refres
             access_token=access_token,
             refresh_token=refresh_token,
             expires_at=expires_at,
-            status='unclaimed',
+            status="unclaimed",
         )
 
 
 def get_unclaimed_ring_users():
     app.db = cast(flask_dictabase.Dictabase, app.db)
-    return app.db.FindAll(RingUser, status='unclaimed')
+    return app.db.FindAll(RingUser, status="unclaimed")
 
 
 def mark_ring_user_claimed(ring_user: RingUser):
-    ring_user['status'] = 'claimed'
+    ring_user["status"] = "claimed"

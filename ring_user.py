@@ -1,3 +1,4 @@
+import datetime
 import time
 import uuid
 from pathlib import Path
@@ -176,12 +177,16 @@ class RingUser(flask_login.UserMixin, BaseTable):
         self.app.logger.error('lastest images=' + str(latest_images))
         if latest_images and (latest_images[0].get('timestamp_epoch_ms', 0) or 0) > (time.time() * 1000) - (
                 IMAGE_REQUEST_TIMEOUT * 1000):
-            return latest_images[0]['id']
+            img = latest_images[0]
+            print('179 get_snapshot returning old image', img)
+            print('old image dt=', datetime.datetime.fromtimestamp(img['timestamp_epoch_ms'] / 1000))
+            return img['id']
 
         # the existing images are too old, request a new image
 
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
         # end_timestamp_ms = int(time.time() * 1000)
+        print('grabbing a new snapshot')
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
             method='POST',
@@ -262,7 +267,7 @@ def get_current_user():
 
 
 def score_cleanliness(image_id):
-    print('score_cleanliness id=', image_id)
+    # print('score_cleanliness id=', image_id)
     with app.app_context():
         app.db = cast(Dictabase, app.db)
         image = app.db.FindOne(
@@ -279,7 +284,7 @@ def score_cleanliness(image_id):
 
             try:
                 res = evaluate_cleanliness(image_bytes=image_bytes)
-                print('score_cleanliness id=', image_id, ', res=', res)
+                print('ai returned score_cleanliness id=', image_id, ', res=', res)
                 image['cleanliness'] = res['cleanliness']
                 image['summary'] = res['summary']
             except Exception as e:

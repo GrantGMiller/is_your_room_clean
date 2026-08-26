@@ -1,3 +1,7 @@
+'''
+Use this to make sure the API is working
+'''
+
 import requests
 
 import config

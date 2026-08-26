@@ -1,141 +1,134 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Is Your Room Clean</title>
     <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-            rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
     />
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-</head>
-<body class="bg-light">
-{% include "js_css.html" %}
-{% include "flash_messages.html" %}
-{% include "navbar.html" %}
-<div class="container py-5">
-    <h1 class="h3 mb-4">Room Cleanliness Dashboard</h1>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+  </head>
+  <body class="bg-light">
+    {% include "js_css.html" %} {% include "flash_messages.html" %} {% include
+    "navbar.html" %}
+    <div class="container py-5">
+      <h1 class="h3 mb-4">Room Cleanliness Dashboard</h1>
 
-    <div class="row g-4">
+      <div class="row g-4">
         {% set devices = ring_user.get_devices() %} {% if devices | length < 1
         %}
         <span class="text">
           No devices found.
           <a href="ring://"
-          >Click here to make sure you have shared your devices with this
+            >Click here to make sure you have shared your devices with this
             app.</a
           >
         </span>
         <img
-                class="img-fluid img-thumbnail w-50 align-items-center"
-                src="/static/enable_cameras.png"
+          class="img-fluid img-thumbnail w-50 align-items-center"
+          src="/static/enable_cameras.png"
         />
-        {% endif %}
-        {% for device in devices %}
+        {% endif %} {% for device in devices %}
         <div class="col-12 col-sm-6 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="position-relative">
-                    <img
-                            src="/get_snapshot/{{device['id']}}"
-                            class="card-img-top"
-                            id="snapshot-{{ device['id'] }}"
-                            alt="{{ device['attributes']['name'] }} snapshot"
-                            onload="fetchSummary('{{ device['id'] }}');"
-                    />
+          <div class="card shadow-sm h-100">
+            <div class="position-relative">
+              <img
+                src="/get_snapshot/{{device['id']}}"
+                class="card-img-top"
+                id="snapshot-{{ device['id'] }}"
+                alt="{{ device['attributes']['name'] }} snapshot"
+                onload="fetchSummary('{{ device['id'] }}');"
+              />
 
-                    <span
-                            class="badge position-absolute bottom-0 end-0 m-2 fs-6"
-                            id="badge-{{ device['id'] }}"
-                    >
-              </span>
-                </div>
-                <div
-                        class="card-body d-flex justify-content-between align-items-center"
-                >
-                    <h2 class="h6 mb-0">{{ device['attributes']['name'] }}</h2>
-                    <!--                    <button-->
-                    <!--                            type="button"-->
-                    <!--                            class="btn btn-sm btn-outline-primary refresh-btn"-->
-                    <!--                            data-device-id="{{ device['id'] }}"-->
-                    <!--                            disabled="true"-->
-                    <!--                    >-->
-                    <!--                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"-->
-                    <!--                             viewBox="0 0 16 16">-->
-                    <!--                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>-->
-                    <!--                            <path fill-rule="evenodd"-->
-                    <!--                                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>-->
-                    <!--                        </svg>-->
-                    <!--                        Refresh-->
-                    <!--                    </button>-->
-                </div>
-                <p
-                        class="text-muted m-2 summary-text"
-                        id="summary-{{ device['id'] }}"
-                        data-snapshot-id="snapshot-{{ device['id'] }}"
-                >
               <span
-                      class="spinner-border spinner-border-sm"
-                      role="status"
-                      aria-hidden="true"
-              ></span>
-                    Analyzing room...
-                </p>
+                class="badge position-absolute bottom-0 end-0 m-2 fs-6"
+                id="badge-{{ device['id'] }}"
+              >
+              </span>
             </div>
+            <div
+              class="card-body d-flex justify-content-between align-items-center"
+            >
+              <h2 class="h6 mb-0">{{ device['attributes']['name'] }}</h2>
+              <!--                    <button-->
+              <!--                            type="button"-->
+              <!--                            class="btn btn-sm btn-outline-primary refresh-btn"-->
+              <!--                            data-device-id="{{ device['id'] }}"-->
+              <!--                            disabled="true"-->
+              <!--                    >-->
+              <!--                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"-->
+              <!--                             viewBox="0 0 16 16">-->
+              <!--                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>-->
+              <!--                            <path fill-rule="evenodd"-->
+              <!--                                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>-->
+              <!--                        </svg>-->
+              <!--                        Refresh-->
+              <!--                    </button>-->
+            </div>
+            <p
+              class="text-muted m-2 summary-text"
+              id="summary-{{ device['id'] }}"
+              data-snapshot-id="snapshot-{{ device['id'] }}"
+            >
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Analyzing room...
+            </p>
+          </div>
         </div>
         {% endfor %}
+      </div>
     </div>
-</div>
 
-<script>
-    const LOOP_TIME_MS = 10000;
+    <script>
+      const LOOP_TIME_MS = 10000;
 
-    function fetchSummary(deviceId) {
+      function fetchSummary(deviceId) {
         const summaryEl = document.getElementById("summary-" + deviceId);
         const badgeEl = document.getElementById("badge-" + deviceId);
 
         fetch("/image/" + deviceId)
-            .then(async function (resp) {
-                if (!resp.ok) {
-                    throw new Error("Error " + resp.status);
-                }
-                const data = await resp.json()
-                console.info('data=', data)
-                if (data.summary == null){
-                    throw new Error('Error missing summary')
-                }
-                return data
-            })
-            .then(function (data) {
-                summaryEl.textContent = data.summary;
+          .then(async function (resp) {
+            if (!resp.ok) {
+              throw new Error("Error " + resp.status);
+            }
+            const data = await resp.json();
+            console.info("data=", data);
+            if (data.summary == null) {
+              throw new Error("Error missing summary");
+            }
+            return data;
+          })
+          .then(function (data) {
+            summaryEl.textContent = data.summary;
 
-                badgeEl.textContent = `${data.cleanliness}% Clean`;
+            badgeEl.textContent = `${data.cleanliness}% Clean`;
 
-                if (data.cleanliness < 40) {
-                    badgeEl.classList.add("text-bg-danger");
-                } else if (data.cleanliness < 70) {
-                    badgeEl.classList.add("text-bg-warning");
-                } else {
-                    badgeEl.classList.add("text-bg-success");
-                }
-            })
-            .catch(function (err) {
-                console.error(
-                    "Failed to load summary for device",
-                    deviceId,
-                    err
-                );
+            if (data.cleanliness < 40) {
+              badgeEl.classList.add("text-bg-danger");
+            } else if (data.cleanliness < 70) {
+              badgeEl.classList.add("text-bg-warning");
+            } else {
+              badgeEl.classList.add("text-bg-success");
+            }
+          })
+          .catch(function (err) {
+            console.error("Failed to load summary for device", deviceId, err);
 
-                summaryEl.textContent = "Analyzing room...";
+            summaryEl.textContent = "Analyzing room...";
 
-                // Try again in 10 seconds
+            // Try again in 10 seconds
 
-                setTimeout(function () {
-                    fetchSummary(deviceId);
-                }, LOOP_TIME_MS);
-            });
-    }
-
-</script>
-</body>
+            setTimeout(function () {
+              fetchSummary(deviceId);
+            }, LOOP_TIME_MS);
+          });
+      }
+    </script>
+  </body>
 </html>

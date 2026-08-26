@@ -23,6 +23,12 @@
           Dashboard
         </a>
         <a
+          class="nav-item nav-link{% if request.path == '/notifications' %} active{% endif %}"
+          href="/notifications"
+        >
+          Notifications
+        </a>
+        <a
           class="nav-item nav-link{% if request.path == '/api' %} active{% endif %}"
           href="/api"
         >

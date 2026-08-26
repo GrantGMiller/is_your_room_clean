@@ -130,7 +130,6 @@ class RingWebhook(BaseTable):
 
 
 def process_webhook(request_id):
-    # todo
     global app
     app.db = cast(Dictabase, app.db)
     with app.app_context():
