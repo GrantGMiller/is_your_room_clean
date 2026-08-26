@@ -210,6 +210,11 @@ def terms():
     return render_template("terms.html")
 
 
+@app.route("/tutorial")
+def tutorial():
+    return render_template("tutorial.html")
+
+
 @app.errorhandler(500)
 def handle_error(e):
     msg = str(e)
