@@ -4,12 +4,6 @@
 
     <button
       class="navbar-toggler"
-        <a
-          class="nav-item nav-link{% if request.path == '/tutorial' %} active{% endif %}"
-          href="/tutorial"
-        >
-          How It Works
-        </a>
       type="button"
       data-bs-toggle="collapse"
       data-bs-target="#navbarNav"
@@ -28,12 +22,12 @@
         >
           Dashboard
         </a>
-<!--        <a-->
-<!--          class="nav-item nav-link{% if request.path == '/notifications' %} active{% endif %}"-->
-<!--          href="/notifications"-->
-<!--        >-->
-<!--          Notifications-->
-<!--        </a>-->
+        <a
+          class="nav-item nav-link{% if request.path == '/notifications' %} active{% endif %}"
+          href="/notifications"
+        >
+          Notifications
+        </a>
         <a
           class="nav-item nav-link{% if request.path == '/api' %} active{% endif %}"
           href="/api"
