@@ -24,7 +24,7 @@ def setup(a):
                 hour=0, minute=0, second=0, microsecond=0
             ) - datetime.timedelta(days=1),  # midnight
             func=delete_old_images,
-            days=1,
+            hours=1,
             errorCallback=send_slack_error
         )
 
@@ -48,13 +48,16 @@ def delete_old_images():
 
     with app.app_context():
         dt_24hrs_ago = datetime.datetime.now() - datetime.timedelta(hours=24)
+        num_img_deleted = 0
         for img in app.db.FindAll(RingImage):
             img_timestamp = (img.get('timestamp_epoch_ms', 0) or 0) / 1000
             img_dt = datetime.datetime.fromtimestamp(img_timestamp)
             if img_dt > dt_24hrs_ago:
                 print('deleting img=', img)
                 app.db.Delete(img)  # delete the obj from the database
+                num_img_deleted += 1
                 try:
                     os.remove(img['image_path'])  # delete the img from the server hard drive
                 except Exception as e:
                     send_slack_message('Error deleting old image', e)
+        send_slack_message('deleted', num_img_deleted, 'old images'
