@@ -6,7 +6,7 @@ from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 
 from ring_user import RingImage
-from slack import send_slack_message
+from slack import send_slack_message, send_slack_error
 
 global app
 
@@ -24,7 +24,8 @@ def setup(a):
                 hour=0, minute=0, second=0, microsecond=0
             ) - datetime.timedelta(days=1),  # midnight
             func=delete_old_images,
-            days=1
+            days=1,
+            errorCallback=send_slack_error
         )
 
 
@@ -36,7 +37,7 @@ def add_new_daily_job(app, job_name, *a, **k):
             existing_job.Delete()
 
         new_job = app.jobs.RepeatJob(
-            *a, name=job_name, **k
+            *a, name=job_name, **k,
         )
         return new_job
 

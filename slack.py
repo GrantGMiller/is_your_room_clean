@@ -51,3 +51,6 @@ def send_error(err):
         url=config.SLACK_NOTIFICATION_URL,
         json={'text': f'Error Sending Slack Message: {err}'}
     )
+
+def send_slack_error(job):
+    send_slack_message("Error:", job)

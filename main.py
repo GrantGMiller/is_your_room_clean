@@ -242,8 +242,7 @@ def get_grant():
     return jsonify(ring_user)
 
 
-def send_slack_error(job):
-    send_slack_message("Error:", job)
+
 
 
 if __name__ == "__main__":
