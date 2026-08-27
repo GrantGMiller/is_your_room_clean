@@ -16,7 +16,7 @@ import daily_jobs
 import ring_token_endpoints
 import ring_webhook
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user
-from slack import send_slack_message, setup as slack_setup
+from slack import send_slack_message, setup as slack_setup, send_slack_error
 
 if not os.path.exists("images"):
     # this will hold the ring camera screenshots
@@ -61,7 +61,7 @@ def dashboard():
     # Ring calls this the "App Homepage"
 
     if request.args.get(
-        "key", None
+            "key", None
     ) == "force" and datetime.datetime.now() < datetime.datetime.now().replace(
         year=2026, month=8, day=25
     ):
@@ -70,7 +70,7 @@ def dashboard():
     else:
         ring_user = get_current_user()
 
-    app.logger.error("111 ring_user=" + str(ring_user))
+    # app.logger.error("111 ring_user=" + str(ring_user))
 
     if not ring_user:
         # send_slack_message(
@@ -156,9 +156,9 @@ def get_latest_ring_image(device_id):
 @app.route("/job/<job_id>")
 def job(job_id):
     if not datetime.datetime.now() < datetime.datetime.now().replace(
-        year=2026,
-        month=8,
-        day=24,
+            year=2026,
+            month=8,
+            day=24,
     ):
         return "too late"
 
@@ -240,9 +240,6 @@ def test():
 def get_grant():
     ring_user = get_current_user()
     return jsonify(ring_user)
-
-
-
 
 
 if __name__ == "__main__":
