@@ -110,7 +110,7 @@
                             <div id="devicesExample" class="accordion-collapse collapse show" aria-labelledby="devicesExampleHeading" data-bs-parent="#apiExamples">
                                 <div class="accordion-body">
                                     <p class="small text-muted">Returns the devices connected to your account.</p>
-                                    <pre class="bg-dark text-light rounded p-3 small mb-0"><code>curl "{{ request.host_url.rstrip('/') }}/api/get_devices" \
+                                    <pre class="bg-dark text-light rounded p-3 small mb-0"><code>curl "{{ base_url }}api/get_devices" \
   -H "X-API-KEY: YOUR_API_KEY"</code></pre>
                                 </div>
                             </div>
@@ -125,7 +125,7 @@
                             <div id="snapshotExample" class="accordion-collapse collapse" aria-labelledby="snapshotExampleHeading" data-bs-parent="#apiExamples">
                                 <div class="accordion-body">
                                     <p class="small text-muted">Replace <code>DEVICE_ID</code> with an ID from the devices response.</p>
-                                    <pre class="bg-dark text-light rounded p-3 small mb-0"><code>curl "{{ request.host_url.rstrip('/') }}/api/get_snapshot/DEVICE_ID" \
+                                    <pre class="bg-dark text-light rounded p-3 small mb-0"><code>curl "{{ base_url }}api/get_snapshot/DEVICE_ID" \
   -H "X-API-KEY: YOUR_API_KEY" \
   --output snapshot.jpg</code></pre>
                                 </div>
@@ -144,7 +144,7 @@
                                     <pre class="bg-dark text-light rounded p-3 small mb-0"><code>import requests
 
 response = requests.get(
-    "{{ request.host_url.rstrip('/') }}/api/get_summary/DEVICE_ID",
+    "{{ base_url }}api/get_summary/DEVICE_ID",
     headers={"X-API-KEY": "YOUR_API_KEY"},
 )
 response.raise_for_status()

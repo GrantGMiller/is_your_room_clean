@@ -6,6 +6,7 @@ import flask_login
 from flask import request, jsonify, send_file, flash, redirect, render_template
 from flask_dictabase import Dictabase
 
+import config
 from ring_user import RingUser, RingImage, get_current_user
 
 app = None
@@ -55,6 +56,7 @@ def setup_ui_endpoints(app):
         return render_template(
             'api-key.html',
             current_api_key_masked=masked_key,
+            base_url=config.SERVER_HOST_URL
         )
 
     @app.route('/get_new_api_key')
