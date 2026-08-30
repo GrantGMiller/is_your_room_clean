@@ -24,7 +24,7 @@ def setup(a):
                 hour=0, minute=0, second=0, microsecond=0
             ) - datetime.timedelta(days=1),  # midnight
             func=delete_old_images,
-            hours=1,
+            days=1,
             errorCallback=send_slack_error
         )
 
@@ -60,4 +60,5 @@ def delete_old_images():
                     os.remove(img['image_path'])  # delete the img from the server hard drive
                 except Exception as e:
                     send_slack_message('Error deleting old image', e)
-        send_slack_message('deleted', num_img_deleted, 'old images')
+        if num_img_deleted:
+            send_slack_message('deleted', num_img_deleted, 'old images')
