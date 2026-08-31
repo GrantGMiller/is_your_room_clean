@@ -3,6 +3,9 @@ Room cleanliness evaluation via Google Gemini's vision API, called
 directly over REST with `requests` (no google-genai SDK dependency).
 
 pip install requests
+
+Note each scan cost about ~$0.000155 using gemini-3.1-flash-lite
+That is, you can get almost 6,500 scans per dollar.
 """
 
 import base64
@@ -14,7 +17,6 @@ import config
 
 # MODEL = 'gemini-3.7-flash'
 MODEL = 'gemini-3.1-flash-lite'
-# MODEL = 'gemini-2.5-flash-lite' # needs different GEMINI_URL
 
 GEMINI_URL = (
     'https://generativelanguage.googleapis.com/v1beta/interactions'
@@ -71,7 +73,8 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
                 "type": "image",
                 "data": encoded_image,
                 "mime_type": mime_type,
-                "resolution": "low", # hopefully cost less tokens
+                "resolution": "low",  # hopefully cost less tokens
+                # 'thinking_level': "minimal"  # defaults to 'minimal' to reduce token usage by limiting thinking
             },
         ],
         "response_format": [

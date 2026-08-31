@@ -61,7 +61,7 @@ def dashboard():
     # Ring calls this the "App Homepage"
 
     if request.args.get(
-            "key", None
+        "key", None
     ) == "force" and datetime.datetime.now() < datetime.datetime.now().replace(
         year=2026, month=8, day=25
     ):
@@ -156,9 +156,9 @@ def get_latest_ring_image(device_id):
 @app.route("/job/<job_id>")
 def job(job_id):
     if not datetime.datetime.now() < datetime.datetime.now().replace(
-            year=2026,
-            month=8,
-            day=24,
+        year=2026,
+        month=8,
+        day=24,
     ):
         return "too late"
 
@@ -208,6 +208,34 @@ def privacy():
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
+
+
+@app.route("/my_account", methods=["GET"])
+def my_account():
+    ring_user = get_current_user()
+    if not ring_user:
+        return redirect("/dashboard")
+    return render_template("my_account.html")
+
+
+@app.route("/delete_account", methods=["POST"])
+def delete_account():
+    ring_user = get_current_user()
+    if not ring_user:
+        return redirect("/dashboard")
+
+    try:
+        app.db.Delete(ring_user)
+        flask_login.logout_user()
+        flash("Your account has been deleted.", "success")
+    except Exception:
+        app.logger.exception("Failed to delete account")
+        flash(
+            "There was a problem deleting your account. Please try again or contact support.",
+            "danger",
+        )
+
+    return redirect("/dashboard")
 
 
 @app.route("/tutorial")

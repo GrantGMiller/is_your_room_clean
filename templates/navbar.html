@@ -22,17 +22,23 @@
         >
           Dashboard
         </a>
-<!--        <a-->
-<!--          class="nav-item nav-link{% if request.path == '/notifications' %} active{% endif %}"-->
-<!--          href="/notifications"-->
-<!--        >-->
-<!--          Notifications-->
-<!--        </a>-->
+        <!--        <a-->
+        <!--          class="nav-item nav-link{% if request.path == '/notifications' %} active{% endif %}"-->
+        <!--          href="/notifications"-->
+        <!--        >-->
+        <!--          Notifications-->
+        <!--        </a>-->
         <a
           class="nav-item nav-link{% if request.path == '/api' %} active{% endif %}"
           href="/api"
         >
           API Key
+        </a>
+        <a
+          class="nav-item nav-link{% if request.path == '/my_account' %} active{% endif %}"
+          href="/my_account"
+        >
+          My Account
         </a>
         <a
           class="nav-item nav-link{% if request.path == '/contact' %} active{% endif %}"
