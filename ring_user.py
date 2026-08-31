@@ -174,7 +174,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
             _limit=1,
             _reverse=True,
         ))
-        self.app.logger.error('lastest images=' + str(latest_images))
+        # self.app.logger.error('lastest images=' + str(latest_images))
         if latest_images and (latest_images[0].get('timestamp_epoch_ms', 0) or 0) > (time.time() * 1000) - (
                 IMAGE_REQUEST_TIMEOUT * 1000):
             img = latest_images[0]
