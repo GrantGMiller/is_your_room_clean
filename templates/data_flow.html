@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is Your Room Clean — Data Flow Between Systems</title>
+<style>
+  :root {
+    --ink: #1c1f24;
+    --muted: #5b6470;
+    --line: #d7dbe0;
+    --panel: #f6f7f9;
+    --accent: #2a5f8f;
+    --accent-soft: #e7eff6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: #fff;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font-size: 1.55rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); margin: 0 0 36px; font-size: 0.95rem; }
+  h2 { font-size: 1.05rem; margin: 40px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  p { max-width: 68ch; }
+  svg { width: 100%; height: auto; display: block; margin: 8px 0 32px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: none; }
+  td.mono, th.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+  .tag {
+    display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 3px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  }
+  footer { margin-top: 56px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Data Flow Between Systems</h1>
+  <p class="subtitle">Is Your Room Clean — last reviewed August 2026</p>
+
+  <p>This document describes every system our application exchanges data with, what data moves between them, and how each connection is secured. It supports our answers to Ring Appstore's technical safeguards questionnaire.</p>
+
+  <svg viewBox="0 0 860 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Data flow diagram between the user's browser, Ring, our Flask application, its database, Google Gemini, and our email provider">
+
+    <defs>
+      <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#5b6470"/>
+      </marker>
+    </defs>
+
+    <!-- User Browser -->
+    <rect x="20" y="20" width="180" height="64" rx="6" fill="#f6f7f9" stroke="#d7dbe0"/>
+    <text x="110" y="46" text-anchor="middle" font-size="14" font-weight="600" fill="#1c1f24">User's Browser</text>
+    <text x="110" y="64" text-anchor="middle" font-size="11" fill="#5b6470">Parent viewing dashboard</text>
+
+    <!-- Ring Cloud -->
+    <rect x="330" y="20" width="200" height="64" rx="6" fill="#f6f7f9" stroke="#d7dbe0"/>
+    <text x="430" y="46" text-anchor="middle" font-size="14" font-weight="600" fill="#1c1f24">Ring Cloud / API</text>
+    <text x="430" y="64" text-anchor="middle" font-size="11" fill="#5b6470">OAuth, devices, webhooks</text>
+
+    <!-- Flask App -->
+    <rect x="330" y="220" width="200" height="72" rx="6" fill="#e7eff6" stroke="#2a5f8f"/>
+    <text x="430" y="250" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1f24">Flask Application</text>
+    <text x="430" y="268" text-anchor="middle" font-size="11" fill="#5b6470">Hosted on Time4VPS (US)</text>
+    <text x="430" y="282" text-anchor="middle" font-size="11" fill="#5b6470">"Is Your Room Clean" backend</text>
+
+    <!-- Database -->
+    <rect x="330" y="420" width="200" height="64" rx="6" fill="#f6f7f9" stroke="#d7dbe0"/>
+    <text x="430" y="446" text-anchor="middle" font-size="14" font-weight="600" fill="#1c1f24">Database</text>
+    <text x="430" y="464" text-anchor="middle" font-size="11" fill="#5b6470">Account + token records</text>
+
+    <!-- Gemini -->
+    <rect x="640" y="140" width="200" height="64" rx="6" fill="#f6f7f9" stroke="#d7dbe0"/>
+    <text x="740" y="166" text-anchor="middle" font-size="14" font-weight="600" fill="#1c1f24">Google Gemini API</text>
+    <text x="740" y="184" text-anchor="middle" font-size="11" fill="#5b6470">Image cleanliness analysis</text>
+
+    <!-- Email provider -->
+    <rect x="640" y="320" width="200" height="64" rx="6" fill="#f6f7f9" stroke="#d7dbe0"/>
+    <text x="740" y="346" text-anchor="middle" font-size="14" font-weight="600" fill="#1c1f24">Email Provider</text>
+    <text x="740" y="364" text-anchor="middle" font-size="11" fill="#5b6470">Transactional / login links</text>
+
+    <!-- Arrows -->
+    <!-- Browser <-> Ring (linking) -->
+    <path d="M200,40 L330,40" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <text x="265" y="32" text-anchor="middle" font-size="10" fill="#5b6470">account linking</text>
+
+    <!-- Browser <-> Flask App -->
+    <path d="M110,84 L110,256 L330,256" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <text x="120" y="180" font-size="10" fill="#5b6470">HTTPS session</text>
+
+    <!-- Ring <-> Flask App (bi-directional: tokens, webhooks, device/image reads) -->
+    <path d="M430,84 L430,220" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <path d="M450,220 L450,84" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <text x="470" y="150" font-size="10" fill="#5b6470">OAuth tokens,</text>
+    <text x="470" y="163" font-size="10" fill="#5b6470">HMAC webhooks,</text>
+    <text x="470" y="176" font-size="10" fill="#5b6470">device/image reads</text>
+
+    <!-- Flask App <-> DB -->
+    <path d="M430,292 L430,420" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <text x="452" y="360" font-size="10" fill="#5b6470">account + token</text>
+    <text x="452" y="373" font-size="10" fill="#5b6470">records</text>
+
+    <!-- Flask App -> Gemini -->
+    <path d="M530,240 L640,172" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <text x="605" y="215" font-size="10" fill="#5b6470">image bytes</text>
+    <text x="605" y="228" font-size="10" fill="#5b6470">(low-res, one-time)</text>
+
+    <!-- Flask App -> Email -->
+    <path d="M530,270 L640,340" stroke="#5b6470" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+    <text x="600" y="315" font-size="10" fill="#5b6470">login link / notice</text>
+
+  </svg>
+
+  <h2>Flow-by-flow detail</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Path</th>
+        <th>Data exchanged</th>
+        <th>Protection</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">Browser ↔ Ring</td>
+        <td>Account-linking authorization (user clicks Confirm in the Ring app)</td>
+        <td><span class="tag">TLS</span> Handled entirely within Ring's own app/site</td>
+      </tr>
+      <tr>
+        <td class="mono">Ring → Flask App</td>
+        <td>OAuth authorization code, access/refresh tokens, device events (webhooks)</td>
+        <td><span class="tag">TLS</span> <span class="tag">HMAC-SHA256</span> Webhook payloads verified before processing</td>
+      </tr>
+      <tr>
+        <td class="mono">Flask App → Ring</td>
+        <td>API requests for device list and image snapshots, authenticated with the linked account's access token</td>
+        <td><span class="tag">TLS</span> <span class="tag">OAuth Bearer token</span></td>
+      </tr>
+      <tr>
+        <td class="mono">Flask App → Google Gemini</td>
+        <td>A single room snapshot image (low resolution) per analysis request, plus a fixed prompt</td>
+        <td><span class="tag">TLS</span> Image not persisted by our app beyond ~1 hour; no other identifying data included in the request</td>
+      </tr>
+      <tr>
+        <td class="mono">Flask App ↔ Database</td>
+        <td>Ring account identifier, email, OAuth tokens, cleanliness scores/summaries</td>
+        <td><span class="tag">Local to server</span> Not exposed externally; access restricted to the application process</td>
+      </tr>
+      <tr>
+        <td class="mono">Flask App → Email Provider</td>
+        <td>Passwordless login links; would carry incident notifications if needed</td>
+        <td><span class="tag">TLS</span></td>
+      </tr>
+      <tr>
+        <td class="mono">Browser ↔ Flask App</td>
+        <td>Dashboard views, session cookie, contact form submissions</td>
+        <td><span class="tag">TLS</span> <span class="tag">Signed session cookie</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Notes</h2>
+  <p>Room snapshot images are not retained beyond approximately one hour and are not stored in the database. No image data is shared with any party other than Google Gemini, and solely for the purpose of generating a cleanliness score.</p>
+
+  <footer>
+    Is Your Room Clean — prepared for Ring Appstore technical safeguards review.
+  </footer>
+
+</div>
+</body>
+</html>

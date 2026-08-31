@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>My Account - Is Your Room Clean</title>
-    {% include "js_css.html" %} 
+    {% include "js_css.html" %}
   </head>
 
   <body class="bg-light">
@@ -28,6 +28,8 @@
                 will be removed immediately.
               </p>
 
+              
+
               <form
                 method="POST"
                 action="/delete_account"
@@ -48,6 +50,25 @@
                 </a>
               </div>
             </div>
+            <div class="mb-4 border rounded p-3 bg-light">
+                <h2 class="h5 mb-3">Delete stored images</h2>
+                <p class="text-muted small mb-3">
+                  Remove any saved room images from your account immediately.
+                </p>
+                <form
+                  method="POST"
+                  action="/delete_stored_images"
+                  onsubmit="
+                    return confirm(
+                      'This will delete any stored images now. Continue?',
+                    );
+                  "
+                >
+                  <button type="submit" class="btn btn-outline-warning w-100">
+                    Delete any stored images now
+                  </button>
+                </form>
+              </div>
           </div>
         </div>
       </div>

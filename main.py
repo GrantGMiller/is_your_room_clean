@@ -210,6 +210,11 @@ def terms():
     return render_template("terms.html")
 
 
+@app.route("/data_flow")
+def data_flow():
+    return render_template("data_flow.html")
+
+
 @app.route("/my_account", methods=["GET"])
 def my_account():
     ring_user = get_current_user()
@@ -236,6 +241,38 @@ def delete_account():
         )
 
     return redirect("/dashboard")
+
+
+@app.route("/delete_stored_images", methods=["POST"])
+def delete_stored_images():
+    ring_user = get_current_user()
+    if not ring_user:
+        return redirect("/dashboard")
+
+    try:
+        image_records = list(
+            app.db.FindAll(RingImage, account_id=ring_user.get("account_id", None))
+        )
+        deleted_count = 0
+        for image in image_records:
+            image_path = image.get("image_path")
+            try:
+                if image_path and os.path.exists(image_path):
+                    os.remove(image_path)
+            except Exception:
+                app.logger.exception("Failed to delete image file")
+            app.db.Delete(image)
+            deleted_count += 1
+
+        flash(f"Deleted {deleted_count} stored image(s).", "success")
+    except Exception:
+        app.logger.exception("Failed to delete stored images")
+        flash(
+            "There was a problem deleting your stored images. Please try again or contact support.",
+            "danger",
+        )
+
+    return redirect("/my_account")
 
 
 @app.route("/tutorial")
