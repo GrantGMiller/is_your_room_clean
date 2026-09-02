@@ -61,7 +61,7 @@ def dashboard():
     # Ring calls this the "App Homepage"
 
     if request.args.get(
-        "key", None
+            "key", None
     ) == "force" and datetime.datetime.now() < datetime.datetime.now().replace(
         year=2026, month=8, day=25
     ):
@@ -156,9 +156,9 @@ def get_latest_ring_image(device_id):
 @app.route("/job/<job_id>")
 def job(job_id):
     if not datetime.datetime.now() < datetime.datetime.now().replace(
-        year=2026,
-        month=8,
-        day=24,
+            year=2026,
+            month=8,
+            day=24,
     ):
         return "too late"
 
@@ -278,6 +278,12 @@ def delete_stored_images():
 @app.route("/tutorial")
 def tutorial():
     return render_template("tutorial.html")
+
+
+@app.route('/error')
+def trigger_error():
+    # trigger a 500 error on purpose
+    return 'this is definitely an error', 500
 
 
 @app.errorhandler(500)
