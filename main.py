@@ -283,7 +283,7 @@ def tutorial():
 @app.route('/error')
 def trigger_error():
     # trigger a 500 error on purpose
-    return 'this is definitely an error', 500
+    return f'{app.config.get("basedir", "no basedir")}:this is definitely an error', 500
 
 
 @app.errorhandler(500)
