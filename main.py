@@ -283,7 +283,7 @@ def tutorial():
 @app.route('/error')
 def trigger_error():
     # trigger a error on purpose
-    raise Exception('fake error')
+    return 'fake error', 500
 
 
 @app.errorhandler(500)
