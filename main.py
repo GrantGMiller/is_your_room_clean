@@ -280,6 +280,12 @@ def tutorial():
     return render_template("tutorial.html")
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    flash('Page not found', 'danger')
+    return redirect("/dashboard")
+
+
 @app.errorhandler(500)
 def handle_error(e):
     msg = str(e)
