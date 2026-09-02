@@ -282,8 +282,8 @@ def tutorial():
 
 @app.route('/error')
 def trigger_error():
-    # trigger a 500 error on purpose
-    return f'{app.config.get("basedir", "no basedir")}:this is definitely an error', 500
+    # trigger a error on purpose
+    raise Exception('fake error')
 
 
 @app.errorhandler(500)
@@ -291,7 +291,7 @@ def handle_error(e):
     msg = str(e)
     if not sys.platform == "darwin":
         try:
-            with open(f'{app.config["basedir"]}/gerror.log', mode="rt") as file:
+            with open(f'gerror.log', mode="rt") as file:
                 msg += "\r\n\r\n****GUNICORN ERROR LOG****\r\n" + file.read()
         except Exception as e2:
             msg += str(e2)
