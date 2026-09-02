@@ -145,9 +145,11 @@ class RingUser(flask_login.UserMixin, BaseTable):
             self.app.logger.error(str(resp))
             send_slack_message('error 131:', resp.status_code, resp.headers, resp.reason, str(resp.text))
             flash(resp.reason, 'danger')
-            return []
+            return self.Get('last_devices', [])
 
-        return resp.json().get('data', [])
+        devices = resp.json().get('data', [])
+        self.Set('last_devices', devices)
+        return devices
 
     def get_snapshot(self, device_id: str, save_dir: Path = 'images'):
         """
