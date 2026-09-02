@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create a Chore | Is Your Room Clean</title>
+    <style>
+      .btn-check:checked + label {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.2);
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    {% include "js_css.html" %} {% include "flash_messages.html" %} {% include
+    "navbar.html" %}
+
+    <main class="container py-5" style="max-width: 720px">
+      <div class="mb-4">
+        <p class="text-uppercase text-muted small fw-semibold mb-2">
+          Create a New Chore
+        </p>
+        
+      </div>
+
+      <form action="/chores/wizard/start" method="post" id="chore-kind-form">
+        <div class="mb-4">
+          <h1 class="h2 mb-4" id="chore-name-label">Chore name</h1>
+          <input
+            class="form-control"
+            type="text"
+            name="name"
+            id="chore-name"
+            maxlength="200"
+            placeholder="e.g. Take out the trash"
+            required
+          />
+        </div>
+        <hr />
+        <h1 class="h2 mb-4">What kind of chore is this?</h1>
+
+        <fieldset>
+          <legend class="visually-hidden">Chore kind</legend>
+
+          <div class="vstack gap-3">
+            <div>
+              <input
+                class="btn-check"
+                type="radio"
+                name="kind"
+                id="kind-one-time"
+                value="one-time"
+                autocomplete="off"
+                required
+              />
+              <label class="card card-body h-100" for="kind-one-time">
+                <span class="d-flex justify-content-between align-items-start">
+                  <span>
+                    <span class="h5 d-block mb-1">One-time</span>
+                    <span class="text-muted">
+                      A special occasion chore, such as bringing your teddy bear
+                      to school day.
+                    </span>
+                  </span>
+                  <span class="badge text-bg-secondary">Once</span>
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <input
+                class="btn-check"
+                type="radio"
+                name="kind"
+                id="kind-repeat"
+                value="repeat"
+                autocomplete="off"
+              />
+              <label class="card card-body h-100" for="kind-repeat">
+                <span class="d-flex justify-content-between align-items-start">
+                  <span>
+                    <span class="h5 d-block mb-1">Repeat</span>
+                    <span class="text-muted">
+                      For regular chores, such as taking out the trash daily or
+                      washing clothes weekly.
+                    </span>
+                  </span>
+                  <span class="badge text-bg-primary">Regularly</span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </fieldset>
+        <hr />
+        <section class="mt-4" id="kind-explanation" aria-live="polite" hidden>
+          <div class="alert alert-info mb-0">
+            <p class="fw-semibold mb-1" id="explanation-title"></p>
+            <p class="mb-0" id="explanation-text"></p>
+          </div>
+        </section>
+
+        <div class="mt-4" id="one-time-options" hidden>
+          <label class="form-label fw-semibold" for="scheduled-for">
+            When should it happen?
+          </label>
+          <input
+            class="form-control"
+            type="datetime-local"
+            name="schedule_for"
+            id="scheduled-for"
+            required
+          />
+        </div>
+
+        <div class="mt-4" id="repeat-options" hidden>
+          <label class="form-label fw-semibold" for="repeat-interval">
+            How often should it repeat?
+          </label>
+          <select
+            class="form-select"
+            name="repeat_interval"
+            id="repeat-interval"
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="other">Another interval</option>
+          </select>
+          <div class="mt-3" id="repeat-time-options" hidden>
+            <label class="form-label" for="repeat-time-of-day">
+              What time of day?
+            </label>
+            <select
+              class="form-select"
+              name="repeat_time_of_day"
+              id="repeat-time-of-day"
+              required
+            >
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+              <option value="specific">A specific time</option>
+            </select>
+            <div class="mt-2" id="specific-time-option" hidden>
+              <label class="form-label" for="repeat-time">Specific time</label>
+              <input
+                class="form-control"
+                type="time"
+                name="repeat_time"
+                id="repeat-time"
+              />
+            </div>
+          </div>
+          <div class="mt-3" id="weekly-options" hidden>
+            <label class="form-label" for="repeat-day">Which day?</label>
+            <select
+              class="form-select"
+              name="repeat_day"
+              id="repeat-day"
+              required
+            >
+              <option value="monday">Monday</option>
+              <option value="tuesday">Tuesday</option>
+              <option value="wednesday">Wednesday</option>
+              <option value="thursday">Thursday</option>
+              <option value="friday">Friday</option>
+              <option value="saturday">Saturday</option>
+              <option value="sunday">Sunday</option>
+            </select>
+          </div>
+          <div class="row g-2 mt-2" id="custom-interval" hidden>
+            <div class="col-5">
+              <label class="visually-hidden" for="repeat-every">Every</label>
+              <input
+                class="form-control"
+                type="number"
+                name="repeat_every"
+                id="repeat-every"
+                min="1"
+                value="1"
+                aria-label="Repeat every"
+              />
+            </div>
+            <div class="col-7">
+              <label class="visually-hidden" for="repeat-unit">Unit</label>
+              <select class="form-select" name="repeat_unit" id="repeat-unit">
+                <option value="day">day(s)</option>
+                <option value="week">week(s)</option>
+                <option value="month">month(s)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-4">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            id="confirm-button"
+            disabled
+          >
+            Create Chore
+          </button>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      const form = document.getElementById("chore-kind-form");
+      const explanation = document.getElementById("kind-explanation");
+      const explanationTitle = document.getElementById("explanation-title");
+      const explanationText = document.getElementById("explanation-text");
+      const oneTimeOptions = document.getElementById("one-time-options");
+      const scheduledFor = document.getElementById("scheduled-for");
+      const repeatOptions = document.getElementById("repeat-options");
+      const repeatInterval = document.getElementById("repeat-interval");
+      const repeatTimeOptions = document.getElementById("repeat-time-options");
+      const repeatTimeOfDay = document.getElementById("repeat-time-of-day");
+      const specificTimeOption = document.getElementById(
+        "specific-time-option",
+      );
+      const repeatTime = document.getElementById("repeat-time");
+      const weeklyOptions = document.getElementById("weekly-options");
+      const repeatDay = document.getElementById("repeat-day");
+      const customInterval = document.getElementById("custom-interval");
+      const confirmButton = document.getElementById("confirm-button");
+
+      function localDateTimeValue(date) {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+      }
+
+      scheduledFor.min = localDateTimeValue(new Date());
+
+      function updateIntervalFields() {
+        const isDaily = repeatInterval.value === "daily";
+        const isWeekly = repeatInterval.value === "weekly";
+        const hasTimeOfDay = isDaily || isWeekly;
+
+        repeatTimeOptions.hidden = !hasTimeOfDay;
+        repeatTimeOfDay.required = hasTimeOfDay;
+        specificTimeOption.hidden =
+          !hasTimeOfDay || repeatTimeOfDay.value !== "specific";
+        repeatTime.required =
+          hasTimeOfDay && repeatTimeOfDay.value === "specific";
+        weeklyOptions.hidden = !isWeekly;
+        repeatDay.required = isWeekly;
+        customInterval.hidden = repeatInterval.value !== "other";
+      }
+
+      form.addEventListener("change", function () {
+        const selectedKind = form.elements.kind.value;
+        const isRepeat = selectedKind === "repeat";
+
+        explanation.hidden = false;
+        oneTimeOptions.hidden = isRepeat;
+        scheduledFor.required = !isRepeat;
+        repeatOptions.hidden = !isRepeat;
+        confirmButton.disabled = false;
+        updateIntervalFields();
+
+        if (isRepeat) {
+          explanationTitle.textContent = "This chore will repeat.";
+          explanationText.textContent =
+            "Choose whether it should happen daily, weekly, or on another interval.";
+        } else {
+          explanationTitle.textContent = "This is a one-time chore.";
+          explanationText.textContent =
+            "It can be scheduled for any time in the future. Once it is complete, it will be deleted.";
+        }
+      });
+
+      repeatInterval.addEventListener("change", updateIntervalFields);
+    </script>
+  </body>
+</html>

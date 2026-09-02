@@ -17,6 +17,7 @@ import ring_token_endpoints
 import ring_webhook
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user
 from slack import send_slack_message, setup as slack_setup, send_slack_error
+import chores_ui
 
 if not os.path.exists("images"):
     # this will hold the ring camera screenshots
@@ -37,6 +38,7 @@ slack_setup(app)
 ring_user_setup(app)
 api.setup(app)
 daily_jobs.setup(app)
+# chores_ui.setup(app)
 
 
 @app.route("/")
@@ -282,7 +284,7 @@ def tutorial():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    flash('Page not found', 'danger')
+    flash('Page not found: ' + request.path, 'danger')
     return redirect("/dashboard")
 
 
