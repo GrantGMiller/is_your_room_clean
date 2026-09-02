@@ -280,12 +280,6 @@ def tutorial():
     return render_template("tutorial.html")
 
 
-@app.route('/error')
-def trigger_error():
-    # trigger a error on purpose
-    return 'fake error', 500
-
-
 @app.errorhandler(500)
 def handle_error(e):
     msg = str(e)
