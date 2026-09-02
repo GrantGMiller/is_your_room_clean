@@ -48,13 +48,9 @@
 
                     {% else %}
 
-                    <div class="alert alert-secondary" role="alert">
-                        You don't currently have an API key.
-                    </div>
-
                     {% endif %}
 
-
+                    {% if ring_user %}
                     <div class="d-flex gap-2">
 
                         {% if current_api_key_masked %}
@@ -81,7 +77,11 @@
                         </button>
 
                     </div>
-
+                    {% else %}
+                    <div>
+                        Please <a href="/dashboard">login</a> to create an API key.
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 

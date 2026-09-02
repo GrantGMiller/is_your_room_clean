@@ -40,21 +40,20 @@ def setup_api_endpoints(app):
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
         return jsonify(img)
 
-
+NUM_MASKED_CHARS = 5
 def setup_ui_endpoints(app):
     @app.route('/api')
     def api():
         ring_user: RingUser = get_current_user()
         print('ring_user=', ring_user)
-        if not ring_user:
-            flash('unknown user', 'warning')
-            return redirect('/dashboard')
 
-        current_api_key = ring_user.get('api_key', '') or ''
-        NUM_MASKED_CHARS = 5
+
+        current_api_key = ring_user and ring_user.get('api_key', '') or ''
+
         masked_key = current_api_key[:NUM_MASKED_CHARS] + '*' * (len(current_api_key) - NUM_MASKED_CHARS)
         return render_template(
             'api-key.html',
+            ring_user=ring_user,
             current_api_key_masked=masked_key,
             base_url=config.SERVER_HOST_URL
         )
