@@ -283,7 +283,7 @@ def tutorial():
 @app.route('/error')
 def trigger_error():
     # trigger a error on purpose
-    raise Exception('fake error')
+    raise 'fake error', 500
 
 
 @app.errorhandler(500)
@@ -298,7 +298,7 @@ def handle_error(e):
 
         send_slack_message("HTTP Error" + msg)
 
-    flash("An error has occurred. The admin has been notified. " + msg, "danger")
+    flash("An error has occurred. The admin has been notified. " "danger")
     return redirect("/dashboard")
 
 
