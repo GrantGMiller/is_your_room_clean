@@ -40,6 +40,7 @@ class Chore(BaseTable):
     repeat_every: Optional[int] = None
     repeat_unit: Optional[RepeatUnit] = None
     owner_id: int
+    tags: List[str] = []
 
     @property
     def can_be_assigned_to(self) -> List[Person]:
@@ -53,6 +54,8 @@ class Chore(BaseTable):
         ids = self.Get('can_be_assigned_to', [])
         return [self.app.db.FindOne(Person, id=id, owner_id=self.owner_id) for id in ids]
 
+    def get_can_be_assigned_to_ids(self) -> List[int]:
+        return self.Get('can_be_assigned_to', [])
 
     def assign_to(self, person: Person) -> None:
         '''
@@ -67,3 +70,9 @@ class Chore(BaseTable):
         '''
         ids = self.Get('assigned_to', [])
         return [self.app.db.FindOne(Person, id=id, owner_id=self.owner_id) for id in ids]
+
+    def add_tag(self, tag: str):
+        self.Append('tags', tag)
+
+    def remove_tag(self, tag: str):
+        self.Remove('tags', tag)

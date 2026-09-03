@@ -38,7 +38,7 @@ def setup(a: Flask):
 
         return render_template("chores_person_edit.html", person=person, mode='edit')
 
-    @app.route("/chores/edit", methods=["GET"])
+    @app.route("/chores/edit", methods=["GET", "POST"])
     def edit_chore():
         chore_id = request.args.get("id", type=int)
         user = get_current_user()
