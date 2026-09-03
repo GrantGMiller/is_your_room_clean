@@ -1,8 +1,8 @@
-import datetime
 import sys
-import time
+from typing import cast
 
 import requests
+from flask_jobs import JobScheduler
 
 import config
 
@@ -23,6 +23,7 @@ def send_slack_message(*a):
     print('SendSlackNotification(', a)
     msg = ' '.join([str(aa) for aa in a])
     if app:
+        app.jobs = cast(JobScheduler, app.jobs)
         app.jobs.AddJob(
             func=do_send_slack_notification,
             args=(msg,),
@@ -51,6 +52,7 @@ def send_error(err):
         url=config.SLACK_NOTIFICATION_URL,
         json={'text': f'Error Sending Slack Message: {err}'}
     )
+
 
 def send_slack_error(job):
     send_slack_message("Error:", job)

@@ -94,6 +94,7 @@ def send_login_email():
         user = app.db.FindOne(RingUser, email=email.lower())
         if user:
             user.get_new_login_url()
+            send_slack_message('sending magic link to', email, user.get_last_login_url())
             app.jobs.AddJob(
                 func=SendEmail_SMTP,
                 kwargs={
@@ -315,7 +316,35 @@ def get_grant():
     return jsonify(ring_user)
 
 
+@app.route('/create_user/<key>')
+def create_user(key):
+    # migrate users from beta to prod
+    if key == config.SELFAPIKEY:
+        user_data: RingUser = request.json
+        print('user_data=', user_data)
+        email = user_data.get('email', None)
+        existing_user: RingUser = app.db.FindOne(RingUser, email=email)
+        if not existing_user and email:
+            user_data.pop('id', None)
+            app.db.New(
+                RingUser,
+                **user_data,
+            )
+            return f'added user {email}'
+        else:
+            return f'user already exist for {email}'
+    return 'nope'
+
+
+@app.route('/get_user/<key>')
+def get_user(key):
+    if key == config.SELFAPIKEY:
+        print('request.json=', request.json)
+        email = request.json.get('email')
+        existing_user: RingUser = app.db.FindOne(RingUser, email=email)
+        return jsonify(existing_user)
+    return jsonify({'error': 'nope'})
+
+
 if __name__ == "__main__":
     app.run(port=3888, debug=True)
-    
-
