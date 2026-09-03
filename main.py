@@ -94,7 +94,7 @@ def send_login_email():
         user = app.db.FindOne(RingUser, email=email.lower())
         if user:
             user.get_new_login_url()
-            send_slack_message('sending magic link to', email, user.get_last_login_url())
+            send_slack_message('sending magic link to', email)
             app.jobs.AddJob(
                 func=SendEmail_SMTP,
                 kwargs={
