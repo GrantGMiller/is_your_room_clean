@@ -16,7 +16,7 @@ import config
 import daily_jobs
 import ring_token_endpoints
 import ring_webhook
-from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user
+from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
 
 if not os.path.exists("images"):
@@ -95,6 +95,7 @@ def send_login_email():
         if user:
             user.get_new_login_url()
             send_slack_message('sending magic link to', email)
+
             app.jobs.AddJob(
                 func=SendEmail_SMTP,
                 kwargs={
@@ -111,6 +112,12 @@ def send_login_email():
                     ),
                 },
                 errorCallback=send_slack_error,
+            )
+
+            # get the new snapshots cuz the user is prob going to want to see them soon, so lets pre load them
+            app.jobs.AddJob(
+                func=get_snapshots_for_user_id,
+                args=(user['id'],)
             )
 
         # note, if the user was not found, we dont actually send an email, but dont tell them that

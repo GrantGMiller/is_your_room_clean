@@ -294,3 +294,11 @@ def score_cleanliness(image_id):
                 image['isError'] = True
                 image['error'] = str(e)
                 raise e  # raise so that the error is sent via slack
+
+def get_snapshots_for_user_id(id:int):
+    with app.app_context():
+        app.db = cast(Dictabase, app.db)
+        user:RingUser = app.db.FindOne(RingUser, id=int(id))
+        if user:
+            for device in user.get_devices():
+                user.get_snapshot(device['id'])
