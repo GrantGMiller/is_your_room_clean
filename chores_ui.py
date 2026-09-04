@@ -1,3 +1,4 @@
+import datetime
 from typing import cast
 from flask_dictabase import Dictabase
 from flask import Flask, abort, flash, redirect, render_template, request
@@ -5,7 +6,7 @@ from flask import Flask, abort, flash, redirect, render_template, request
 import chores_wizard
 from chores_models import Chore, Person
 import chores_helper
-from ring_user import get_current_user
+from ring_user import RingUser, get_current_user
 
 global app
 def setup(a: Flask):
@@ -80,3 +81,27 @@ def setup(a: Flask):
             persons=chores_helper.get_current_user_persons(),
             chores=chores_helper.get_current_user_chores(),
         )
+
+    @app.route('/chores/settings', methods=["GET", "POST"])
+    def chores_settings():
+        user:RingUser = get_current_user()
+
+        if request.method == "POST":
+            print('request.form=', request.form)
+            for key in ['morning_time', 'afternoon_time', 'evening_time']:
+                if key in request.form:
+                   
+                    user.SetItem(
+                        'chore_settings', 
+                        key, 
+                        # convert the string from the form into a datetime.time object
+                        datetime.datetime.strptime(request.form.get(key), "%H:%M").time().isoformat()
+                        # datetime.datetime.now().time().isoformat()
+                    )
+                    return redirect("/chores/overview")
+        elif request.method == "GET":
+            return render_template(
+                "chores_settings.html",
+                settings=user.get_chore_settings()
+                
+                )

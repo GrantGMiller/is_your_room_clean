@@ -13,7 +13,7 @@ from flask_tools import IsValidEmail, SendEmail_SMTP
 import api
 import chores_ui
 import config
-import daily_jobs
+import repeat_jobs
 import ring_token_endpoints
 import ring_webhook
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
@@ -37,7 +37,7 @@ ring_webhook.setup(app)
 slack_setup(app)
 ring_user_setup(app)
 api.setup(app)
-daily_jobs.setup(app)
+repeat_jobs.setup(app)
 chores_ui.setup(app)
 
 
@@ -96,23 +96,24 @@ def send_login_email():
             user.get_new_login_url()
             send_slack_message('sending magic link to', email)
 
-            app.jobs.AddJob(
-                func=SendEmail_SMTP,
-                kwargs={
-                    "smtpServerURL": config.SES_SMTP_SERVER,
-                    "smtpUsername": config.SES_USERNAME,
-                    "smtpPassword": config.SES_PASSWORD,
-                    "to": email,
-                    "frm": config.ADMINS[0],
-                    "subject": "Login with a Magic Link",
-                    "body": f"Click this link to login.\r{user.get_last_login_url()}",
-                    "html": render_template(
-                        "email_body_magic_link.html",
-                        login_url=user.get_last_login_url(),
-                    ),
-                },
-                errorCallback=send_slack_error,
-            )
+            if sys.platform != 'darwin':
+                app.jobs.AddJob(
+                    func=SendEmail_SMTP,
+                    kwargs={
+                        "smtpServerURL": config.SES_SMTP_SERVER,
+                        "smtpUsername": config.SES_USERNAME,
+                        "smtpPassword": config.SES_PASSWORD,
+                        "to": email,
+                        "frm": config.ADMINS[0],
+                        "subject": "Login with a Magic Link",
+                        "body": f"Click this link to login.\r{user.get_last_login_url()}",
+                        "html": render_template(
+                            "email_body_magic_link.html",
+                            login_url=user.get_last_login_url(),
+                        ),
+                    },
+                    errorCallback=send_slack_error,
+                )
 
             # get the new snapshots cuz the user is prob going to want to see them soon, so lets pre load them
             app.jobs.AddJob(

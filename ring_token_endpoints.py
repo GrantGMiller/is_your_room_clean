@@ -281,6 +281,7 @@ def store_unclaimed_token(
             refresh_token=refresh_token,
             expires_at=expires_at,
             status="unclaimed",
+            app_authorized_at_ms=int(time.time() * 1000)
         )
 
 

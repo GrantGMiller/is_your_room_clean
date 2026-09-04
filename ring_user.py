@@ -2,7 +2,7 @@ import datetime
 import time
 import uuid
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional, TypedDict, cast
 
 import flask_login
 import requests
@@ -20,6 +20,12 @@ AVA_BASE_URL = "https://api.amazonvision.com"
 IMAGE_REQUEST_TIMEOUT = 5 * 60  # (seconds) only request an image every X seconds
 
 
+class ChoreSettings(TypedDict):
+    morning_time: datetime.time.isoformat
+    afternoon_time: datetime.time.isoformat
+    evening_time: datetime.time.isoformat
+
+
 class RingUser(flask_login.UserMixin, BaseTable):
     account_id: str
     access_token: str
@@ -31,8 +37,19 @@ class RingUser(flask_login.UserMixin, BaseTable):
     login_url_expires_at: int  # epoch seconds
     last_image_timestamp: dict  # keep track of the last image requested, only request a new image every IMAGE_REQUEST_TIMEOUT seconds
     api_key: Optional[str]
+    chore_settings: ChoreSettings  # store the user's chore settings
+    app_authorized_at_ms: int  # epoch milliseconds when the app was authorized, used to prevent requesting images before this time
+
+    def get_chore_settings(self) -> ChoreSettings:
+        return self.Get('chore_settings', {
+            # default times
+            'morning_time': datetime.time(hour=6, minute=0).isoformat(),
+            'afternoon_time': datetime.time(hour=12, minute=0).isoformat(),
+            'evening_time': datetime.time(hour=17, minute=0).isoformat(),
+        })
 
     def get_id(self, *a, **k):
+        # needed for flask_login to identify the user
         return self['id']
 
     def __str__(self):
@@ -114,7 +131,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     def make_authenticated_request(self, *args, method='GET', **kwargs):
         headers = kwargs.pop('headers', {})
         headers['Authorization'] = 'Bearer {}'.format(self.get_valid_access_token())
-
+        print('make_authenticated_request', args, headers, kwargs)
         return requests.request(method, *args, headers=headers, **kwargs)
 
     def get_devices(self, include='status,capabilities'):
@@ -186,8 +203,17 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         # the existing images are too old, request a new image
 
+        # ok some weirdness, you cannot request a start_time that is before the app was authorized
+        # so use the start_time or the app creatiion time, whichever is greater
+
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
-        # end_timestamp_ms = int(time.time() * 1000)
+        five_mins_ago_ms = (time.time() * 1000) - (5 * 60 * 60 * 1000)
+        if start_timestamp_ms < self.get('app_authorized_at_ms', five_mins_ago_ms):
+            start_timestamp_ms = self.get('app_authorized_at_ms', five_mins_ago_ms) + 1000
+
+        start_timestamp_ms = int(start_timestamp_ms)  # make sure its an int cuz server will reject a float
+        # end_timestamp_ms = int(time.time() * 1000) # defaults to now
+
         print('grabbing a new snapshot')
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
@@ -295,10 +321,12 @@ def score_cleanliness(image_id):
                 image['error'] = str(e)
                 raise e  # raise so that the error is sent via slack
 
-def get_snapshots_for_user_id(id:int):
+
+def get_snapshots_for_user_id(id: int):
+    # fetch the latest snapshots for all of the users devices
     with app.app_context():
         app.db = cast(Dictabase, app.db)
-        user:RingUser = app.db.FindOne(RingUser, id=int(id))
+        user: RingUser = app.db.FindOne(RingUser, id=int(id))
         if user:
             for device in user.get_devices():
                 user.get_snapshot(device['id'])
