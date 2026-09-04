@@ -131,7 +131,6 @@ class RingUser(flask_login.UserMixin, BaseTable):
     def make_authenticated_request(self, *args, method='GET', **kwargs):
         headers = kwargs.pop('headers', {})
         headers['Authorization'] = 'Bearer {}'.format(self.get_valid_access_token())
-        print('make_authenticated_request', args, headers, kwargs)
         return requests.request(method, *args, headers=headers, **kwargs)
 
     def get_devices(self, include='status,capabilities'):
