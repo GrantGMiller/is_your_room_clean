@@ -207,8 +207,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
         five_mins_ago_ms = (time.time() * 1000) - (5 * 60 * 60 * 1000)
-        if start_timestamp_ms < self.get('app_authorized_at_ms', five_mins_ago_ms):
-            start_timestamp_ms = self.get('app_authorized_at_ms', five_mins_ago_ms) + 1000
+        if start_timestamp_ms < (self.get('app_authorized_at_ms', five_mins_ago_ms) or 0):
+            start_timestamp_ms = (self.get('app_authorized_at_ms', five_mins_ago_ms) or 0) + 1000
 
         start_timestamp_ms = int(start_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now

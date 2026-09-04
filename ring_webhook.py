@@ -45,6 +45,9 @@ def verify_ring_webhook_signature(
     )
 
 
+global app
+
+
 def setup(a: Flask):
     global app
     app = a

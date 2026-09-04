@@ -130,6 +130,12 @@ def send_login_email():
     return render_template("email_input.html", message="Invalid Email Address")
 
 
+@app.route('/logout')
+def logout():
+    flask_login.logout_user()
+    return redirect("/dashboard")
+
+
 @app.route("/image/<device_id>")
 def image_summary(device_id):
     """

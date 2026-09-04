@@ -265,11 +265,8 @@ def mask_email(email):
     return f"{masked}@{domain}"
 
 
-# --- Storage stubs -- replace with your actual persistence layer -------
-
-
 def store_unclaimed_token(
-    account_id: str, email: str, access_token: str, refresh_token: str, expires_at: int
+        account_id: str, email: str, access_token: str, refresh_token: str, expires_at: int
 ):
     app.db = cast(flask_dictabase.Dictabase, app.db)
     with app.app_context():
