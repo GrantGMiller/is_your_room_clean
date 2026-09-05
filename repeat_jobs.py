@@ -24,7 +24,7 @@ def setup(a):
                 hour=0, minute=0, second=0, microsecond=0
             ) - datetime.timedelta(days=1),  # midnight
             func=delete_old_images,
-            days=1,
+            hours=1,
             errorCallback=send_slack_error
         )
 
