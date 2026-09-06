@@ -37,15 +37,52 @@ def setup(a: Flask):
         elif request.method == "POST":
             person_id = request.args.get("id", type=int)
             name = request.form.get("name", "").strip()
+            color = request.form.get("color", "primary")
+            allowed_colors = {
+                "primary",
+                "secondary",
+                "success",
+                "danger",
+                "warning",
+                "info",
+                "light",
+                "dark",
+            }
             if name:
                 person = app.db.FindOne(Person, id=person_id, owner_id=get_current_user()['id'])
                 if not person:
-                    person = app.db.New(Person, name=name, owner_id=get_current_user()['id'])
+                    person = app.db.New(
+                        Person,
+                        name=name,
+                        color=color if color in allowed_colors else "primary",
+                        owner_id=get_current_user()['id'],
+                    )
                 else:
                     person['name'] = name
+                    if color in allowed_colors:
+                        person['color'] = color
+
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify(person.ui_safe())
+
                 return redirect("/chores/overview")
 
         return render_template("chores_person_edit.html", person=person, mode='edit')
+
+    @app.route("/chores/person/delete", methods=["POST"])
+    def delete_person():
+        person_id = request.args.get("id", type=int)
+        user = get_current_user()
+        person = (
+            app.db.FindOne(Person, id=person_id, owner_id=user["id"])
+            if person_id is not None and user
+            else None
+        )
+
+        if person is not None:
+            app.db.Delete(person)
+
+        return redirect("/chores/overview")
 
     @app.route("/chores/edit", methods=["GET", "POST"])
     def edit_chore():

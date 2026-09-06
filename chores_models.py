@@ -16,13 +16,26 @@ RepeatDay = Literal[
     "sunday",
 ]
 RepeatUnit = Literal["day", "week", "month"]
+PersonColor = Literal[
+    "primary", "secondary", "success", "danger", "warning", "info", "light", "dark"
+]
 
 
 class Person(BaseTable):
     name: str
+    color: Optional[PersonColor] = "primary"
     chores_assigned: List["Chore"] = []
     chores_completed: List["Chore"] = []
     owner_id: int
+
+    def ui_safe(self):
+        ret = {
+            "id": self.get("id", None),
+            "name": self.get("name", None),
+            "color": self.get("color", None),
+            "owner_id": self.get("owner_id", None),
+        }
+        return ret
 
     def get_number_of_chores_assigned(self) -> int:
         num = 0

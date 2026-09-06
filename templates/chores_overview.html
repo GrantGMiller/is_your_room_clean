@@ -37,21 +37,22 @@
         </div>
         <div class="row g-3">
           {% for person in persons %}
-            <div class="col-12 col-sm-6 col-xl-3">
-              <article class="card h-100 shadow-sm">
+            <div
+              class="col-12 col-sm-6 col-xl-3 person-card"
+              data-edit-url="/chores/person/edit?id={{ person.id }}"
+              role="link"
+              tabindex="0"
+              aria-label="Edit {{ person.name }}"
+            >
+              <article
+                class="card h-100 shadow-sm border-{{ person.get('color', 'primary') }} bg-{{ person.get('color', 'primary') }}-subtle"
+                style="cursor: pointer"
+              >
                 <div class="card-body">
                   <div
                     class="d-flex justify-content-between align-items-start mb-3"
                   >
                     <h2 class="h5 mb-0">{{ person.name }}</h2>
-                    <a
-                      class="btn btn-sm btn-outline-secondary"
-                      href="/chores/person/edit?id={{ person.id }}"
-                      aria-label="Edit {{ person.name }}"
-                      title="Edit {{ person.name }}"
-                    >
-                      <span aria-hidden="true">&#9998;</span>
-                    </a>
                   </div>
                   <div class="d-flex justify-content-between align-items-end">
                     <div>
@@ -61,7 +62,7 @@
                       <div class="text-muted small">assigned</div>
                     </div>
                     <div class="text-end">
-                      <div class="h4 mb-0">
+                      <div class="display-6 lh-1">
                         {{ person.get_number_of_chores_incomplete() }}
                       </div>
                       <div class="text-muted small">incomplete</div>
@@ -213,12 +214,30 @@
     <script>
       const searchInput = document.getElementById("chore-search");
       const choreCards = document.querySelectorAll(".chore-card");
+      const personCards = document.querySelectorAll(".person-card");
       const noResults = document.getElementById("no-results");
       const hiddenChoreCount = document.getElementById("hidden-chore-count");
 
       function openChoreEditor(card) {
         window.location.href = card.dataset.editUrl;
       }
+
+      function openPersonEditor(card) {
+        window.location.href = card.dataset.editUrl;
+      }
+
+      personCards.forEach(function (card) {
+        card.addEventListener("click", function () {
+          openPersonEditor(card);
+        });
+
+        card.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openPersonEditor(card);
+          }
+        });
+      });
 
       choreCards.forEach(function (card) {
         card.addEventListener("click", function (event) {

@@ -11,9 +11,10 @@
       {% endif %}
       | Is Your Room Clean
     </title>
+    {% include "js_css.html" %}
   </head>
   <body class="bg-light">
-    {% include "js_css.html" %} {% include "navbar.html" %}
+    {% include "navbar.html" %}
 
     <main class="container py-5">
       <div
@@ -23,7 +24,7 @@
           {% if mode == 'add' %}
             Add Person
           {% else %}
-            Edit {{ person.name }}
+            Edit "{{ person.name }}"
           {% endif %}
         </h1>
         <a class="btn btn-outline-secondary" href="/chores/overview"
@@ -44,15 +45,87 @@
           maxlength="200"
           required
         />
+        <label
+          class="form-label fw-semibold mt-3 d-inline-block px-2 py-1 rounded border"
+          id="person-color-label"
+          for="person-color"
+        >
+          Color
+        </label>
+        <select class="form-select" name="color" id="person-color">
+          {% for color in ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"] %}
+            <option
+              value="{{ color }}"
+              {% if (person.get('color', 'primary') if person else 'primary') == color %}selected{% endif %}
+            >
+              {{ color | capitalize }}
+            </option>
+          {% endfor %}
+        </select>
+        {% if mode == 'add' %}
+          <button class="btn btn-primary mt-3" type="submit">Save</button>
+        {% endif %}
       </form>
+
+      {% if mode == 'edit' %}
+        <form
+          class="mt-5"
+          action="/chores/person/delete?id={{ person.id }}"
+          method="post"
+          onsubmit="return confirm('Are you sure you want to delete this person? This cannot be undone.');"
+        >
+          <button class="btn btn-outline-danger" type="submit">
+            Delete person
+          </button>
+        </form>
+      {% endif %}
     </main>
     <script>
       const personForm = document.querySelector("form");
       const personName = document.getElementById("person-name");
+      const personColor = document.getElementById("person-color");
+      const personColorLabel = document.getElementById("person-color-label");
 
-      personName.addEventListener("change", () => {
-        personForm.requestSubmit();
-      });
+      function updateColorLabel() {
+        const color = personColor.value;
+        personColorLabel.classList.remove(
+          "bg-primary-subtle",
+          "bg-secondary-subtle",
+          "bg-success-subtle",
+          "bg-danger-subtle",
+          "bg-warning-subtle",
+          "bg-info-subtle",
+          "bg-light-subtle",
+          "bg-dark-subtle",
+          "border-primary",
+          "border-secondary",
+          "border-success",
+          "border-danger",
+          "border-warning",
+          "border-info",
+          "border-light",
+          "border-dark",
+        );
+        personColorLabel.classList.add(
+          `bg-${color}-subtle`,
+          `border-${color}`,
+        );
+      }
+
+      function savePerson() {
+        fetch(personForm.action, {
+          method: "POST",
+          body: new FormData(personForm),
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        }).catch((error) => console.error("Error saving person:", error));
+      }
+
+      {% if mode == 'edit' %}
+        personName.addEventListener("change", savePerson);
+        personColor.addEventListener("change", savePerson);
+      {% endif %}
+      personColor.addEventListener("change", updateColorLabel);
+      updateColorLabel();
     </script>
   </body>
 </html>
