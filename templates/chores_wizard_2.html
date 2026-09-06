@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assign a Chore | Is Your Room Clean</title>
+    <style>
+      .person-check:checked + label {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.2);
+      }
+
+      .person-check {
+        width: 1.15rem;
+        height: 1.15rem;
+        flex: 0 0 auto;
+      }
+
+      .person-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .person-row label {
+        flex: 1;
+        margin-bottom: 0;
+      }
+
+      .mode-check:checked + label {
+        border-color: var(--bs-primary);
+        background-color: var(--bs-primary-bg-subtle);
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    {% include "js_css.html" %} {% include "flash_messages.html" %}
+    {%
+      include
+      "navbar.html"
+    %}
+
+    <main class="container py-5" style="max-width: 720px">
+      <div class="mb-4">
+        <p class="text-uppercase text-muted small fw-semibold mb-2">
+          New chore · Step 2
+        </p>
+        <h1 class="h2 mb-2">
+          Who should "{{ chore.get('name', None) or 'this chore' }}"be assigned
+          to?
+        </h1>
+      </div>
+
+      <form
+        action="/chores/wizard/2/{{ chore.get('id', None) }}"
+        method="post"
+        id="assignment-form"
+      >
+        <fieldset>
+          <legend class="h5 mb-3">
+            Select one or more people, then choose how the assignment should
+            work.
+          </legend>
+          {% if persons %}
+            <div class="vstack gap-2">
+              {% for person in persons %}
+                <div class="person-row">
+                  <input
+                    class="person-check"
+                    type="checkbox"
+                    name="person_ids"
+                    id="person-{{ loop.index }}"
+                    value="{{ person.id }}"
+                  />
+                  <label
+                    class="card card-body py-3 flex-row align-items-center gap-3"
+                    for="person-{{ loop.index }}"
+                  >
+                    <span>{{ person.name }}</span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">
+              No people are available to assign this chore to.
+            </p>
+          {% endif %}
+        </fieldset>
+        <hr />
+        <fieldset class="mt-4">
+          <legend class="h5 mb-3">Assignment method</legend>
+          <div class="vstack gap-2">
+            <div>
+              <input
+                class="mode-check visually-hidden"
+                type="radio"
+                name="assignment_mode"
+                id="mode-all"
+                value="all"
+                required
+              />
+              <label class="card card-body" for="mode-all">
+                <span class="fw-semibold">Assign to everyone selected</span>
+
+                <span class="text-muted small mt-1">
+                  Each person will need to complete this chore individually.
+                </span>
+                <span class="text-muted small mt-1">
+                  Use this for chores like "Clean your individual room"
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <input
+                class="mode-check visually-hidden"
+                type="radio"
+                name="assignment_mode"
+                id="mode-random"
+                value="random"
+              />
+              <label class="card card-body" for="mode-random">
+                <span class="fw-semibold">Choose one at random</span>
+                <span class="text-muted small mt-1">
+                  One person from the selected group will be randomly chosen for
+                  this chore. </span
+                ><span class="text-muted small mt-1">
+                  Use this to avoid the "Why do <b><u>I</u></b> always have to
+                  do that chore?" problem.
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <input
+                class="mode-check visually-hidden"
+                type="radio"
+                name="assignment_mode"
+                id="mode-first-done"
+                value="first-done"
+              />
+              <label class="card card-body" for="mode-first-done">
+                <span class="fw-semibold">First done wins</span>
+                <span class="text-muted small mt-1">
+                  Everyone selected will receive it, but only the first person
+                  to complete it gets the bonus prize.
+                </span>
+                <span class="text-muted small mt-1">
+                  Use this for chores that are important but no one wants to do.
+                </span>
+              </label>
+            </div>
+          </div>
+        </fieldset>
+
+        <section class="alert alert-info mt-4" id="mode-explanation" hidden>
+          <p class="fw-semibold mb-1" id="mode-title"></p>
+          <p class="mb-0" id="mode-text"></p>
+        </section>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <a class="btn btn-outline-secondary" href="/chore/wizard_1">Back</a>
+          <button class="btn btn-primary" type="submit">Continue</button>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      const assignmentForm = document.getElementById("assignment-form");
+      const modeExplanation = document.getElementById("mode-explanation");
+      const modeTitle = document.getElementById("mode-title");
+      const modeText = document.getElementById("mode-text");
+
+      const modeDetails = {
+        all: {
+          title: "Everyone selected will get this chore.",
+          text: "Use this when each person should complete their own version of the chore.",
+        },
+        random: {
+          title: "One person will be selected at random.",
+          text: "Use this to share a chore fairly across the selected people.",
+        },
+        "first-done": {
+          title: "Everyone selected will receive the chore.",
+          text: "The first person to complete it will receive the bonus prize. Bonus prizes are configured elsewhere.",
+        },
+      };
+
+      assignmentForm.addEventListener("change", function () {
+        const selectedMode = assignmentForm.elements.assignment_mode.value;
+        const details = modeDetails[selectedMode];
+
+        if (details) {
+          modeExplanation.hidden = false;
+          modeTitle.textContent = details.title;
+          modeText.textContent = details.text;
+        }
+      });
+
+      assignmentForm.addEventListener("submit", function (event) {
+        if (!assignmentForm.querySelector('input[name="person_ids"]:checked')) {
+          event.preventDefault();
+          modeExplanation.hidden = false;
+          modeTitle.textContent = "Select at least one person.";
+          modeText.textContent =
+            "Choose who should be considered for this assignment.";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chore settings | Is Your Room Clean</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
+    <main class="container py-5">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
+      >
+        <div>
+          <p class="text-uppercase text-muted small fw-semibold mb-2">
+            Chore Settings
+          </p>
+          <h1 class="h2 mb-1">Assignment times</h1>
+          <p class="text-muted mb-0">
+            Choose when each part of your daily chore schedule begins.
+          </p>
+        </div>
+        <a class="btn btn-outline-secondary" href="/chores/overview"
+          >Back to chores overview</a
+        >
+      </div>
+
+      <section
+        class="card shadow-sm"
+        aria-labelledby="assignment-times-heading"
+      >
+        <div class="card-body p-4">
+          <h2 class="h5 mb-1" id="assignment-times-heading">Daily schedule</h2>
+          <p class="text-muted mb-4">
+            Chores marked morning, afternoon, or evening will use these times.
+          </p>
+
+          <form method="post">
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label class="form-label" for="morning-time">Morning</label>
+                <input
+                  class="form-control form-control-lg"
+                  type="time"
+                  step="60"
+                  id="morning-time"
+                  name="morning_time"
+                  value="{{ settings.get('morning_time','')[:5] }}"
+                  required
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" for="afternoon-time">Afternoon</label>
+                <input
+                  class="form-control form-control-lg"
+                  type="time"
+                  step="60"
+                  id="afternoon-time"
+                  name="afternoon_time"
+                  value="{{ (settings.get('afternoon_time','')[:5]) }}"
+                  required
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" for="evening-time">Evening</label>
+                <input
+                  class="form-control form-control-lg"
+                  type="time"
+                  step="60"
+                  id="evening-time"
+                  name="evening_time"
+                  value="{{ settings.get('evening_time','')[:5] }}"
+                  required
+                />
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button class="btn btn-primary" type="submit">Save times</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

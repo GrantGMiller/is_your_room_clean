@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>All rooms are clean</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      background-color: #f3f6f9;
+      color: #243447;
+      font-family: Arial, Helvetica, sans-serif;
+    "
+  >
+    <div style="padding: 32px 16px">
+      <div style="width: 100%; max-width: 680px; margin: 0 auto">
+        <div
+          style="
+            padding: 28px 24px;
+            background-color: #ffffff;
+            border-top: 5px solid #198754;
+            border-radius: 10px;
+          "
+        >
+          <div
+            style="
+              margin-bottom: 20px;
+              color: #198754;
+              font-size: 13px;
+              font-weight: bold;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+            "
+          >
+            Is Your Room Clean
+          </div>
+
+          <h1
+            style="
+              margin: 0 0 12px;
+              color: #172b4d;
+              font-size: 28px;
+              line-height: 1.25;
+            "
+          >
+            All rooms are {{ cleanliness_threshold }}% clean or better
+          </h1>
+          <p
+            style="
+              margin: 0 0 24px;
+              color: #52606d;
+              font-size: 16px;
+              line-height: 1.6;
+            "
+          >
+            Great work. Here is the latest cleanliness check for every room.
+          </p>
+
+          {% for room in rooms %}
+            {% set score = room.cleanliness | int %}
+            {%
+              if
+              score < 40
+            %}
+              {% set accent_color = '#dc3545' %}
+              {%
+                set badge_color =
+                '#f8d7da'
+              %}
+              {% set badge_text_color = '#842029' %}
+            {% elif score < 70 %}
+              {% set accent_color = '#fd7e14' %}
+              {% set badge_color = '#fff3cd' %}
+              {% set badge_text_color = '#664d03' %}
+            {% else %}
+              {%
+                set
+                accent_color = '#198754'
+              %}
+              {% set badge_color = '#d1e7dd' %}
+              {%
+                set
+                badge_text_color = '#0f5132'
+              %}
+            {% endif %}
+
+            <table
+              role="presentation"
+              cellpadding="0"
+              cellspacing="0"
+              width="100%"
+              style="margin: 0 0 18px; border: 1px solid #dfe5eb; border-left: 5px solid {{ accent_color }}; border-radius: 6px; overflow: hidden;"
+            >
+              <tr>
+                <td style="padding: 0">
+                  <img
+                    src="{{ room.image_url }}"
+                    width="100%"
+                    alt="{{ room.name }} snapshot"
+                    style="
+                    display: block;
+                    width: 100%;
+                    height: auto;
+                    max-height: 360px;
+                    object-fit: cover;
+                    border: 0;
+                  "
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 16px 18px 14px">
+                  <table
+                    role="presentation"
+                    cellpadding="0"
+                    cellspacing="0"
+                    width="100%"
+                  >
+                    <tr>
+                      <td
+                        style="
+                        color: #172b4d;
+                        font-size: 19px;
+                        font-weight: bold;
+                        line-height: 1.3;
+                      "
+                      >
+                        {{ room.name }}
+                      </td>
+                      <td align="right" style="white-space: nowrap">
+                        <span
+                          style="display: inline-block; padding: 6px 10px; background-color: {{ badge_color }}; border-radius: 4px; color: {{ badge_text_color }}; font-size: 14px; font-weight: bold; line-height: 1;"
+                          >{{ score }}% Clean</span
+                        >
+                      </td>
+                    </tr>
+                  </table>
+                  {% if room.summary %}
+                    <p
+                      style="
+                    margin: 10px 0 0;
+                    color: #52606d;
+                    font-size: 14px;
+                    line-height: 1.5;
+                  "
+                    >
+                      {{ room.summary }}
+                    </p>
+                  {% endif %}
+                </td>
+              </tr>
+            </table>
+          {% else %}
+            <p
+              style="
+              margin: 0 0 24px;
+              padding: 16px;
+              background-color: #f8f9fa;
+              color: #52606d;
+              font-size: 15px;
+              line-height: 1.5;
+            "
+            >
+              No room snapshots were available for this check.
+            </p>
+          {% endfor %}
+
+          <p
+            style="
+              margin: 24px 0 0;
+              color: #7b8794;
+              font-size: 13px;
+              line-height: 1.5;
+            "
+          >
+            This is an automated message from Is Your Room Clean.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

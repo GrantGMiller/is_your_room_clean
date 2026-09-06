@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      {% if mode == 'add' %}
+        Add Person
+      {% else %}
+        Edit {{ person.name }}
+      {% endif %}
+      | Is Your Room Clean
+    </title>
+  </head>
+  <body class="bg-light">
+    {% include "js_css.html" %} {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
+      >
+        <h1 class="h2 mb-0">
+          {% if mode == 'add' %}
+            Add Person
+          {% else %}
+            Edit {{ person.name }}
+          {% endif %}
+        </h1>
+        <a class="btn btn-outline-secondary" href="/chores/overview"
+          >Back to chores overview</a
+        >
+      </div>
+      <form
+        action="/chores/person/edit{% if mode == 'edit' %}?id={{ person.id }}{% endif %}"
+        method="post"
+      >
+        <label class="form-label fw-semibold" for="person-name">Name</label>
+        <input
+          class="form-control"
+          type="text"
+          name="name"
+          id="person-name"
+          value="{% if person %}{{ person.name }}{% endif %}"
+          maxlength="200"
+          required
+        />
+      </form>
+    </main>
+    <script>
+      const personForm = document.querySelector("form");
+      const personName = document.getElementById("person-name");
+
+      personName.addEventListener("change", () => {
+        personForm.requestSubmit();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chores | Is Your Room Clean</title>
+    <style>
+      .chore-card {
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease;
+      }
+
+      .chore-card.is-hidden {
+        display: none;
+      }
+
+      .chore-kind {
+        text-transform: capitalize;
+      }
+
+      .schedule-text {
+        text-transform: capitalize;
+      }
+    </style>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <section class="mb-5" aria-labelledby="today-heading">
+        <div class="mb-3">
+          <h1 class="h2 mb-1" id="today-heading">People</h1>
+          <p class="text-muted mb-0">A quick view of today&apos;s progress.</p>
+        </div>
+        <div class="row g-3">
+          {% for person in persons %}
+            <div class="col-12 col-sm-6 col-xl-3">
+              <article class="card h-100 shadow-sm">
+                <div class="card-body">
+                  <div
+                    class="d-flex justify-content-between align-items-start mb-3"
+                  >
+                    <h2 class="h5 mb-0">{{ person.name }}</h2>
+                    <a
+                      class="btn btn-sm btn-outline-secondary"
+                      href="/chores/person/edit?id={{ person.id }}"
+                      aria-label="Edit {{ person.name }}"
+                      title="Edit {{ person.name }}"
+                    >
+                      <span aria-hidden="true">&#9998;</span>
+                    </a>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-end">
+                    <div>
+                      <div class="display-6 lh-1">
+                        {{ person.chores_assigned | default([]) | length }}
+                      </div>
+                      <div class="text-muted small">assigned today</div>
+                    </div>
+                    <div class="text-end">
+                      <div class="h4 mb-0">
+                        {{ person.chores_completed | default([]) | length }}
+                      </div>
+                      <div class="text-muted small">completed</div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="mt-3">
+          <a class="btn btn-outline-primary" href="/chores/person/add">
+            Add person
+          </a>
+        </div>
+      </section>
+
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
+      >
+        <div>
+          <p class="text-uppercase text-muted small fw-semibold mb-2">Chores</p>
+          <h1 class="h2 mb-1">Your chore list</h1>
+          <p class="text-muted mb-0">
+            Find a chore and see its assignment at a glance.
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <a
+            class="btn btn-outline-secondary"
+            href="/chores/settings"
+            aria-label="chore settings"
+            title="chore settings"
+          >
+            <span role="img" aria-label="chore settings">&#9881;</span>
+          </a>
+          <a class="btn btn-primary" href="/chores/wizard/start">Add chore</a>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="visually-hidden" for="chore-search">Filter chores</label>
+        <div class="input-group input-group-lg">
+          <span class="input-group-text" aria-hidden="true">&#128269;</span>
+          <input
+            class="form-control"
+            type="search"
+            id="chore-search"
+            placeholder="Filter chores"
+            autocomplete="off"
+          />
+        </div>
+        <div
+          class="form-text text-muted"
+          id="hidden-chore-count"
+          aria-live="polite"
+        >
+          0 chores hidden
+        </div>
+      </div>
+
+      <div class="row g-3" id="chore-list">
+        {% for chore in chores %}
+          <div
+            class="col-12 col-md-6 col-xl-4 chore-card"
+            data-search="{{ chore.get('name', None) }} {{ chore.get('kind', None) }} {{ chore.get_assigned_to_ids() | join(',') }}"
+            data-edit-url="/chores/edit?id={{ chore.get('id', None) }}"
+            role="link"
+            tabindex="0"
+            aria-label="Edit {{ chore.get('name', None) }}"
+          >
+            <article class="card h-100 shadow-sm" style="cursor: pointer">
+              <div class="card-body d-flex flex-column">
+                <div
+                  class="d-flex justify-content-between align-items-start gap-3 mb-3"
+                >
+                  <h2 class="h5 mb-0">{{ chore.get('name', None) }}</h2>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-secondary chore-kind"
+                      >{{ chore.get('kind', None) }}</span
+                    >
+                    <span
+                      class="badge {% if chore.get('assignment_mode') == 'random' %}text-bg-danger{% elif chore.get('assignment_mode') == 'first-done' %}text-bg-warning{% elif chore.get('assignment_mode') == 'all' %}text-bg-success{% else %}text-bg-secondary{% endif %}"
+                      >{{ chore.get("assignment_mode", "") }}</span
+                    >
+                    <a
+                      class="btn btn-sm btn-outline-secondary"
+                      href="/chores/edit?id={{ chore.get('id', None) }}"
+                      aria-label="Edit {{ chore.get('name', None) }}"
+                      title="Edit {{ chore.get('name', None) }}"
+                    >
+                      <span aria-hidden="true">&#9998;</span>
+                    </a>
+                  </div>
+                </div>
+
+                <dl class="row small mb-0 mt-auto">
+                  <dt class="col-5 text-muted fw-normal">Currently Assigned</dt>
+                  <dd class="col-7 text-end mb-2">
+                    {% for person in chore.get_assigned_to_persons() %}
+                      {{ person.name }}
+                    {% else %}
+                      <span class="text-muted">---</span>
+                    {% endfor %}
+                  </dd>
+                  <dt class="col-5 text-muted fw-normal">Schedule</dt>
+                  <dd class="col-7 text-end mb-0">
+                    {% if chore.get('schedule_for', None) %}
+                      <span class="d-block text-muted"
+                        >{{ chore.get('schedule_for', None) }}</span
+                      >
+                    {% elif chore['repeat_interval'] %}
+                      <span class="d-block text-muted schedule-text">
+                        {% if chore["repeat_interval"] == "other" %}
+                          Every {{ chore["repeat_every_number_of"] }}
+                          {{ chore["repeat_units"] }}(s)
+                        {% else %}
+                          {{ chore["repeat_interval"] }}{% if chore["repeat_day_of_week"] %}
+                            , {{ chore["repeat_day_of_week"] }}
+                          {% endif %}{% if chore["repeat_time_of_day"] %}
+                            , {{ chore["repeat_time_of_day"] }}
+                          {% endif %}{% if chore["repeat_time"] %}
+                            at {{ chore["repeat_time"] }}
+                          {% endif %}
+                        {% endif %}
+                      </span>
+                    {% else %}
+                      <span class="d-block text-muted">Schedule not set</span>
+                    {% endif %}
+                  </dd>
+                </dl>
+              </div>
+            </article>
+          </div>
+        {% else %}
+          <div class="col-12" id="no-chores">
+            <div class="alert alert-light border mb-0">
+              No chores have been created yet.
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="alert alert-light border mt-3" id="no-results" hidden>
+        No chores match your filter.
+      </div>
+    </main>
+
+    <script>
+      const searchInput = document.getElementById("chore-search");
+      const choreCards = document.querySelectorAll(".chore-card");
+      const noResults = document.getElementById("no-results");
+      const hiddenChoreCount = document.getElementById("hidden-chore-count");
+
+      function openChoreEditor(card) {
+        window.location.href = card.dataset.editUrl;
+      }
+
+      choreCards.forEach(function (card) {
+        card.addEventListener("click", function (event) {
+          if (event.target.closest("a, button")) {
+            return;
+          }
+
+          openChoreEditor(card);
+        });
+
+        card.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openChoreEditor(card);
+          }
+        });
+      });
+
+      searchInput.addEventListener("input", function () {
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleCards = 0;
+
+        choreCards.forEach(function (card) {
+          const matches = card.dataset.search.toLowerCase().includes(query);
+          card.classList.toggle("is-hidden", !matches);
+          if (matches) {
+            visibleCards += 1;
+          }
+        });
+
+        noResults.hidden = visibleCards > 0 || choreCards.length === 0;
+        const hiddenCards = choreCards.length - visibleCards;
+        hiddenChoreCount.textContent = `${hiddenCards} ${hiddenCards === 1 ? "chore" : "chores"} hidden`;
+      });
+    </script>
+  </body>
+</html>
