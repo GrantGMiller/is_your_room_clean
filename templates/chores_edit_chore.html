@@ -308,13 +308,31 @@
         </fieldset>
         <div class="mt-4">
           <label class="form-label h5 mb-3" for="chore-tags">Tags</label>
+          <div class="d-flex flex-wrap gap-2 mb-2" id="tag-list">
+            {% for tag in chore.Get('tags', []) or [] %}
+              {% if tag %}
+              <button
+                class="btn btn-sm text-bg-secondary tag-badge"
+                type="button"
+                data-tag="{{ tag }}"
+                aria-label="Remove {{ tag }} tag"
+              >
+                {{ tag }} <span aria-hidden="true">&times;</span>
+              </button>
+              {% endif %}
+            {% endfor %}
+          </div>
           <input
             class="form-control"
             type="text"
-            name="tags"
             id="chore-tags"
-            value="{{ chore.get('tags', None) | default([]) | join(', ') }}"
-            placeholder="eg. 'School', 'Dance', 'Soccer'"
+            placeholder="Type a tag and press Enter"
+          />
+          <input
+            type="hidden"
+            name="tags"
+            id="chore-tags-value"
+            value="{{ (chore.Get('tags', []) or []) | join(', ') }}"
           />
         </div>
       </form>
@@ -352,6 +370,9 @@
       const customInterval = document.getElementById("custom-interval");
       const repeatEvery = document.getElementById("repeat-every-number-of");
       const repeatUnit = document.getElementById("repeat-units");
+      const tagInput = document.getElementById("chore-tags");
+      const tagList = document.getElementById("tag-list");
+      const tagValue = document.getElementById("chore-tags-value");
 
       function updateFields() {
         const isOneTime = form.elements.kind.value === "one-time";
@@ -392,8 +413,91 @@
         }).catch((error) => console.error("Error saving chore:", error));
       }
 
+      function getTags() {
+        return Array.from(tagList.querySelectorAll(".tag-badge")).map(
+          (badge) => badge.dataset.tag,
+        );
+      }
+
+      function tagColorClass(tag) {
+        const normalizedTag = tag.trim()
+        let hash = normalizedTag[0].charCodeAt(0);
+
+        const colors = [
+          "text-bg-primary",
+          "text-bg-success",
+          "text-bg-danger",
+          "text-bg-warning",
+          "text-bg-info",
+          "text-bg-dark",
+        ];
+        return colors[hash % colors.length];
+      }
+
+      function applyTagColor(badge) {
+        badge.classList.remove(
+          "text-bg-primary",
+          "text-bg-success",
+          "text-bg-danger",
+          "text-bg-warning",
+          "text-bg-info",
+          "text-bg-dark",
+          "text-bg-secondary",
+        );
+        badge.classList.add(tagColorClass(badge.dataset.tag));
+      }
+
+      document.querySelectorAll(".tag-badge").forEach(applyTagColor);
+
+      function saveTags() {
+        tagValue.value = getTags().join(", ");
+        saveChore();
+      }
+
+      function addTag(tag) {
+        const normalizedTag = tag.trim();
+        if (!normalizedTag || getTags().includes(normalizedTag)) {
+          return;
+        }
+
+        const badge = document.createElement("button");
+        badge.className = "btn btn-sm text-bg-secondary tag-badge";
+        badge.type = "button";
+        badge.dataset.tag = normalizedTag;
+        badge.setAttribute("aria-label", `Remove ${normalizedTag} tag`);
+        badge.append(document.createTextNode(`${normalizedTag} `));
+        const removeIcon = document.createElement("span");
+        removeIcon.setAttribute("aria-hidden", "true");
+        removeIcon.textContent = "\u00d7";
+        badge.append(removeIcon);
+        applyTagColor(badge);
+        tagList.appendChild(badge);
+        tagInput.value = "";
+        saveTags();
+      }
+
+      tagInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addTag(tagInput.value);
+        }
+      });
+
+      tagList.addEventListener("click", (event) => {
+        const badge = event.target.closest(".tag-badge");
+        if (!badge) {
+          return;
+        }
+
+        badge.remove();
+        saveTags();
+      });
+
       function scheduleSave(event) {
-        if (event.target.classList.contains("person-check")) {
+        if (
+          event.target.classList.contains("person-check") ||
+          event.target === tagInput
+        ) {
           return;
         }
 

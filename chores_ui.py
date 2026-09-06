@@ -1,8 +1,7 @@
 import datetime
-
-import pytz
 from typing import cast
 
+import pytz
 from flask import Flask, flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
 
@@ -51,12 +50,7 @@ def setup(a: Flask):
     @app.route("/chores/edit", methods=["GET", "POST"])
     def edit_chore():
         chore_id = request.args.get("id", type=int)
-        user = get_current_user()
-        chore = (
-            app.db.FindOne(Chore, id=chore_id, owner_id=user["id"])
-            if chore_id is not None and user
-            else None
-        )
+        chore = chores_helper.get_current_user_chore(chore_id)
 
         if chore is None:
             flash('Chore not found', 'danger')
@@ -73,10 +67,19 @@ def setup(a: Flask):
                 "repeat_time",
                 "repeat_units",
                 "assignment_mode",
-                "tags",
             ]:
                 if key in request.form:
                     chore[key] = request.form.get(key)
+
+            if "tags" in request.form:
+                tags = request.form.get("tags", "").split(",")
+                # make sure the tags contain text
+                tags = [t.strip() for t in tags]
+                new_tags = []
+                for tag in tags:
+                    if tag:
+                        new_tags.append(tag)
+                chore.Set('tags', new_tags)
 
             if "repeat_every_number_of" in request.form:
                 chore["repeat_every_number_of"] = request.form.get(
@@ -84,7 +87,6 @@ def setup(a: Flask):
                 )
 
             return jsonify(chore.ui_safe())
-
 
         return render_template(
             "chores_edit_chore.html",
@@ -136,7 +138,7 @@ def setup(a: Flask):
                 user['timezone'] = timezone
 
             user['enable_daylight_savings'] = (
-                request.form.get("enable_daylight_savings") == "on"
+                    request.form.get("enable_daylight_savings") == "on"
             )
 
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":

@@ -56,15 +56,15 @@
                   <div class="d-flex justify-content-between align-items-end">
                     <div>
                       <div class="display-6 lh-1">
-                        {{ person.chores_assigned | default([]) | length }}
+                        {{ person.get_number_of_chores_assigned() }}
                       </div>
-                      <div class="text-muted small">assigned today</div>
+                      <div class="text-muted small">assigned</div>
                     </div>
                     <div class="text-end">
                       <div class="h4 mb-0">
-                        {{ person.chores_completed | default([]) | length }}
+                        {{ person.get_number_of_chores_incomplete() }}
                       </div>
-                      <div class="text-muted small">completed</div>
+                      <div class="text-muted small">incomplete</div>
                     </div>
                   </div>
                 </div>

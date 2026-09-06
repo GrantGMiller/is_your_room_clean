@@ -21,9 +21,9 @@ IMAGE_REQUEST_TIMEOUT = 5 * 60  # (seconds) only request an image every X second
 
 
 class ChoreSettings(TypedDict):
-    morning_time: datetime.time.isoformat
-    afternoon_time: datetime.time.isoformat
-    evening_time: datetime.time.isoformat
+    morning_time: str  # datetime.time.isoformat()
+    afternoon_time: str  # datetime.time.isoformat()
+    evening_time: str  # datetime.time.isoformat()
 
 
 class RingUser(flask_login.UserMixin, BaseTable):

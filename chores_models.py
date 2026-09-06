@@ -24,6 +24,27 @@ class Person(BaseTable):
     chores_completed: List["Chore"] = []
     owner_id: int
 
+    def get_number_of_chores_assigned(self) -> int:
+        num = 0
+        for chore in self.app.db.FindAll(Chore, owner_id=self['owner_id']):
+            if self['id'] in chore.get_assigned_to_ids():
+                num += 1
+        return num
+
+    def get_number_of_chores_completed(self) -> int:
+        num = 0
+        for chore in self.app.db.FindAll(Chore, owner_id=self['owner_id']):
+            if self['id'] in chore.Get('completed_by', []):
+                num += 1
+        return num
+
+    def get_number_of_chores_incomplete(self) -> int:
+        num = 0
+        for chore in self.app.db.FindAll(Chore, owner_id=self['owner_id']):
+            if self['id'] in chore.get_assigned_to_ids() and self['id'] not in chore.Get('completed_by', []):
+                num += 1
+        return num
+
 
 Assignees = List[Person]
 
@@ -101,7 +122,19 @@ class Chore(BaseTable):
         ]
 
     def add_tag(self, tag: str):
-        self.Append('tags', tag)
+        self.Append('tags', tag, allowDuplicates=False)
 
     def remove_tag(self, tag: str):
-        self.Remove('tags', tag)
+        self.Remove('tags', tag, removeAll=True)
+
+    def mark_completed_by(self, person_id: int) -> None:
+        '''
+        Mark the chore as completed by a specific person.
+        '''
+        self.Append('completed_by', person_id, allowDuplicates=False)
+
+    def mark_incomplete_by(self, person_id: int) -> None:
+        '''
+        Mark the chore as incomplete by a specific person.
+        '''
+        self.Remove('completed_by', person_id, removeAll=True)
