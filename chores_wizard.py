@@ -26,11 +26,13 @@ def setup(app: Flask):
                 chore_fields.update(
                     {
                         "repeat_interval": request.form.get("repeat_interval"),
-                        "repeat_day": request.form.get("repeat_day"),
+                        "repeat_day_of_week": request.form.get("repeat_day_of_week"),
                         "repeat_time_of_day": request.form.get("repeat_time_of_day"),
                         "repeat_time": request.form.get("repeat_time"),
-                        "repeat_every": request.form.get("repeat_every", type=int),
-                        "repeat_unit": request.form.get("repeat_unit"),
+                        "repeat_every_number_of": request.form.get(
+                            "repeat_every_number_of", type=int
+                        ),
+                        "repeat_units": request.form.get("repeat_units"),
                     }
                 )
 

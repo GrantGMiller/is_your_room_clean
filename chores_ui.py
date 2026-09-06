@@ -30,7 +30,8 @@ def setup(a: Flask):
             person_id = request.args.get("id", type=int)
             person = app.db.FindOne(Person, id=person_id,
                                     owner_id=get_current_user()['id']) if person_id is not None else None
-            return render_template("chores_person_edit.html", person=person, mode='add')
+            mode = 'edit' if person is not None else 'add'
+            return render_template("chores_person_edit.html", person=person, mode=mode)
 
         elif request.method == "POST":
             person_id = request.args.get("id", type=int)
@@ -39,6 +40,8 @@ def setup(a: Flask):
                 person = app.db.FindOne(Person, id=person_id, owner_id=get_current_user()['id'])
                 if not person:
                     person = app.db.New(Person, name=name, owner_id=get_current_user()['id'])
+                else:
+                    person['name'] = name
                 return redirect("/chores/overview")
 
         return render_template("chores_person_edit.html", person=person, mode='edit')
@@ -56,6 +59,30 @@ def setup(a: Flask):
         if chore is None:
             flash('Chore not found', 'danger')
             return redirect("/chores/overview")
+        print('request.form=', request.form)
+        if request.method == "POST":
+            for key in [
+                "name",
+                "kind",
+                "schedule_for",
+                "repeat_interval",
+                "repeat_day_of_week",
+                "repeat_time_of_day",
+                "repeat_time",
+                "repeat_units",
+                "assignment_mode",
+                "tags",
+            ]:
+                if key in request.form:
+                    chore[key] = request.form.get(key)
+
+            if "repeat_every_number_of" in request.form:
+                chore["repeat_every_number_of"] = request.form.get(
+                    "repeat_every_number_of", type=int
+                )
+
+            return jsonify(chore.ui_safe())
+
 
         return render_template(
             "chores_edit_chore.html",
@@ -129,3 +156,25 @@ def setup(a: Flask):
                 return jsonify(chore.ui_safe())
 
         return 'chore or person not found', 404
+
+    @app.route('/chores/assignable', methods=['POST'])
+    def chore_assignable():
+        data = request.get_json(silent=True) or {}
+        chore_id = data.get("chore_id")
+        person_id = data.get("person_id")
+        is_assignable = data.get("is_assignable")
+
+        if chore_id is None or person_id is None or is_assignable is None:
+            return 'chore or person not found', 404
+
+        chore = chores_helper.get_current_user_chore(int(chore_id))
+        person = chores_helper.get_current_user_person(int(person_id))
+        if not chore or not person:
+            return 'chore or person not found', 404
+
+        if is_assignable:
+            chore.Append('can_be_assigned_to', person['id'])
+        else:
+            chore.Remove('can_be_assigned_to', person['id'])
+
+        return jsonify(chore.ui_safe())

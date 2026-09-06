@@ -153,11 +153,13 @@
             </div>
           </div>
           <div class="mt-3" id="weekly-options" hidden>
-            <label class="form-label" for="repeat-day">Which day?</label>
+            <label class="form-label" for="repeat-day-of-week"
+              >Which day?</label
+            >
             <select
               class="form-select"
-              name="repeat_day"
-              id="repeat-day"
+              name="repeat_day_of_week"
+              id="repeat-day-of-week"
               required
             >
               <option value="monday">Monday</option>
@@ -171,20 +173,22 @@
           </div>
           <div class="row g-2 mt-2" id="custom-interval" hidden>
             <div class="col-5">
-              <label class="visually-hidden" for="repeat-every">Every</label>
+              <label class="visually-hidden" for="repeat-every-number-of"
+                >Every</label
+              >
               <input
                 class="form-control"
                 type="number"
-                name="repeat_every"
-                id="repeat-every"
+                name="repeat_every_number_of"
+                id="repeat-every-number-of"
                 min="1"
                 value="1"
                 aria-label="Repeat every"
               />
             </div>
             <div class="col-7">
-              <label class="visually-hidden" for="repeat-unit">Unit</label>
-              <select class="form-select" name="repeat_unit" id="repeat-unit">
+              <label class="visually-hidden" for="repeat-units">Unit</label>
+              <select class="form-select" name="repeat_units" id="repeat-units">
                 <option value="day">day(s)</option>
                 <option value="week">week(s)</option>
                 <option value="month">month(s)</option>
@@ -222,7 +226,7 @@
       );
       const repeatTime = document.getElementById("repeat-time");
       const weeklyOptions = document.getElementById("weekly-options");
-      const repeatDay = document.getElementById("repeat-day");
+      const repeatDay = document.getElementById("repeat-day-of-week");
       const customInterval = document.getElementById("custom-interval");
       const confirmButton = document.getElementById("confirm-button");
 

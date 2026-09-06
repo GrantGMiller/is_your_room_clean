@@ -34,28 +34,30 @@ class Chore(BaseTable):
     assignment_mode: Optional[AssignmentMode] = None
     schedule_for: Optional[str] = None
     repeat_interval: Optional[RepeatInterval] = None
-    repeat_day: Optional[RepeatDay] = None
+    repeat_day_of_week: Optional[RepeatDay] = None
     repeat_time_of_day: Optional[RepeatTimeOfDay] = None
     repeat_time: Optional[str] = None
-    repeat_every: Optional[int] = None
-    repeat_unit: Optional[RepeatUnit] = None
+    repeat_every_number_of: Optional[int] = None
+    repeat_units: Optional[RepeatUnit] = None
     owner_id: int
     tags: List[str] = []
 
     def ui_safe(self):
         ret = {
-            "name": self.get('name', None),
-            "kind": self.get('kind', None),
-            "assignment_mode": self.get('assignment_mode', None),
-            "schedule_for": self.get('schedule_for', None),
-            "repeat_interval": self.get('repeat_interval', None),
-            "repeat_day": self.get('repeat_day', None),
-            "repeat_time_of_day": self.get('repeat_time_of_day', None),
-            "repeat_unit": self.get('repeat_unit', None),
-            "owner_id": self.get('owner_id', None),
-            "tags": self.get('tags', None),
             'assigned_to_ids': self.get_assigned_to_ids(),
             'can_be_assigned_to_ids': self.get_can_be_assigned_to_ids(),
+            "assignment_mode": self.get('assignment_mode', None),
+            "kind": self.get('kind', None),
+            "name": self.get('name', None),
+            "owner_id": self.get('owner_id', None),
+            "repeat_day_of_week": self.get('repeat_day_of_week', None),
+            "repeat_every_number_of": self.get('repeat_every_number_of', None),
+            "repeat_interval": self.get('repeat_interval', None),
+            "repeat_time_of_day": self.get('repeat_time_of_day', None),
+            "repeat_time": self.get('repeat_time', None),
+            "repeat_units": self.get('repeat_units', None),
+            "schedule_for": self.get('schedule_for', None),
+            "tags": self.get('tags', None),
         }
         return ret
 
