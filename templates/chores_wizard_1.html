@@ -12,15 +12,17 @@
     </style>
   </head>
   <body class="bg-light">
-    {% include "js_css.html" %} {% include "flash_messages.html" %} {% include
-    "navbar.html" %}
+    {% include "js_css.html" %} {% include "flash_messages.html" %}
+    {%
+      include
+      "navbar.html"
+    %}
 
     <main class="container py-5" style="max-width: 720px">
       <div class="mb-4">
         <p class="text-uppercase text-muted small fw-semibold mb-2">
           Create a New Chore
         </p>
-        
       </div>
 
       <form action="/chores/wizard/start" method="post" id="chore-kind-form">

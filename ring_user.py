@@ -41,12 +41,14 @@ class RingUser(flask_login.UserMixin, BaseTable):
     app_authorized_at_ms: int  # epoch milliseconds when the app was authorized, used to prevent requesting images before this time
 
     def get_chore_settings(self) -> ChoreSettings:
-        return self.Get('chore_settings', {
-            # default times
-            'morning_time': datetime.time(hour=6, minute=0).isoformat(),
-            'afternoon_time': datetime.time(hour=12, minute=0).isoformat(),
-            'evening_time': datetime.time(hour=17, minute=0).isoformat(),
-        })
+        ret = self.Get('chore_settings', {})
+        if 'morning_time' not in ret:
+            ret['morning_time'] = datetime.time(hour=6, minute=0).isoformat()
+        if 'afternoon_time' not in ret:
+            ret['afternoon_time'] = datetime.time(hour=12, minute=0).isoformat()
+        if 'evening_time' not in ret:
+            ret['evening_time'] = datetime.time(hour=17, minute=0).isoformat()
+        return ret
 
     def get_id(self, *a, **k):
         # needed for flask_login to identify the user
@@ -203,7 +205,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         # the existing images are too old, request a new image
 
         # ok some weirdness, you cannot request a start_time that is before the app was authorized
-        # so use the start_time or the app creatiion time, whichever is greater
+        # so use the start_time or the app creation time, whichever is greater
 
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
         five_mins_ago_ms = (time.time() * 1000) - (5 * 60 * 60 * 1000)
@@ -282,7 +284,7 @@ def setup(a: Flask):
         return app.db.FindOne(RingUser, id=int(user_id))
 
 
-def get_current_user():
+def get_current_user() -> Optional[RingUser]:
     with app.app_context():
         # return user object if logged in, else return None
 

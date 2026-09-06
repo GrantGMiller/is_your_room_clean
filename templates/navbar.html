@@ -3,7 +3,7 @@
     <a class="navbar-brand" href="/">Is Your Room Clean</a>
 
     <button
-      class="navbar-toggler"
+      class="navbar-toggler m-1"
       type="button"
       data-bs-toggle="collapse"
       data-bs-target="#navbarNav"
@@ -19,7 +19,7 @@
           Open Ring App
         </a>
         <a
-          class="nav-item nav-link{% if request.path == '/dashboard' %} active{% endif %}"
+          class="nav-item nav-link{% if request.path == '/dashboard' %}active{% endif %}"
           href="/dashboard"
         >
           Dashboard
@@ -36,36 +36,37 @@
         <!--        >-->
         <!--          API Key-->
         <!--        </a>-->
+        <!-- <a
+          class="nav-item nav-link{% if request.path == '/chores/overview' %} active{% endif %}"
+          href="/chores/overview"
+        >
+          Chores
+        </a> -->
         <a
-          class="nav-item nav-link{% if request.path == '/my_account' %} active{% endif %}"
+          class="nav-item nav-link{% if request.path == '/my_account' %}active{% endif %}"
           href="/my_account"
         >
           My Account
         </a>
         <a
-          class="nav-item nav-link{% if request.path == '/contact' %} active{% endif %}"
+          class="nav-item nav-link{% if request.path == '/contact' %}active{% endif %}"
           href="/contact"
         >
           Contact Us
         </a>
         <a
-          class="nav-item nav-link{% if request.path == '/privacy' %} active{% endif %}"
+          class="nav-item nav-link{% if request.path == '/privacy' %}active{% endif %}"
           href="/privacy"
         >
           Privacy
         </a>
         <a
-          class="nav-item nav-link{% if request.path == '/terms' %} active{% endif %}"
+          class="nav-item nav-link{% if request.path == '/terms' %}active{% endif %}"
           href="/terms"
         >
           Terms & Conditions
         </a>
-        <a
-          class="nav-item nav-link"
-          href="/logout"
-        >
-          Sign Out
-        </a>
+        <a class="nav-item nav-link" href="/logout"> Sign Out </a>
       </ul>
     </div>
   </div>

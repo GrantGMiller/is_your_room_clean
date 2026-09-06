@@ -299,7 +299,8 @@ def tutorial():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    flash('Page not found: ' + request.path, 'danger')
+    if not 'installHook' in request.path:
+        flash('Page not found: ' + request.path, 'danger')
     return redirect("/dashboard")
 
 

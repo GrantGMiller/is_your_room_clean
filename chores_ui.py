@@ -1,14 +1,17 @@
 import datetime
 from typing import cast
-from flask_dictabase import Dictabase
-from flask import Flask, abort, flash, redirect, render_template, request
 
+from flask import Flask, flash, redirect, render_template, request, jsonify
+from flask_dictabase import Dictabase
+
+import chores_helper
 import chores_wizard
 from chores_models import Chore, Person
-import chores_helper
 from ring_user import RingUser, get_current_user
 
 global app
+
+
 def setup(a: Flask):
     global app
     app = a
@@ -25,7 +28,8 @@ def setup(a: Flask):
     def edit_person():
         if request.method == 'GET':
             person_id = request.args.get("id", type=int)
-            person = app.db.FindOne(Person, id=person_id, owner_id=get_current_user()['id']) if person_id is not None else None
+            person = app.db.FindOne(Person, id=person_id,
+                                    owner_id=get_current_user()['id']) if person_id is not None else None
             return render_template("chores_person_edit.html", person=person, mode='add')
 
         elif request.method == "POST":
@@ -84,24 +88,44 @@ def setup(a: Flask):
 
     @app.route('/chores/settings', methods=["GET", "POST"])
     def chores_settings():
-        user:RingUser = get_current_user()
+        user: RingUser = get_current_user()
 
         if request.method == "POST":
             print('request.form=', request.form)
             for key in ['morning_time', 'afternoon_time', 'evening_time']:
                 if key in request.form:
-                   
                     user.SetItem(
-                        'chore_settings', 
-                        key, 
+                        'chore_settings',
+                        key,
                         # convert the string from the form into a datetime.time object
                         datetime.datetime.strptime(request.form.get(key), "%H:%M").time().isoformat()
                         # datetime.datetime.now().time().isoformat()
                     )
                     return redirect("/chores/overview")
-        elif request.method == "GET":
-            return render_template(
-                "chores_settings.html",
-                settings=user.get_chore_settings()
-                
-                )
+
+        return render_template(
+            "chores_settings.html",
+            settings=user.get_chore_settings()
+
+        )
+
+    @app.route('/chores/assign', methods=['POST'])
+    def chore_assign():
+        chore_id = request.args.get("chore_id", type=int)
+        person_id = request.args.get("person_id", type=int)
+        new_state = bool(request.json.get('is_assigned', None))
+
+        user = get_current_user()
+
+        if user and chore_id and person_id and new_state is not None:
+            chore = chores_helper.get_current_user_chore(chore_id)
+            person = chores_helper.get_current_user_person(person_id)
+            if chore and person:
+                if new_state:
+                    chore.assign_to(person)
+                else:
+                    chore.unassign(person)
+
+                return jsonify(chore.ui_safe())
+
+        return 'chore or person not found', 404

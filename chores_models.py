@@ -42,6 +42,23 @@ class Chore(BaseTable):
     owner_id: int
     tags: List[str] = []
 
+    def ui_safe(self):
+        ret = {
+            "name": self.get('name', None),
+            "kind": self.get('kind', None),
+            "assignment_mode": self.get('assignment_mode', None),
+            "schedule_for": self.get('schedule_for', None),
+            "repeat_interval": self.get('repeat_interval', None),
+            "repeat_day": self.get('repeat_day', None),
+            "repeat_time_of_day": self.get('repeat_time_of_day', None),
+            "repeat_unit": self.get('repeat_unit', None),
+            "owner_id": self.get('owner_id', None),
+            "tags": self.get('tags', None),
+            'assigned_to_ids': self.get_assigned_to_ids(),
+            'can_be_assigned_to_ids': self.get_can_be_assigned_to_ids(),
+        }
+        return ret
+
     @property
     def can_be_assigned_to(self) -> List[Person]:
         '''
@@ -61,15 +78,25 @@ class Chore(BaseTable):
         '''
         Assign the chore to a specific person.
         '''
-        self.Append('assigned_to', person.id)
+        self.Append('assigned_to', person['id'], allowDuplicates=False)
 
-    @property
-    def is_assigned_to(self) -> List[Person]:
-        '''
-        This is a list of Persons that the chore is currently assigned to.
-        '''
-        ids = self.Get('assigned_to', [])
-        return [self.app.db.FindOne(Person, id=id, owner_id=self.owner_id) for id in ids]
+    def unassign(self, person: Person) -> None:
+        self.Remove('assigned_to', person['id'], removeAll=True)
+
+    def is_assigned_to(self, person_id: int) -> bool:
+        return person_id in self.Get('assigned_to', [])
+
+    def get_assigned_to_ids(self) -> List[int]:
+        return self.Get('assigned_to', [])
+
+    def get_assigned_to_persons(self) -> List[Person]:
+        return [
+            self.app.db.FindOne(
+                Person,
+                id=idd,
+                owner_id=self['owner_id']
+            ) for idd in self.Get('assigned_to', [])
+        ]
 
     def add_tag(self, tag: str):
         self.Append('tags', tag)
