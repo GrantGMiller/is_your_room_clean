@@ -39,6 +39,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
     api_key: Optional[str]
     chore_settings: ChoreSettings  # store the user's chore settings
     app_authorized_at_ms: int  # epoch milliseconds when the app was authorized, used to prevent requesting images before this time
+    timezone: str  # store the user's timezone, default to UTC if not set
+    enable_daylight_savings: bool
 
     def get_chore_settings(self) -> ChoreSettings:
         ret = self.Get('chore_settings', {})

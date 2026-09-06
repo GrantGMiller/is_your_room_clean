@@ -1,4 +1,6 @@
 import datetime
+
+import pytz
 from typing import cast
 
 from flask import Flask, flash, redirect, render_template, request, jsonify
@@ -128,11 +130,32 @@ def setup(a: Flask):
                         datetime.datetime.strptime(request.form.get(key), "%H:%M").time().isoformat()
                         # datetime.datetime.now().time().isoformat()
                     )
-                    return redirect("/chores/overview")
+
+            timezone = request.form.get("timezone")
+            if timezone in pytz.all_timezones:
+                user['timezone'] = timezone
+
+            user['enable_daylight_savings'] = (
+                request.form.get("enable_daylight_savings") == "on"
+            )
+
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({
+                    **user.get_chore_settings(),
+                    "timezone": user.get("timezone", "US/Eastern"),
+                    "enable_daylight_savings": user.get(
+                        "enable_daylight_savings", True
+                    ),
+                })
+
+            return redirect("/chores/overview")
 
         return render_template(
             "chores_settings.html",
-            settings=user.get_chore_settings()
+            settings=user.get_chore_settings(),
+            timezone=user.get("timezone", "US/Eastern"),
+            timezones=pytz.all_timezones,
+            enable_daylight_savings=user.get("enable_daylight_savings", True),
 
         )
 
