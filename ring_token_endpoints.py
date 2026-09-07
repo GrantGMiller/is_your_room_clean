@@ -288,4 +288,4 @@ def get_unclaimed_ring_users():
 
 def mark_ring_user_claimed(ring_user: RingUser):
     ring_user["status"] = "claimed"
-    ring_user["app_authorized_at_ms"] = int(time.time() * 1000)
+    ring_user["ring_user_claimed_at_ms"] = int(time.time() * 1000)
