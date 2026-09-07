@@ -44,6 +44,7 @@
                   id="snapshot-{{ device['id'] }}"
                   alt="{{ device['attributes']['name'] }} snapshot"
                   onload="fetchSummary('{{ device['id'] }}');"
+                  onerror="retrySnapshot(this);"
                 />
 
                 <span
@@ -98,6 +99,15 @@
 
     <script>
       const LOOP_TIME_MS = 10000;
+      const SNAPSHOT_RETRY_TIME_MS = 3000;
+
+      function retrySnapshot(image) {
+        window.setTimeout(function () {
+          const separator = image.src.includes("?") ? "&" : "?";
+          image.src =
+            image.src.split("#")[0] + separator + "retry=" + Date.now();
+        }, SNAPSHOT_RETRY_TIME_MS);
+      }
 
       function fetchSummary(deviceId) {
         const summaryEl = document.getElementById("summary-" + deviceId);
