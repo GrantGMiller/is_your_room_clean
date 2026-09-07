@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ring Camera Access | Is Your Room Clean</title>
+    {% include "js_css.html" %}
+    <style>
+      :root {
+        --ink: #183044;
+        --muted: #607487;
+        --paper: #f5f8f7;
+        --mint: #d9f1e7;
+        --coral: #ef765d;
+      }
+
+      body {
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 0%, #d9f1e7 0, transparent 32%),
+          linear-gradient(135deg, #f5f8f7 0%, #edf3f7 100%);
+      }
+
+      .access-shell {
+        max-width: 1060px;
+      }
+
+      .access-hero {
+        overflow: hidden;
+        position: relative;
+        border-radius: 1rem;
+        background: var(--ink);
+        color: white;
+      }
+
+      .access-hero::after {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        right: -90px;
+        bottom: -130px;
+        border: 36px solid rgba(217, 241, 231, 0.22);
+        border-radius: 50%;
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+        max-width: 670px;
+      }
+
+      .eyebrow {
+        color: var(--mint);
+        letter-spacing: 0.12em;
+      }
+
+      .access-title {
+        max-width: 620px;
+        font-size: clamp(2.25rem, 5vw, 4.5rem);
+        line-height: 0.98;
+        letter-spacing: -0.04em;
+      }
+
+      .score-mark {
+        display: grid;
+        width: 116px;
+        height: 116px;
+        place-items: center;
+        border: 8px solid var(--mint);
+        border-radius: 50%;
+        color: white;
+        font-size: 1.6rem;
+        font-weight: 700;
+      }
+
+      .step-number {
+        display: inline-grid;
+        width: 2.25rem;
+        height: 2.25rem;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--coral);
+        color: white;
+        font-weight: 700;
+      }
+
+      .step-card {
+        height: 100%;
+        border: 0;
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .cta-link {
+        background: var(--coral);
+        border-color: var(--coral);
+        color: white;
+      }
+
+      .cta-link:hover,
+      .cta-link:focus {
+        background: #d85f48;
+        border-color: #d85f48;
+        color: white;
+      }
+
+      .fine-print {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container access-shell py-5">
+      <section class="access-hero p-4 p-md-5 mb-5">
+        <div class="hero-copy">
+          <p class="eyebrow text-uppercase small fw-bold mb-3">
+            Ring camera access required
+          </p>
+          <h1 class="access-title mb-4">A cleaner view of every room.</h1>
+          <p class="lead mb-4">
+            The Ring camera feature is available only to users subscribed
+            through the Ring App Store.
+          </p>
+          <a
+            class="btn cta-link btn-lg px-4"
+            href="https://ring.com/appstore/is-your-room-clean"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Subscribe through Ring
+          </a>
+        </div>
+        <div class="score-mark position-absolute top-0 end-0 m-4 m-md-5">
+          0-100%
+        </div>
+      </section>
+
+      <section class="mb-5" aria-labelledby="how-it-works">
+        <div class="mb-4">
+          <p class="text-uppercase text-secondary small fw-bold mb-2">
+            What your subscription unlocks
+          </p>
+          <h2 id="how-it-works" class="h3 mb-0">How it works</h2>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <article class="card step-card shadow-sm p-4">
+              <span class="step-number mb-4">1</span>
+              <h3 class="h5">Subscribe in Ring</h3>
+              <p class="fine-print mb-0">
+                Open the Ring App Store listing and subscribe to Is Your Room
+                Clean.
+              </p>
+            </article>
+          </div>
+          <div class="col-12 col-md-4">
+            <article class="card step-card shadow-sm p-4">
+              <span class="step-number mb-4">2</span>
+              <h3 class="h5">Share your cameras</h3>
+              <p class="fine-print mb-0">
+                Connect your Ring account and give the app access to the cameras
+                you want to monitor.
+              </p>
+            </article>
+          </div>
+          <div class="col-12 col-md-4">
+            <article class="card step-card shadow-sm p-4">
+              <span class="step-number mb-4">3</span>
+              <h3 class="h5">See each room's score</h3>
+              <p class="fine-print mb-0">
+                Each camera receives a cleanliness score from 0 to 100%, along
+                with an at-a-glance room assessment.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 border-top pt-4"
+      >
+        <p class="fine-print mb-0">
+          Already subscribed? Return to the Ring App Store listing to manage
+          your access.
+        </p>
+        <a
+          class="btn btn-outline-primary"
+          href="https://ring.com/appstore/is-your-room-clean"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open Ring App Store
+        </a>
+      </section>
+    </main>
+  </body>
+</html>

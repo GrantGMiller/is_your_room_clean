@@ -220,7 +220,7 @@ def setup(a: Flask):
             flash("User Not Found", "danger")
             return redirect("/dashboard")
 
-        elif ring_user["login_url_expires_at"] > now_timestamp:
+        elif float(ring_user["login_url_expires_at"]) > now_timestamp:
             # success, log this user in
             send_slack_message("user found and magic link NOT expired", uid)
             flask_login.login_user(ring_user, remember=True)
@@ -270,15 +270,12 @@ def store_unclaimed_token(
 ):
     app.db = cast(flask_dictabase.Dictabase, app.db)
     with app.app_context():
-        app.db.New(
-            RingUser,
-            account_id=account_id,
-            email=email,
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_at=expires_at,
-            status="unclaimed",
-        )
+        new_user = app.db.NewOrFind(RingUser, email=email.lower())
+        new_user['account_id'] = account_id
+        new_user['expires_at'] = expires_at
+        new_user['access_token'] = access_token
+        new_user['refresh_token'] = refresh_token
+        new_user['status'] = 'unclaimed'
 
 
 def get_unclaimed_ring_users():

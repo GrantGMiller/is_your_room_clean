@@ -7,7 +7,7 @@ import time
 import flask_login
 from flask import render_template, Flask, request, redirect, send_file, jsonify, flash
 from flask_dictabase import Dictabase
-from flask_jobs import Job, JobScheduler
+from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
@@ -31,7 +31,6 @@ app.jobs = JobScheduler(
     SERVER_HOST_URL=config.SERVER_HOST_URL,  # only required for linux
     deleteOldJobs=False,  # whether to keep old jobs in the database
 )
-
 
 ring_token_endpoints.setup(app)
 ring_webhook.setup(app)
@@ -85,6 +84,9 @@ def dashboard():
         # ask for the users email, send them a link
         return render_template("email_input.html")
 
+    if ring_user and ring_user.get('access_token', None) is None:
+        return render_template("dashboard_unauth.html")
+
     return render_template("dashboard.html", ring_user=ring_user)
 
 
@@ -92,7 +94,7 @@ def dashboard():
 def send_login_email():
     email = request.form.get("email", None)
     if IsValidEmail(email):
-        user = app.db.FindOne(RingUser, email=email.lower())
+        user = app.db.NewOrFind(RingUser, email=email.lower())
         if user:
             user.get_new_login_url()
             send_slack_message('sending magic link to', email)
@@ -249,7 +251,7 @@ def delete_account():
 
     try:
         for u in app.db.FindAll(RingUser, email=ring_user.get("email")):
-            app.db.Delete(u) # just in case
+            app.db.Delete(u)  # just in case
         flask_login.logout_user()
         flash("Your account has been deleted.", "success")
     except Exception:
@@ -327,10 +329,15 @@ def test():
     return "The time is " + time.asctime()
 
 
-@app.route("/get_grant")
-def get_grant():
-    ring_user = get_current_user()
-    return jsonify(ring_user)
+@app.route('/delete_access_token/<key>')
+def delete_access_token(key):
+    if key == config.SELFAPIKEY:
+        print('request.json=', request.json)
+        email = request.json.get('email')
+        existing_user: RingUser = app.db.FindOne(RingUser, email=email)
+        existing_user['access_token'] = None
+        return jsonify(existing_user)
+    return 'no user found', 404
 
 
 @app.route('/create_user/<key>')
