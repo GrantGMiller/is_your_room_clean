@@ -7,7 +7,7 @@ import time
 import flask_login
 from flask import render_template, Flask, request, redirect, send_file, jsonify, flash
 from flask_dictabase import Dictabase
-from flask_jobs import JobScheduler
+from flask_jobs import Job, JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
@@ -31,6 +31,7 @@ app.jobs = JobScheduler(
     SERVER_HOST_URL=config.SERVER_HOST_URL,  # only required for linux
     deleteOldJobs=False,  # whether to keep old jobs in the database
 )
+
 
 ring_token_endpoints.setup(app)
 ring_webhook.setup(app)

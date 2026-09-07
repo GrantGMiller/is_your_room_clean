@@ -17,7 +17,7 @@ def setup(a):
     app.jobs = cast(JobScheduler, app.jobs)
 
     with app.app_context():
-        add_new_daily_job(
+        add_new_repeat_job(
             app,
             job_name='delete old images',
             startDT=datetime.datetime.utcnow().replace(
@@ -29,9 +29,10 @@ def setup(a):
         )
 
 
-def add_new_daily_job(app, job_name, *a, **k):
+def add_new_repeat_job(app, job_name, *a, **k):
     app.jobs = cast(JobScheduler, app.jobs)
     with app.app_context():
+        # if the job already exists, delete it first so we can add a new one
         existing_job = app.jobs.Find(name=job_name)
         if existing_job:
             existing_job.Delete()

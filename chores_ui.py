@@ -7,7 +7,12 @@ from flask_dictabase import Dictabase
 
 import chores_helper
 import chores_wizard
-from chores_models import Chore, Person
+from chores_models import (
+    Chore,
+    Person,
+    assign_chore_to_persons,
+    setup as setup_chores_models,
+)
 from ring_user import RingUser, get_current_user
 
 global app
@@ -19,6 +24,7 @@ def setup(a: Flask):
     app.db = cast(Dictabase, app.db)
     chores_wizard.setup(app)
     chores_helper.setup(app)
+    setup_chores_models(app)
 
     @app.route("/chores")
     def chores():
@@ -123,6 +129,7 @@ def setup(a: Flask):
                     "repeat_every_number_of", type=int
                 )
 
+            chore.refresh_scheduled_job()
             return jsonify(chore.ui_safe())
 
         return render_template(
@@ -240,3 +247,16 @@ def setup(a: Flask):
             chore.Remove('can_be_assigned_to', person['id'])
 
         return jsonify(chore.ui_safe())
+
+    @app.route('/chores/assign-now', methods=['POST'])
+    def chore_assign_now():
+        data = request.get_json(silent=True) or {}
+        chore_id = data.get("chore_id")
+
+        if chore_id is None or chores_helper.get_current_user_chore(int(chore_id)) is None:
+            return jsonify({"error": "chore not found"}), 404
+
+        updated_chore = assign_chore_to_persons(int(chore_id))
+        if updated_chore is None:
+            return jsonify({"error": "chore not found"}), 404
+        return jsonify(updated_chore.ui_safe())

@@ -135,7 +135,7 @@
             value="{{ chore.get('schedule_for', None) or "" }}"
           />
         </div>
-
+<hr/>
         <div class="mt-4" id="repeat-options">
           <label class="form-label h5 mb-3" for="repeat-interval"
             >How often should it repeat?</label
@@ -164,7 +164,42 @@
               Every...
             </option>
           </select>
-
+ <div class="row g-2 mt-2" id="custom-interval">
+            <div class="col-5">
+              <label class="visually-hidden" for="repeat-every-number-of">Every</label>
+              <input
+                class="form-control"
+                type="number"
+                name="repeat_every_number_of"
+                id="repeat-every-number-of"
+                min="1"
+                value="{{ chore.get('repeat_every_number_of', None) or 1 }}"
+              />
+            </div>
+            <div class="col-7">
+              <label class="visually-hidden" for="repeat-units">Unit</label>
+              <select class="form-select" name="repeat_units" id="repeat-units">
+                <option
+                  value="day"
+                  {% if chore.get('repeat_units', None) == "day" %}selected{% endif %}
+                >
+                  day(s)
+                </option>
+                <option
+                  value="week"
+                  {% if chore.get('repeat_units', None) == "week" %}selected{% endif %}
+                >
+                  week(s)
+                </option>
+                <option
+                  value="month"
+                  {% if chore.get('repeat_units', None) == "month" %}selected{% endif %}
+                >
+                  month(s)
+                </option>
+              </select>
+            </div>
+          </div>
           <div class="mt-3" id="repeat-time-options">
             <label class="form-label" for="repeat-time-of-day"
               >What time of day?</label
@@ -211,6 +246,8 @@
             </div>
           </div>
 
+         
+
           <div class="mt-3" id="weekly-options">
             <label class="form-label" for="repeat-day-of-week">Which day?</label>
             <select class="form-select" name="repeat_day_of_week" id="repeat-day-of-week">
@@ -224,45 +261,8 @@
               {% endfor %}
             </select>
           </div>
-
-          <div class="row g-2 mt-2" id="custom-interval">
-            <div class="col-5">
-              <label class="visually-hidden" for="repeat-every-number-of">Every</label>
-              <input
-                class="form-control"
-                type="number"
-                name="repeat_every_number_of"
-                id="repeat-every-number-of"
-                min="1"
-                value="{{ chore.get('repeat_every_number_of', None) or 1 }}"
-              />
-            </div>
-            <div class="col-7">
-              <label class="visually-hidden" for="repeat-units">Unit</label>
-              <select class="form-select" name="repeat_units" id="repeat-units">
-                <option
-                  value="day"
-                  {% if chore.get('repeat_units', None) == "day" %}selected{% endif %}
-                >
-                  day(s)
-                </option>
-                <option
-                  value="week"
-                  {% if chore.get('repeat_units', None) == "week" %}selected{% endif %}
-                >
-                  week(s)
-                </option>
-                <option
-                  value="month"
-                  {% if chore.get('repeat_units', None) == "month" %}selected{% endif %}
-                >
-                  month(s)
-                </option>
-              </select>
-            </div>
-          </div>
         </div>
-
+<hr>
         <fieldset class="mt-4">
           <legend class="h5 mb-3">Who can this chore be assigned to?</legend>
           <div class="vstack gap-2">
@@ -285,7 +285,16 @@
             {% endfor %}
           </div>
         </fieldset>
-
+        <div class="mt-3">
+          <button
+            class="btn btn-primary"
+            type="button"
+            id="assign-now-button"
+          >
+            Assign Now
+          </button>
+        </div>
+<hr>
         <fieldset class="mt-4">
           <legend class="h5 mb-3">Assignment method</legend>
           
@@ -373,12 +382,14 @@
       const tagInput = document.getElementById("chore-tags");
       const tagList = document.getElementById("tag-list");
       const tagValue = document.getElementById("chore-tags-value");
+      const assignNowButton = document.getElementById("assign-now-button");
 
       function updateFields() {
         const isOneTime = form.elements.kind.value === "one-time";
         const isDaily = repeatInterval.value === "daily";
         const isWeekly = repeatInterval.value === "weekly";
-        const hasTimeOfDay = isDaily || isWeekly;
+        const isCustom = repeatInterval.value === "other";
+        const hasTimeOfDay = isDaily || isWeekly || isCustom;
 
         oneTimeOptions.hidden = !isOneTime;
         scheduleFor.required = isOneTime;
@@ -547,6 +558,79 @@
             console.error("Error:", error);
           });
       }
+
+      function updateFormFromChore(choreData) {
+        document.getElementById("chore-name").value = choreData.name || "";
+        document.getElementById("schedule-for").value =
+          choreData.schedule_for || "";
+        repeatInterval.value = choreData.repeat_interval || "daily";
+        repeatTimeOfDay.value = choreData.repeat_time_of_day || "morning";
+        repeatTime.value = choreData.repeat_time || "";
+        repeatEvery.value = choreData.repeat_every_number_of || 1;
+        repeatUnit.value = choreData.repeat_units || "day";
+        repeatDay.value = choreData.repeat_day_of_week || "monday";
+
+        form.querySelectorAll('input[name="kind"]').forEach((input) => {
+          input.checked = input.value === choreData.kind;
+        });
+        form
+          .querySelectorAll('input[name="assignment_mode"]')
+          .forEach((input) => {
+            input.checked = input.value === choreData.assignment_mode;
+          });
+
+        const assignedIds = new Set(choreData.assigned_to_ids || []);
+        document
+          .querySelectorAll(".person-check:not(.can-assign-check)")
+          .forEach((checkbox) => {
+            checkbox.checked = assignedIds.has(Number(checkbox.value));
+          });
+
+        const assignableIds = new Set(choreData.can_be_assigned_to_ids || []);
+        document.querySelectorAll(".can-assign-check").forEach((checkbox) => {
+          checkbox.checked = assignableIds.has(Number(checkbox.value));
+        });
+
+        tagList.replaceChildren();
+        (choreData.tags || []).forEach((tag) => {
+          const badge = document.createElement("button");
+          badge.className = "btn btn-sm text-bg-secondary tag-badge";
+          badge.type = "button";
+          badge.dataset.tag = tag;
+          badge.setAttribute("aria-label", `Remove ${tag} tag`);
+          badge.append(document.createTextNode(`${tag} `));
+          const removeIcon = document.createElement("span");
+          removeIcon.setAttribute("aria-hidden", "true");
+          removeIcon.textContent = "\u00d7";
+          badge.append(removeIcon);
+          applyTagColor(badge);
+          tagList.appendChild(badge);
+        });
+        tagValue.value = (choreData.tags || []).join(", ");
+        updateFields();
+      }
+
+      assignNowButton.addEventListener("click", async () => {
+        assignNowButton.disabled = true;
+
+        try {
+          const response = await fetch("/chores/assign-now", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chore_id: {{ chore.get('id', None) }} }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Unable to assign chore");
+          }
+
+          updateFormFromChore(await response.json());
+        } catch (error) {
+          console.error("Error assigning chore now:", error);
+        } finally {
+          assignNowButton.disabled = false;
+        }
+      });
     </script>
   </body>
 </html>
