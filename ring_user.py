@@ -230,12 +230,12 @@ class RingUser(flask_login.UserMixin, BaseTable):
                 },
             },
         )
-        if not resp.ok:
-            send_slack_message('resp.text=', resp.text)
-            send_slack_message('resp.reason=', resp.reason)
-            send_slack_message('resp.headers=', resp.headers)
-            return None
-        # resp.raise_for_status()
+
+        if resp.status_code == 416:
+            # The user may have tried to access a time before this app was authorized
+            pass
+
+        resp.raise_for_status()
 
         save_path = Path(save_dir) / f'{uuid.uuid4()}.jpg'
         with open(save_path, 'wb') as f:

@@ -289,3 +289,5 @@ def get_unclaimed_ring_users():
 def mark_ring_user_claimed(ring_user: RingUser):
     ring_user["status"] = "claimed"
     ring_user["ring_user_claimed_at_ms"] = int(time.time() * 1000)
+    send_slack_message('292 type(ring_user)=', type(ring_user))
+    send_slack_message('293 ring_user=', ring_user)
