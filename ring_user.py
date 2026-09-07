@@ -41,6 +41,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     ring_user_claimed_at_ms: int  # epoch milliseconds when the app was authorized, used to prevent requesting images before this time
     timezone: str  # store the user's timezone, default to UTC if not set
     enable_daylight_savings: bool
+    latest_events: dict # {device_id: timestamp_ms}
 
     def get_chore_settings(self) -> ChoreSettings:
         ret = self.Get('chore_settings', {})
@@ -128,7 +129,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         self['expires_at'] = time.time() + tokens['expires_in']
 
     def get_valid_access_token(self):
-        if time.time() >= self['expires_at'] - 60:  # Refresh 1 minute early
+        if not self.get('expires_at', None) or time.time() >= float(self.get('expires_at', 0)) - 60:  # Refresh 1 minute early
             self._refresh_token_if_needed()
         return self['access_token']
 
@@ -175,6 +176,17 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         return devices
 
+    def get_latest_event(self, device_id: str) -> Optional[dict]:
+        """Return the newest event for a device, or None when no events exist."""
+        response = self.make_authenticated_request(
+            f'https://api.amazonvision.com/v1/history/devices/{device_id}/events'
+        )
+        if response.ok:
+            events = response.json().get('data', [])
+            return events[0] if events else None
+
+        return None
+
     def get_snapshot(self, device_id: str, save_dir: Path = 'images'):
         """
         Fetches the most recent still-frame image for a device.
@@ -215,9 +227,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
         five_mins_ago_ms = (time.time() * 1000) - (5 * 60 * 60 * 1000)
-        if start_timestamp_ms < (self.get('ring_user_claimed_at_ms', five_mins_ago_ms) or 0):
+        if start_timestamp_ms < self.GetItem('latest_events', device_id, five_mins_ago_ms):
             # start one second after app was authorized
-            start_timestamp_ms = (self.get('ring_user_claimed_at_ms', five_mins_ago_ms) or 0) + 1000
+            start_timestamp_ms = self.GetItem('latest_events', device_id, five_mins_ago_ms) + 1000
 
         start_timestamp_ms = int(start_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now
@@ -238,6 +250,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         if resp.status_code == 416:
             # The user may have tried to access a time before this app was authorized
+            # Or we otherwise lost the authorization
+            print('clearing the latest_events for', device_id)
+            self.SetItem('latest_events', device_id, None)
             pass
 
         resp.raise_for_status()

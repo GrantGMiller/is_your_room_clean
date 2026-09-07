@@ -62,15 +62,25 @@ def get_snapshot(device_id):
 def dashboard():
     # Ring calls this the "App Homepage"
 
-    if request.args.get(
-            "key", None
-    ) == "force" and datetime.datetime.now() < datetime.datetime.now().replace(
-        year=2026, month=8, day=25
-    ):
-        ring_user = app.db.FindOne(RingUser, email="grant@grant-miller.com")
-        flask_login.login_user(ring_user, remember=True)
-    else:
-        ring_user = get_current_user()
+    ring_user = get_current_user()
+    if ring_user:
+        # if no events have occured since the app was authorized
+        # then no snapshots can be grabbed and this app is useless
+        # send a flash message to the user to let them know
+        devs = ring_user.get_devices()
+        print('devs=', devs)
+        for dev in devs:
+            if not ring_user.GetItem('latest_events', dev['id'], None):
+                latest_event = ring_user.get_latest_event(dev['id'])
+                if not latest_event:
+                    flash(
+                        f'No events found for {dev["attributes"]["name"]}. Note: This app cannot access events that happened before the app was authorized. Please wait for a new event to occur.',
+                        'warning')
+                    break
+                else:
+                    print('saving latest event')
+                    ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
+
 
     # app.logger.error("111 ring_user=" + str(ring_user))
 
