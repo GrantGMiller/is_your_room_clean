@@ -120,7 +120,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
             },
             headers={'Content-Type': 'application/x-www-form-urlencoded'},
         )
-        response.raise_for_status()
+        if not response.ok:
+            return
         tokens = response.json()
 
         # Each assignment below is auto-persisted to the DB by Dictabase.
