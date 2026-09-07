@@ -169,6 +169,10 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         devices = resp.json().get('data', [])
         self.Set('last_devices', devices)
+        if len(devices) == 0:
+            # we lost authorization to the devices
+            self['ring_user_claimed_at_ms'] = None
+
         return devices
 
     def get_snapshot(self, device_id: str, save_dir: Path = 'images'):
@@ -237,6 +241,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
             pass
 
         resp.raise_for_status()
+
+        if resp.ok and not self.get('ring_user_claimed_at_ms', None):
+            self['ring_user_claimed_at_ms'] = time.time() * 1000
 
         save_path = Path(save_dir) / f'{uuid.uuid4()}.jpg'
         with open(save_path, 'wb') as f:
