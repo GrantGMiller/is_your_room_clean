@@ -27,13 +27,13 @@ def setup_api_endpoints(app):
         if ring_user:
             return jsonify(ring_user.get_devices())
         else:
-            return jsonify({'error':'no user found'})
+            return jsonify({'error': 'no user found'}), 404
 
     @app.route('/api/get_snapshot/<device_id>')
     def api_get_snapshot(device_id):
         ring_user = get_user_from_api_request()
         if not ring_user:
-            return jsonify({'error':'no user found'})
+            return jsonify({'error': 'no user found'}), 404
         img_id = ring_user.get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
         return send_file(img['image_path'])
@@ -42,18 +42,20 @@ def setup_api_endpoints(app):
     def api_get_summary(device_id):
         ring_user = get_user_from_api_request()
         if not ring_user:
-            return jsonify({'error':'no user found'})
+            return jsonify({'error': 'no user found'}), 404
         img_id = ring_user.get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
         return jsonify(img)
 
+
 NUM_MASKED_CHARS = 5
+
+
 def setup_ui_endpoints(app):
     @app.route('/api')
     def api():
         ring_user: RingUser = get_current_user()
         print('ring_user=', ring_user)
-
 
         current_api_key = ring_user and ring_user.get('api_key', '') or ''
 
