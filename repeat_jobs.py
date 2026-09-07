@@ -6,7 +6,7 @@ from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 
 from ring_user import RingImage
-from slack import send_slack_message, send_slack_error
+from slack import send_slack_message, send_slack_error, send_all_slack_messages
 
 global app
 
@@ -26,6 +26,15 @@ def setup(a):
             func=delete_old_images,
             hours=1,
             errorCallback=send_slack_error
+        )
+
+        add_new_repeat_job(
+            app,
+            job_name='send slack messages',
+            startDT=datetime.datetime.utcnow(),
+            func=send_all_slack_messages,
+            errorCallback=send_slack_error,
+            minutes=1
         )
 
 

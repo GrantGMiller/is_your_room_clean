@@ -2,11 +2,12 @@ import sys
 from typing import cast
 
 import requests
-from flask_jobs import JobScheduler
+from flask import Flask
+from flask_dictabase import BaseTable, Dictabase
 
 import config
 
-app = None
+app: Flask
 
 
 def setup(a):
@@ -20,16 +21,10 @@ def setup(a):
 
 
 def send_slack_message(*a):
-    print('SendSlackNotification(', a)
+    print('send_slack_message(', a)
     msg = ' '.join([str(aa) for aa in a])
-    if app:
-        app.jobs = cast(JobScheduler, app.jobs)
-        app.jobs.AddJob(
-            func=do_send_slack_notification,
-            args=(msg,),
-            successCallback=None,
-            errorCallback=send_error,
-        )
+    app.db = cast(Dictabase, app.db)
+    app.db.New(SlackMessage, message=msg)
 
 
 def do_send_slack_notification(msg, **kwargs):
@@ -56,3 +51,22 @@ def send_error(err):
 
 def send_slack_error(job):
     send_slack_message("Error:", job)
+
+
+class SlackMessage(BaseTable):
+    message: str
+
+
+def send_all_slack_messages():
+    print('send_all_slack_messages()')
+    with app.app_context():
+        app.db = cast(Dictabase, app.db)
+        msg = ''
+        for sm in app.db.FindAll(SlackMessage):
+            msg += sm.get('message', '') + '\r\n'
+            app.db.Delete(sm)
+
+        requests.post(
+            url=config.SLACK_NOTIFICATION_URL,
+            json={'text': msg}
+        )
