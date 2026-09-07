@@ -303,7 +303,10 @@ def delete_stored_images():
             app.db.Delete(image)
             deleted_count += 1
 
-        flash(f"Deleted {deleted_count} stored image(s).", "success")
+        if deleted_count > 0:
+            flash(f"Deleted {deleted_count} stored image(s).", "success")
+        else:
+            flash("No stored images found to delete.", "info")
     except Exception:
         app.logger.exception("Failed to delete stored images")
         flash(
