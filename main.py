@@ -266,6 +266,10 @@ def delete_account():
     try:
         for u in app.db.FindAll(RingUser, email=ring_user.get("email")):
             app.db.Delete(u)  # just in case
+
+        for img in app.db.FindAll(RingImage, account_id=ring_user.get("account_id", None)):
+            app.db.Delete(img)
+
         flask_login.logout_user()
         flash("Your account has been deleted.", "success")
     except Exception:
