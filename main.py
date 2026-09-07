@@ -248,7 +248,8 @@ def delete_account():
         return redirect("/dashboard")
 
     try:
-        app.db.Delete(ring_user)
+        for u in app.db.FindAll(RingUser, email=ring_user.get("email")):
+            app.db.Delete(u) # just in case
         flask_login.logout_user()
         flash("Your account has been deleted.", "success")
     except Exception:
