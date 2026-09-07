@@ -68,7 +68,11 @@ def dashboard():
         # then no snapshots can be grabbed and this app is useless
         # send a flash message to the user to let them know
         devs = ring_user.get_devices()
+        if len(devs) == 0:
+            # all devices were unauthorized, clear the stored latest events
+            ring_user.Set('latest_events', {})
         print('devs=', devs)
+
         for dev in devs:
             if not ring_user.GetItem('latest_events', dev['id'], None):
                 latest_event = ring_user.get_latest_event(dev['id'])
