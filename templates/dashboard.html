@@ -9,6 +9,19 @@
       rel="stylesheet"
     />
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+    <style>
+      .snapshot-frame {
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #dfe7eb;
+      }
+
+      .snapshot-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
   </head>
   <body class="bg-light">
     {% include "js_css.html" %} {% include "flash_messages.html" %}
@@ -40,7 +53,7 @@
         {% for device in devices %}
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="card shadow-sm h-100">
-              <div class="position-relative">
+              <div class="snapshot-frame position-relative">
                 <img
                   src="/get_snapshot/{{ device['id'] }}"
                   class="card-img-top"
