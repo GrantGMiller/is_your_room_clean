@@ -97,7 +97,8 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
     )
     print('evaluate_cleanliness response=', response)
 
-    response.raise_for_status()
+    if not response.ok:
+        return None
 
     data = response.json()
 

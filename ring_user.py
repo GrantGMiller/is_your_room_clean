@@ -97,7 +97,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
             resp = self.make_authenticated_request(
                 f"{AVA_BASE_URL}/v1/users/me",
             )
-            resp.raise_for_status()
+            if not resp.ok:
+                return None
             email = resp.json()["data"]["attributes"]["email"]
             self['email'] = email.lower()
             return email
@@ -343,8 +344,12 @@ def score_cleanliness(image_id):
             try:
                 res = evaluate_cleanliness(image_bytes=image_bytes)
                 print('ai returned score_cleanliness id=', image_id, ', res=', res)
-                image['cleanliness'] = res['cleanliness']
-                image['summary'] = res['summary']
+                if res:
+                    image['cleanliness'] = res['cleanliness']
+                    image['summary'] = res['summary']
+                else:
+                    print('evaluation failed')
+                    return
             except Exception as e:
                 print('score_cleanliness error=', e)
                 image['isError'] = True
