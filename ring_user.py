@@ -256,7 +256,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
             self.SetItem('latest_events', device_id, None)
             pass
 
-        resp.raise_for_status()
+        if not resp.ok:
+            return None
 
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
             self['ring_user_claimed_at_ms'] = time.time() * 1000

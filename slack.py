@@ -23,6 +23,12 @@ def setup(a):
 def send_slack_message(*a):
     print('send_slack_message(', a)
     msg = ' '.join([str(aa) for aa in a])
+
+    if sys.platform.startswith('win') or sys.platform.startswith('darwin'):
+        msg = '***DEV***\r\n' + msg
+    else:  # linux
+        msg = f'***  {config.SERVER_HOST_URL}  *** \r\n' + msg
+
     app.db = cast(Dictabase, app.db)
     app.db.New(SlackMessage, message=msg)
 

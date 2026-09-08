@@ -36,7 +36,10 @@ def setup_api_endpoints(app):
             return jsonify({'error': 'no user found'}), 404
         img_id = ring_user.get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
-        return send_file(img['image_path'])
+        if img:
+            return send_file(img['image_path'])
+        else:
+            return 'no image found', 404
 
     @app.route('/api/get_summary/<device_id>')
     def api_get_summary(device_id):
@@ -45,7 +48,10 @@ def setup_api_endpoints(app):
             return jsonify({'error': 'no user found'}), 404
         img_id = ring_user.get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
-        return jsonify(img)
+        if img:
+            return jsonify(img)
+        else:
+            return 'no image found', 404
 
 
 NUM_MASKED_CHARS = 5
