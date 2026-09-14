@@ -354,6 +354,7 @@ def score_cleanliness(image_id):
                 print('score_cleanliness error=', e)
                 image['isError'] = True
                 image['error'] = str(e)
+                image['scoring_in_progress'] = False # maybe we will try again
                 raise e  # raise so that the error is sent via slack
 
 
