@@ -82,9 +82,9 @@
                   type="checkbox"
                   name="person_ids"
                   id="person-{{ loop.index }}"
-                  value="{{ person.id }}"
-                  {% if chore.is_assigned_to(person.id) %}checked{% endif %}
-                  onclick="assign_chore({{ chore.get('id', None) }}, {{ person.id }}, this.checked)"
+                  value="{{ person['id'] }}"
+                  {% if chore.is_assigned_to(person['id']) %}checked{% endif %}
+                  onclick="assign_chore({{ chore.get('id', None) }}, {{ person['id'] }}, this.checked)"
                 />
                 <label class="card card-body py-3" for="person-{{ loop.index }}"
                   >{{ person.name }}</label
@@ -235,7 +235,7 @@
               </option>
             </select>
             <div class="mt-2" id="specific-time-option">
-              <label class="form-label" for="repeat-time">Specific time</label>
+              <label class="form-label" for="repeat-time">Specific time <a href="/chores/settings" title="click here to change your timezone">({{ user.get('timezone', 'UTC') }})</a></label>
               <input
                 class="form-control"
                 type="time"
@@ -273,8 +273,8 @@
                   name="person_ids"
                   id="person-{{ loop.index }}"
                   class="person-check can-assign-check"
-                  value="{{ person.id }}"
-                  {% if person.id in chore.get_can_be_assigned_to_ids() %}checked{% endif %}
+                  value="{{ person['id'] }}"
+                  {% if person['id'] in chore.get_can_be_assigned_to_ids() %}checked{% endif %}
                 />
                 <label
                   class="card card-body py-3 border-secondary bg-secondary-subtle"

@@ -163,10 +163,38 @@
                   <dt class="col-5 text-muted fw-normal">Currently Assigned</dt>
                   <dd class="col-7 text-end mb-2">
                     {% for person in chore.get_assigned_to_persons() %}
-                      {{ person.name }}
+                      {{ person.name }}{% if not loop.last %},{% endif %}
                     {% else %}
                       <span class="text-muted">---</span>
                     {% endfor %}
+                  </dd>
+                  {% set last_completed_dt = chore.get_last_completed_dt() %}
+                  <dt class="col-5 text-muted fw-normal">Last completed</dt>
+                  <dd class="col-7 text-end mb-2">
+                    {% if last_completed_dt %}
+                      {% set delta = (now - last_completed_dt) %}
+                      {% if delta.days == 0 %}
+                        {{ delta.hours }}
+                        hours ago
+                      {% elif delta.days == 1 %}
+                        {{ delta.days }}
+                        day ago
+                      {% else %}
+                        {{ delta.days }}
+                        days ago
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted">Never</span>
+                    {% endif %}
+                  </dd>
+                  {% set scheduled_job_dt = chore.get_scheduled_job_dt() %}
+                  <dt class="col-5 text-muted fw-normal">Next assignment at</dt>
+                  <dd class="col-7 text-end mb-2">
+                    {% if scheduled_job_dt %}
+                      {{ scheduled_job_dt.strftime('%Y-%m-%d %I:%M %p') }}
+                    {% else %}
+                      <span class="text-muted">Not scheduled</span>
+                    {% endif %}
                   </dd>
                   <dt class="col-5 text-muted fw-normal">Schedule</dt>
                   <dd class="col-7 text-end mb-0">
@@ -180,9 +208,9 @@
                           Every {{ chore["repeat_every_number_of"] }}
                           {{ chore["repeat_units"] }}(s)
                         {% else %}
-                          {{ chore["repeat_interval"] }}{% if chore["repeat_day_of_week"] %}
+                          {{ chore["repeat_interval"] }}{% if chore["repeat_interval"] != 'daily' and chore["repeat_day_of_week"] %}
                             , {{ chore["repeat_day_of_week"] }}
-                          {% endif %}{% if chore["repeat_time_of_day"] %}
+                          {% endif %}{% if chore["repeat_time_of_day"] != 'specific' %}
                             , {{ chore["repeat_time_of_day"] }}
                           {% endif %}{% if chore["repeat_time"] %}
                             at {{ chore["repeat_time"] }}

@@ -41,6 +41,7 @@ def setup(app: Flask):
                 owner_id=get_current_user()["id"],
                   **chore_fields
                   )
+            chore.refresh_scheduled_job()
             return redirect(f'/chores/wizard/2/{chore["id"]}')
 
         return render_template(

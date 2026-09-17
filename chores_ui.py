@@ -96,8 +96,9 @@ def setup(a: Flask):
         chore = chores_helper.get_current_user_chore(chore_id)
 
         if chore is None:
-            flash('Chore not found', 'danger')
+            print('Chore not found', 'danger')
             return redirect("/chores/overview")
+
         print('request.form=', request.form)
         if request.method == "POST":
             for key in [
@@ -135,6 +136,7 @@ def setup(a: Flask):
         return render_template(
             "chores_edit_chore.html",
             chore=chore,
+            user=get_current_user(),
             persons=chores_helper.get_current_user_persons(),
         )
 
@@ -159,6 +161,7 @@ def setup(a: Flask):
             "chores_overview.html",
             persons=chores_helper.get_current_user_persons(),
             chores=chores_helper.get_current_user_chores(),
+            now=datetime.datetime.now(datetime.timezone.utc),
         )
 
     @app.route('/chores/settings', methods=["GET", "POST"])
@@ -212,7 +215,7 @@ def setup(a: Flask):
         new_state = bool(request.json.get('is_assigned', None))
 
         user = get_current_user()
-
+        print('new_state=', new_state)
         if user and chore_id and person_id and new_state is not None:
             chore = chores_helper.get_current_user_chore(chore_id)
             person = chores_helper.get_current_user_person(person_id)
@@ -222,6 +225,7 @@ def setup(a: Flask):
                 else:
                     chore.unassign(person)
 
+                chore.refresh_scheduled_job()
                 return jsonify(chore.ui_safe())
 
         return 'chore or person not found', 404
@@ -246,6 +250,7 @@ def setup(a: Flask):
         else:
             chore.Remove('can_be_assigned_to', person['id'])
 
+        chore.refresh_scheduled_job()
         return jsonify(chore.ui_safe())
 
     @app.route('/chores/assign-now', methods=['POST'])
@@ -260,3 +265,30 @@ def setup(a: Flask):
         if updated_chore is None:
             return jsonify({"error": "chore not found"}), 404
         return jsonify(updated_chore.ui_safe())
+
+    @app.route('/chores/complete', methods=['POST'])
+    def chore_complete():
+        chore_id = request.form.get('chore_id', type=int)
+        person_id = request.form.get('person_id', type=int)
+        chore = chores_helper.get_current_user_chore(chore_id)
+        person = chores_helper.get_current_user_person(person_id)
+
+        if (
+            chore is None
+            or person is None
+            or person['id'] not in chore.get_assigned_to_ids()
+        ):
+            return 'chore or person not found', 404
+
+        chore.mark_completed_by(person['id'])
+        return jsonify(chore.ui_safe())
+
+    @app.route('/chores/view', methods=['GET'])
+    def chores_assignee_view():
+        print('test284')
+        return render_template(
+            "chores_assignee_view.html",
+            persons=chores_helper.get_current_user_persons(),
+            chores=chores_helper.get_current_user_chores(),
+            now=datetime.datetime.now(datetime.timezone.utc),
+        )

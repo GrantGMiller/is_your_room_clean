@@ -1,10 +1,11 @@
 import datetime
-from typing import Dict, List, Literal, Optional
-
-from flask import Flask
-from flask_dictabase import BaseTable
-import pytz
 import random
+from typing import Dict, List, Literal, Optional, cast
+
+import pytz
+from flask import Flask
+from flask_dictabase import BaseTable, Dictabase
+
 from ring_user import RingUser
 from slack import send_slack_error
 
@@ -26,14 +27,16 @@ PersonColor = Literal[
     "primary", "secondary", "success", "danger", "warning", "info", "light", "dark"
 ]
 
-
 LastCompleted = Dict[int, datetime.datetime]
 # LastCompleted is a dictionary where the key is the person_id and the value is the datetime when they last completed the chore.
 
-app:Flask = None
-def setup(a:Flask):
+app: Flask = None
+
+
+def setup(a: Flask):
     global app
     app = a
+
 
 class Person(BaseTable):
     name: str
@@ -138,11 +141,17 @@ class Chore(BaseTable):
         '''
         Assign the chore to a specific person.
         '''
+        print('chore.assign_to', person)
+        print('145 chore.Get("assigned_to")=', self.Get('assigned_to', None))
         self.Append('assigned_to', person['id'], allowDuplicates=False)
-        self.Remove('completed_by', person['id'], removeAll=True)  
+        self.Remove('completed_by', person['id'], removeAll=True)
+        print('149 chore.Get("assigned_to")=', self.Get('assigned_to', None))
 
     def unassign(self, person: Person) -> None:
+        print('chore.unassign', person)
+        print('150 chore.Get("assigned_to")=', self.Get('assigned_to', None))
         self.Remove('assigned_to', person['id'], removeAll=True)
+        print('152 chore.Get("assigned_to")=', self.Get('assigned_to', None))
 
     def is_assigned_to(self, person_id: int) -> bool:
         return person_id in self.Get('assigned_to', [])
@@ -170,12 +179,16 @@ class Chore(BaseTable):
         Mark the chore as completed by a specific person.
         '''
         self.Append('completed_by', person_id, allowDuplicates=False)
-        self.SetItem('last_completed', person_id, datetime.datetime.now(datetime.timezone.utc))
+        self.SetItem('last_completed', str(person_id), datetime.datetime.now(datetime.timezone.utc).isoformat())
 
         if self.get('assignment_mode') == 'first-done':
             for person in self.get_assigned_to_persons():
                 if person['id'] != person_id:
                     self.unassign(person)
+
+    def get_last_completed_dt(self) -> Optional[datetime.datetime]:
+        completed_dates = self.Get('last_completed', {}).values()
+        return max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
 
     def mark_incomplete_by(self, person_id: int) -> None:
         '''
@@ -183,22 +196,29 @@ class Chore(BaseTable):
         '''
         self.Remove('completed_by', person_id, removeAll=True)
 
+    def get_scheduled_job_dt(self) -> Optional[datetime.datetime]:
+        if self.get('job_id', None) is not None:
+            job = self.app.jobs.GetJob(self.get('job_id'))
+            if job is not None:
+                return job.get('dt', None)
+        return None
+
     def refresh_scheduled_job(self) -> None:
         if self.get('job_id', None) is not None:
             old_job = self.app.jobs.GetJob(self.get('job_id'))
             if old_job:
                 old_job.Delete()
 
-        dt = self.get_next_start_dt()
-        print('refresh_scheduled_job: dt=', dt,', name=', self.get('name'))
-        if dt is None:
+        dt_utc = self.get_next_start_dt()
+        print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
+        if dt_utc is None:
             print('oops')
             return
-        
+
         new_job = self.app.jobs.ScheduleJob(
             func=assign_chore_to_persons,
             args=(self['id'],),
-            dt=dt,
+            dt=dt_utc,
             errorCallback=send_slack_error,
             name=f"Assign chore '{self['name']}' to persons",
         )
@@ -214,7 +234,8 @@ class Chore(BaseTable):
         now = get_utc_from_users_time(now, user)
 
         if self.get('kind') == 'one-time':
-            dt = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%d %H:%M:%S') if self.get('schedule_for') else None
+            dt = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%d %H:%M:%S') if self.get(
+                'schedule_for') else None
             dt = get_utc_from_users_time(dt, user) if dt else None
             if dt and dt > now:
                 return dt
@@ -222,17 +243,22 @@ class Chore(BaseTable):
                 return None  # one-time chore is in the past, no next start datetime
 
         # For repeat chores, calculate the next start datetime based on the repeat settings
-       
-        
+
         if self.get('repeat_interval') == 'daily':
-               if self.get('repeat_time_of_day') == 'specific':
-                   time = self.get_chore_time()
-                   dt = datetime.datetime.combine(now.date(), time)
-                   dt = get_utc_from_users_time(dt, user)
-                   if dt < now:
-                       dt += datetime.timedelta(days=1)
-                   return dt
-               else:
+            if self.get('repeat_time_of_day') == 'specific':
+                time = self.get_chore_time()
+                print('now utc=', datetime.datetime.utcnow())
+                print('250 time=', time)
+                dt = datetime.datetime.combine(now.date(), time)
+                print('252 dt=', dt)
+                dt = get_utc_from_users_time(dt, user)
+                print('253 dt=', dt)
+                if dt < now:
+                    dt += datetime.timedelta(days=1)
+                    print('257 dt=', dt)
+                print('258 return dt=', dt)
+                return dt
+            else:
                 for time_of_day in ['morning', 'afternoon', 'evening']:
                     if self.get('repeat_time_of_day', None) == time_of_day:
                         time = self.get_chore_time()
@@ -241,8 +267,8 @@ class Chore(BaseTable):
                         if dt < now:
                             dt += datetime.timedelta(days=1)
                         return dt
-                       
-             
+
+
         elif self.get('repeat_interval') == 'weekly':
             # set the time
             time = self.get_chore_time()
@@ -255,14 +281,14 @@ class Chore(BaseTable):
                 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
             ].index(self.get('repeat_day_of_week'))
 
-            while i < 7: 
+            while i < 7:
                 if dt.weekday() == correct_day_of_week_index and dt > now:
                     return dt
                 dt += datetime.timedelta(days=1)
                 i += 1
 
 
-        elif self.get('repeat_interval') == 'other': 
+        elif self.get('repeat_interval') == 'other':
             timedelta_kwargs = {}
             if self.get('repeat_units') == 'day':
                 timedelta_kwargs['days'] = self.get('repeat_every_number_of', 1)
@@ -276,7 +302,8 @@ class Chore(BaseTable):
             if self.get('repeat_units') == 'month':
                 # bump the dt out by x num of months
                 num_months = self.get('repeat_every_number_of', 1)
-                dt = dt.replace(month= (dt.month - 1 + num_months) % 12 + 1, year=dt.year + (dt.month - 1 + num_months) // 12)
+                dt = dt.replace(month=(dt.month - 1 + num_months) % 12 + 1,
+                                year=dt.year + (dt.month - 1 + num_months) // 12)
             else:
                 dt = dt + datetime.timedelta(**timedelta_kwargs)
             print('259 dt=', dt)
@@ -285,28 +312,37 @@ class Chore(BaseTable):
         return None
 
     def get_chore_time(self) -> Optional[datetime.time]:
-       '''
-       This returns only the datetime.time for this chore
-       '''
-       if self.get('repeat_time_of_day') == 'specific':
-            time = datetime.time.strptime(self.get('repeat_time'), '%H:%M')
-            return time
-       else:
+        '''
+        This returns only the datetime.time that this this chore should be assigned
+        '''
+        if self.get('repeat_time_of_day') == 'specific':
+            repeat_time_str: Optional[str] = self.get('repeat_time', None)
+            if isinstance(repeat_time_str, str):
+                repeat_time = datetime.datetime.strptime(
+                    repeat_time_str,
+                    '%H:%M'
+                )
+                return repeat_time.time()
+            else:
+                return None
+        else:
             user = self.app.db.FindOne(RingUser, id=self['owner_id'])
             for time_of_day in ['morning', 'afternoon', 'evening']:
                 if self.get('repeat_time_of_day', None) == time_of_day:
-                    time_str = user.Get('chore_settings', {}).get(f'{time_of_day}_time')
+                    time_str = user.get_chore_settings().get(f'{time_of_day}_time')
                     print('time_str=', time_str)
                     time = datetime.datetime.strptime(time_str, '%H:%M:%S').time()
                     return time
 
-def get_utc_from_users_time(dt:datetime.datetime, user:RingUser):
+
+def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
     '''
     The jobs are scheduled in UTC.
-    So adust the datetime from the users timezone to UTC,
+    So adjust the datetime from the users timezone to UTC,
     including daylight savings if the user has it enabled.
     '''
     user_tz = user.get('timezone', 'UTC')
+    print('user_tz=', user_tz)
     if user_tz == 'UTC':
         return dt
     else:
@@ -315,14 +351,19 @@ def get_utc_from_users_time(dt:datetime.datetime, user:RingUser):
         dt_utc = dt_with_tz.astimezone(pytz.utc)
         # adjust for daylight savings if the user has it enabled
         if user.get('enable_daylight_savings', True):
-            if tz.dst(dt_with_tz):
-                dt_utc -= tz.dst(dt_with_tz)
+            if dt_with_tz.dst():
+                dt_utc -= dt_with_tz.dst()
+        print('get_utc_from_users_time(dt=', dt, ', user_tz=', user_tz, ', DST=', user.get('enable_daylight_savings', True))
+        print('return dt_utc=', dt_utc)
         return dt_utc
 
-def assign_chore_to_persons(chore_id:int):
+
+def assign_chore_to_persons(chore_id: int):
+    print('assign_chore_to_persons(chore_id=', chore_id, ')')
     with app.app_context():
-        chore:Chore = app.db.FindOne(Chore, id=chore_id)
-        
+        app.db = cast(Dictabase, app.db)
+        chore: Chore = app.db.FindOne(Chore, id=chore_id)
+
         if chore is None:
             print(f"Chore with id {chore_id} not found.")
             return
@@ -332,7 +373,7 @@ def assign_chore_to_persons(chore_id:int):
             print(f"No possible assignees for chore '{chore['name']}' (id: {chore_id}).")
             return
 
-        if chore.get('assignment_mode') in [ 'all', 'first-done']:
+        if chore.get('assignment_mode') in ['all', 'first-done']:
             for person in possible_assignees:
                 chore.assign_to(person)
 
@@ -341,5 +382,3 @@ def assign_chore_to_persons(chore_id:int):
             chore.assign_to(person)
 
         return chore
-
-        

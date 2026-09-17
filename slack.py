@@ -64,7 +64,7 @@ class SlackMessage(BaseTable):
 
 
 def send_all_slack_messages():
-    print('send_all_slack_messages()')
+    # print('send_all_slack_messages()')
     with app.app_context():
         app.db = cast(Dictabase, app.db)
         msg = ''
