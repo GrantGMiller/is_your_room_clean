@@ -123,7 +123,6 @@
           0 chores hidden
         </div>
       </div>
-      NOW UTC: {{ now.strftime('%Y-%m-%d %I:%M %p') }} UTC
       <div class="row g-3" id="chore-list">
         {% for chore in chores %}
           <div
@@ -187,13 +186,15 @@
                       <span class="text-muted">Never</span>
                     {% endif %}
                   </dd>
-                  {% set scheduled_job_dt = get_user_local_dt_from_utc(chore.get_scheduled_job_dt(), user) %}
+                 
+                  {% set scheduled_job_dt = chore.get_scheduled_job_dt() %}
+                
                   <dt class="col-5 text-muted fw-normal">Next assignment at</dt>
                   <dd class="col-7 text-end mb-2">
                     {% if scheduled_job_dt %}
-                      {{ scheduled_job_dt.strftime('%Y-%m-%d %I:%M %p') }} UTC
+                      {{ get_user_local_dt_from_utc(scheduled_job_dt, user).strftime('%Y-%m-%d %I:%M %p') }} 
                     {% else %}
-                      <span class="text-muted">Not scheduled</span>
+                      <span class="text-muted">(no future assignment)</span>
                     {% endif %}
                   </dd>
                   <dt class="col-5 text-muted fw-normal">Schedule</dt>
@@ -213,7 +214,7 @@
                           {% endif %}{% if chore["repeat_time_of_day"] != 'specific' %}
                             , {{ chore["repeat_time_of_day"] }}
                           {% endif %}{% if chore["repeat_time"] %}
-                            at {{ chore["repeat_time"] }}
+                            at {{ chore["repeat_time"] }} 
                           {% endif %}
                         {% endif %}
                       </span>

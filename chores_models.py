@@ -87,7 +87,7 @@ class Chore(BaseTable):
     repeat_interval: Optional[RepeatInterval] = None
     repeat_day_of_week: Optional[RepeatDay] = None
     repeat_time_of_day: Optional[RepeatTimeOfDay] = None
-    repeat_time: Optional[str] = None # user local timezone
+    repeat_time: Optional[str] = None  # user local timezone
     repeat_every_number_of: Optional[int] = None
     repeat_units: Optional[RepeatUnit] = None
     owner_id: int
@@ -197,10 +197,12 @@ class Chore(BaseTable):
         self.Remove('completed_by', person_id, removeAll=True)
 
     def get_scheduled_job_dt(self) -> Optional[datetime.datetime]:
+
         if self.get('job_id', None) is not None:
             job = self.app.jobs.GetJob(self.get('job_id'))
             if job is not None:
                 return job.get('dt', None)
+
         return None
 
     def refresh_scheduled_job(self) -> None:
@@ -212,8 +214,7 @@ class Chore(BaseTable):
         dt_utc = self.get_next_start_dt_utc()
         print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
         if dt_utc is None:
-            print('oops')
-            return
+            raise Exception('no scheduled job')
 
         new_job = self.app.jobs.ScheduleJob(
             func=assign_chore_to_persons,
@@ -231,7 +232,7 @@ class Chore(BaseTable):
         The return datetime is in UTC
         '''
         user_tz = self.user.get('timezone', 'UTC')
-        now_dt_usertz = datetime.datetime.now(tz=user_tz)
+        now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
 
         if self.get('kind') == 'one-time':
             dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
@@ -273,7 +274,6 @@ class Chore(BaseTable):
             chrore_time_usertz = self.get_chore_time_usertz()
             dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chrore_time_usertz)
 
-
             # go forward until with day+=1 we are on the correct day
 
             correct_day_of_week_index = [
@@ -304,7 +304,7 @@ class Chore(BaseTable):
                 # bump the dt out by x num of months
                 num_months = self.get('repeat_every_number_of', 1)
                 dt = dt_usertz.replace(month=(dt_usertz.month - 1 + num_months) % 12 + 1,
-                                year=dt_usertz.year + (dt_usertz.month - 1 + num_months) // 12)
+                                       year=dt_usertz.year + (dt_usertz.month - 1 + num_months) // 12)
             else:
                 dt_usertz = dt_usertz + datetime.timedelta(**timedelta_kwargs)
             print('259 dt_usertz=', dt_usertz)
@@ -349,7 +349,7 @@ def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
     including daylight savings if the user has it enabled.
     '''
     user_tz = user.get('timezone', 'UTC')
-    print('user_tz=', user_tz)
+
     if user_tz == 'UTC':
         return dt
     else:
@@ -360,31 +360,24 @@ def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
         if user.get('enable_daylight_savings', True):
             if dt_with_tz.dst():
                 dt_utc -= dt_with_tz.dst()
-        print('get_utc_from_users_time(dt=', dt, ', user_tz=', user_tz, ', DST=',
-              user.get('enable_daylight_savings', True))
-        print('return dt_utc=', dt_utc)
+
         return dt_utc
 
 
 def get_user_local_dt_from_utc(dt: datetime.datetime, user: RingUser):
-    if dt.tzinfo is not None and dt.tzinfo not in (
-        pytz.UTC,
-        datetime.timezone.utc,
+    if dt is None or dt.tzinfo is not None and dt.tzinfo not in (
+            pytz.UTC,
+            datetime.timezone.utc,
     ):
         raise ValueError(
-            "Any datetimes passed to this function need to have no timezone "
+            "A datetime passed to this function need to have no timezone "
             "info or need to use the UTC timezone."
         )
 
     user_has_dst = user.get('enable_daylight_savings', True)
     user_tz = pytz.timezone(user.get('timezone', 'UTC'))
-    print('user_has_dst=', user_has_dst)
-    print('user_tz=', user_tz)
-    print('get_user_local_dt_from_utc dt=', dt)
-    
-    dt_utc =  pytz.utc.localize(dt)
-        
 
+    dt_utc = pytz.utc.localize(dt)
 
     local_dt = dt_utc.astimezone(user_tz)
     if user_has_dst and local_dt.dst():
