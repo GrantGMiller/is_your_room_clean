@@ -123,7 +123,7 @@
           0 chores hidden
         </div>
       </div>
-
+      NOW UTC: {{ now.strftime('%Y-%m-%d %I:%M %p') }} UTC
       <div class="row g-3" id="chore-list">
         {% for chore in chores %}
           <div
@@ -174,7 +174,7 @@
                     {% if last_completed_dt %}
                       {% set delta = (now - last_completed_dt) %}
                       {% if delta.days == 0 %}
-                        {{ delta.hours }}
+                        {{ (delta.total_seconds() // 3600) | int }}
                         hours ago
                       {% elif delta.days == 1 %}
                         {{ delta.days }}
@@ -187,11 +187,11 @@
                       <span class="text-muted">Never</span>
                     {% endif %}
                   </dd>
-                  {% set scheduled_job_dt = chore.get_scheduled_job_dt() %}
+                  {% set scheduled_job_dt = get_user_local_dt_from_utc(chore.get_scheduled_job_dt(), user) %}
                   <dt class="col-5 text-muted fw-normal">Next assignment at</dt>
                   <dd class="col-7 text-end mb-2">
                     {% if scheduled_job_dt %}
-                      {{ scheduled_job_dt.strftime('%Y-%m-%d %I:%M %p') }}
+                      {{ scheduled_job_dt.strftime('%Y-%m-%d %I:%M %p') }} UTC
                     {% else %}
                       <span class="text-muted">Not scheduled</span>
                     {% endif %}

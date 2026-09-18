@@ -87,7 +87,7 @@ class Chore(BaseTable):
     repeat_interval: Optional[RepeatInterval] = None
     repeat_day_of_week: Optional[RepeatDay] = None
     repeat_time_of_day: Optional[RepeatTimeOfDay] = None
-    repeat_time: Optional[str] = None
+    repeat_time: Optional[str] = None # user local timezone
     repeat_every_number_of: Optional[int] = None
     repeat_units: Optional[RepeatUnit] = None
     owner_id: int
@@ -209,7 +209,7 @@ class Chore(BaseTable):
             if old_job:
                 old_job.Delete()
 
-        dt_utc = self.get_next_start_dt()
+        dt_utc = self.get_next_start_dt_utc()
         print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
         if dt_utc is None:
             print('oops')
@@ -224,21 +224,21 @@ class Chore(BaseTable):
         )
         self['job_id'] = new_job['id']
 
-    def get_next_start_dt(self) -> Optional[datetime.datetime]:
+    def get_next_start_dt_utc(self) -> Optional[datetime.datetime]:
         '''
         Get the next start datetime for the chore, based on its repeat settings.
         If the chore is a one-time chore, return None.
+        The return datetime is in UTC
         '''
-        user = self.app.db.FindOne(RingUser, id=self['owner_id'])
-        now = datetime.datetime.now()
-        now = get_utc_from_users_time(now, user)
+        user_tz = self.user.get('timezone', 'UTC')
+        now_dt_usertz = datetime.datetime.now(tz=user_tz)
 
         if self.get('kind') == 'one-time':
-            dt = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%d %H:%M:%S') if self.get(
+            dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
                 'schedule_for') else None
-            dt = get_utc_from_users_time(dt, user) if dt else None
-            if dt and dt > now:
-                return dt
+            dt_usertz = get_utc_from_users_time(dt_usertz, self.user) if dt_usertz else None
+            if dt_usertz and dt_usertz > now_dt_usertz:
+                return dt_usertz
             else:
                 return None  # one-time chore is in the past, no next start datetime
 
@@ -246,45 +246,46 @@ class Chore(BaseTable):
 
         if self.get('repeat_interval') == 'daily':
             if self.get('repeat_time_of_day') == 'specific':
-                time = self.get_chore_time()
-                print('now utc=', datetime.datetime.utcnow())
-                print('250 time=', time)
-                dt = datetime.datetime.combine(now.date(), time)
-                print('252 dt=', dt)
-                dt = get_utc_from_users_time(dt, user)
-                print('253 dt=', dt)
-                if dt < now:
-                    dt += datetime.timedelta(days=1)
-                    print('257 dt=', dt)
-                print('258 return dt=', dt)
-                return dt
+                chore_time_usertz = self.get_chore_time_usertz()
+                print('250 chore_time_usertz=', chore_time_usertz)
+                dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
+                print('252 dt_usertz=', dt_usertz)
+                dt_utc = get_utc_from_users_time(dt_usertz, self.user)
+                print('253 dt_utc=', dt_utc)
+                if dt_utc < datetime.datetime.now(datetime.timezone.utc):
+                    dt_utc += datetime.timedelta(days=1)
+                    print('257 dt_utc=', dt_utc)
+                print('258 return dt_utc=', dt_utc)
+                return dt_utc
             else:
                 for time_of_day in ['morning', 'afternoon', 'evening']:
                     if self.get('repeat_time_of_day', None) == time_of_day:
-                        time = self.get_chore_time()
-                        dt = datetime.datetime.combine(now.date(), time)
-                        dt = get_utc_from_users_time(dt, user)
-                        if dt < now:
-                            dt += datetime.timedelta(days=1)
-                        return dt
+                        chore_time_usertz = self.get_chore_time_usertz()
+                        dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
+                        dt_utc = get_utc_from_users_time(dt_usertz, self.user)
+                        if dt_utc < datetime.datetime.now(datetime.timezone.utc):
+                            dt_utc += datetime.timedelta(days=1)
+                        return dt_utc
 
 
         elif self.get('repeat_interval') == 'weekly':
             # set the time
-            time = self.get_chore_time()
-            dt = datetime.datetime.combine(now.date(), time)
-            dt = get_utc_from_users_time(dt, user)
+            chrore_time_usertz = self.get_chore_time_usertz()
+            dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chrore_time_usertz)
+
 
             # go forward until with day+=1 we are on the correct day
-            i = 0
+
             correct_day_of_week_index = [
                 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
             ].index(self.get('repeat_day_of_week'))
 
+            i = 0
             while i < 7:
-                if dt.weekday() == correct_day_of_week_index and dt > now:
-                    return dt
-                dt += datetime.timedelta(days=1)
+                if dt_usertz.weekday() == correct_day_of_week_index and dt_usertz > now_dt_usertz:
+                    dt_utc = get_utc_from_users_time(dt_usertz, self.user)
+                    return dt_utc
+                dt_usertz += datetime.timedelta(days=1)
                 i += 1
 
 
@@ -295,34 +296,40 @@ class Chore(BaseTable):
             elif self.get('repeat_units') == 'week':
                 timedelta_kwargs['days'] = self.get('repeat_every_number_of', 1) * 7
 
-            time = self.get_chore_time()
-            print('247 time=', time)
-            dt = datetime.datetime.combine(now.date(), time)
-            print('249 dt=', dt)
+            chore_time_usertz = self.get_chore_time_usertz()
+            print('247 chore_time_usertz=', chore_time_usertz)
+            dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
+            print('249 dt_usertz=', dt_usertz)
             if self.get('repeat_units') == 'month':
                 # bump the dt out by x num of months
                 num_months = self.get('repeat_every_number_of', 1)
-                dt = dt.replace(month=(dt.month - 1 + num_months) % 12 + 1,
-                                year=dt.year + (dt.month - 1 + num_months) // 12)
+                dt = dt_usertz.replace(month=(dt_usertz.month - 1 + num_months) % 12 + 1,
+                                year=dt_usertz.year + (dt_usertz.month - 1 + num_months) // 12)
             else:
-                dt = dt + datetime.timedelta(**timedelta_kwargs)
-            print('259 dt=', dt)
-            return dt
+                dt_usertz = dt_usertz + datetime.timedelta(**timedelta_kwargs)
+            print('259 dt_usertz=', dt_usertz)
+            dt_utc = get_utc_from_users_time(dt_usertz, self.user)
+            return dt_utc
 
         return None
 
-    def get_chore_time(self) -> Optional[datetime.time]:
+    @property
+    def user(self):
+        return self.app.db.FindOne(RingUser, id=self['owner_id'])
+
+    def get_chore_time_usertz(self) -> Optional[datetime.time]:
         '''
-        This returns only the datetime.time that this this chore should be assigned
+        This returns only the datetime.time that this chore should be assigned
+        The return datetime.time() is in user_local_timezone
         '''
         if self.get('repeat_time_of_day') == 'specific':
             repeat_time_str: Optional[str] = self.get('repeat_time', None)
             if isinstance(repeat_time_str, str):
-                repeat_time = datetime.datetime.strptime(
+                repeat_time_dt = datetime.datetime.strptime(
                     repeat_time_str,
                     '%H:%M'
                 )
-                return repeat_time.time()
+                return repeat_time_dt.time()
             else:
                 return None
         else:
@@ -353,9 +360,37 @@ def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
         if user.get('enable_daylight_savings', True):
             if dt_with_tz.dst():
                 dt_utc -= dt_with_tz.dst()
-        print('get_utc_from_users_time(dt=', dt, ', user_tz=', user_tz, ', DST=', user.get('enable_daylight_savings', True))
+        print('get_utc_from_users_time(dt=', dt, ', user_tz=', user_tz, ', DST=',
+              user.get('enable_daylight_savings', True))
         print('return dt_utc=', dt_utc)
         return dt_utc
+
+
+def get_user_local_dt_from_utc(dt: datetime.datetime, user: RingUser):
+    if dt.tzinfo is not None and dt.tzinfo not in (
+        pytz.UTC,
+        datetime.timezone.utc,
+    ):
+        raise ValueError(
+            "Any datetimes passed to this function need to have no timezone "
+            "info or need to use the UTC timezone."
+        )
+
+    user_has_dst = user.get('enable_daylight_savings', True)
+    user_tz = pytz.timezone(user.get('timezone', 'UTC'))
+    print('user_has_dst=', user_has_dst)
+    print('user_tz=', user_tz)
+    print('get_user_local_dt_from_utc dt=', dt)
+    
+    dt_utc =  pytz.utc.localize(dt)
+        
+
+
+    local_dt = dt_utc.astimezone(user_tz)
+    if user_has_dst and local_dt.dst():
+        local_dt += local_dt.dst()
+
+    return local_dt
 
 
 def assign_chore_to_persons(chore_id: int):

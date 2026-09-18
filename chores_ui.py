@@ -11,7 +11,7 @@ from chores_models import (
     Chore,
     Person,
     assign_chore_to_persons,
-    setup as setup_chores_models,
+    setup as setup_chores_models, get_user_local_dt_from_utc,
 )
 from ring_user import RingUser, get_current_user
 
@@ -162,6 +162,8 @@ def setup(a: Flask):
             persons=chores_helper.get_current_user_persons(),
             chores=chores_helper.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
+            get_user_local_dt_from_utc=get_user_local_dt_from_utc,
+            user=get_current_user(),
         )
 
     @app.route('/chores/settings', methods=["GET", "POST"])
