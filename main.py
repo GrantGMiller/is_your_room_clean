@@ -123,10 +123,11 @@ def send_login_email():
                         "to": email,
                         "frm": config.ADMINS[0],
                         "subject": "Login with a Magic Link",
-                        "body": f"Click this link to login.\r{user.get_last_login_url()}",
+                        "body": f"Click this link to login.\r{user.get_last_login_url()}\r\rYour login code is: {user['login_code']}",
                         "html": render_template(
                             "email_body_magic_link.html",
                             login_url=user.get_last_login_url(),
+                            login_code=user["login_code"],
                         ),
                     },
                     errorCallback=send_slack_error,

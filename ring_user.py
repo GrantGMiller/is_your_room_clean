@@ -1,4 +1,5 @@
 import datetime
+import random
 import time
 import uuid
 from pathlib import Path
@@ -34,6 +35,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     status: str
     email: str
     login_url: str
+    login_code: str # a six digit code like "012345"
     login_url_expires_at: int  # epoch seconds
     last_image_timestamp: dict  # keep track of the last image requested, only request a new image every IMAGE_REQUEST_TIMEOUT seconds
     api_key: Optional[str]
@@ -78,7 +80,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
     def get_new_login_url(self):
         self['login_url'] = f'{config.SERVER_HOST_URL}magic_link/{uuid.uuid4()}'
+        self['login_code'] = str(random.randint(0, 999999)).zfill(6)
         print('login_url=', self['login_url'])
+        print('login_code=', self['login_code'])
         # link is only valid for X seconds
         self['login_url_expires_at'] = time.time() + (10 * 60)
         return self['login_url']

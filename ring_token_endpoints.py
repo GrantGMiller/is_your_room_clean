@@ -238,6 +238,25 @@ def setup(a: Flask):
             flash("Magic Link Expired", "danger")
             return redirect("/dashboard")
 
+    @app.route("/login_code", methods=["POST"])
+    def login_code():
+        email = request.form.get("email", "").strip().lower()
+        code = request.form.get("login_code", "")
+        if "@" not in email or len(code) != 6 or not code.isdigit():
+            return redirect("/dashboard")
+
+        ring_user: RingUser = app.db.FindOne(RingUser, email=email, login_code=code)
+        if not ring_user:
+            flash("Invalid Login Code", "danger")
+            return redirect("/dashboard")
+
+        if float(ring_user.get("login_url_expires_at", 0)) <= time.time():
+            flash("Login Code Expired", "danger")
+            return redirect("/dashboard")
+
+        flask_login.login_user(ring_user, remember=True)
+        return redirect("/dashboard")
+
 
 # --- Helpers -----------------------------------------------------------
 

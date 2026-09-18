@@ -37,8 +37,34 @@
               <p class="mb-0">
                 A login link has been sent to your email address
                 <strong>{{ email }}</strong>. Please click the link in the email
-                to login.
+                to login, or enter the six-digit code below.
               </p>
+              <form
+                action="{{ url_for('login_code') }}"
+                method="post"
+                class="mt-4"
+              >
+                <input type="hidden" name="email" value="{{ email }}" />
+                <label for="login-code" class="form-label">Login code</label>
+                <input
+                  id="login-code"
+                  name="login_code"
+                  type="text"
+                  class="form-control text-center"
+                  inputmode="numeric"
+                  pattern="[0-9]{6}"
+                  maxlength="6"
+                  autocomplete="one-time-code"
+                  placeholder="000000"
+                  required
+                />
+                <button type="submit" class="btn btn-primary w-100 mt-3">
+                  Log in with code
+                </button>
+              </form>
+              {% if message %}
+                <div class="alert alert-danger mt-3 mb-0">{{ message }}</div>
+              {% endif %}
             </div>
           </div>
         </div>
