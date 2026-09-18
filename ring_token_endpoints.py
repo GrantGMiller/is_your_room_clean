@@ -28,7 +28,7 @@ from typing import cast
 import flask_dictabase
 import flask_login
 import requests
-from flask import Flask, jsonify, redirect, request, flash
+from flask import Flask, flash, jsonify, redirect, render_template, request, session
 
 import config
 from ring_user import RingUser
@@ -242,17 +242,29 @@ def setup(a: Flask):
     def login_code():
         email = request.form.get("email", "").strip().lower()
         code = request.form.get("login_code", "")
+        session["login_email"] = email
+
         if "@" not in email or len(code) != 6 or not code.isdigit():
-            return redirect("/dashboard")
+            return render_template(
+                "email_sent.html",
+                email=session.get("login_email", ""),
+                message="Enter a valid email address and six-digit login code",
+            )
 
         ring_user: RingUser = app.db.FindOne(RingUser, email=email, login_code=code)
         if not ring_user:
-            flash("Invalid Login Code", "danger")
-            return redirect("/dashboard")
+            return render_template(
+                "email_sent.html",
+                email=session["login_email"],
+                message="Invalid Login Code",
+            )
 
         if float(ring_user.get("login_url_expires_at", 0)) <= time.time():
-            flash("Login Code Expired", "danger")
-            return redirect("/dashboard")
+            return render_template(
+                "email_sent.html",
+                email=session["login_email"],
+                message="Login Code Expired",
+            )
 
         flask_login.login_user(ring_user, remember=True)
         return redirect("/dashboard")

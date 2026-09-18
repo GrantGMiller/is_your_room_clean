@@ -44,7 +44,19 @@
                 method="post"
                 class="mt-4"
               >
-                <input type="hidden" name="email" value="{{ email }}" />
+                <label for="login-email" class="form-label"
+                  >Email address</label
+                >
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  class="form-control"
+                  value="{{ email }}"
+                  autocomplete="email"
+                  required
+                  hidden
+                />
                 <label for="login-code" class="form-label">Login code</label>
                 <input
                   id="login-code"

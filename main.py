@@ -5,7 +5,7 @@ import sys
 import time
 
 import flask_login
-from flask import render_template, Flask, request, redirect, send_file, jsonify, flash
+from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
@@ -108,6 +108,7 @@ def dashboard():
 def send_login_email():
     email = request.form.get("email", None)
     if IsValidEmail(email):
+        session["login_email"] = email.lower()
         user = app.db.NewOrFind(RingUser, email=email.lower())
         if user:
             user.get_new_login_url()
@@ -142,7 +143,7 @@ def send_login_email():
         # note, if the user was not found, we dont actually send an email, but dont tell them that
         return render_template(
             "email_sent.html",
-            email=email,
+            email=session["login_email"],
         )
 
     return render_template("email_input.html", message="Invalid Email Address")
