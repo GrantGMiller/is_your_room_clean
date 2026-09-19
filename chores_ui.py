@@ -298,4 +298,5 @@ def setup(a: Flask):
             persons=chores_helper.get_current_user_persons(),
             chores=chores_helper.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
+            ring_user=get_current_user()
         )

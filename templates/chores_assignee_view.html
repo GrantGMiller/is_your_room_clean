@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chores | Is Your Room Clean</title>
+    {% include "js_css.html" %}
+    <style>
+      .assignee-accordion {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        left: 1rem;
+        z-index: 1030;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+
+    <main class="container py-5">
+      <div class="mb-4">
+        <h1 class="h2 mb-1">Chores</h1>
+        <p class="text-muted mb-0">Choose your name to see your chores.</p>
+      </div>
+
+      <button
+        id="toggle-device-cards"
+        class="btn btn-outline-primary mb-3"
+        type="button"
+        aria-controls="device-cards"
+        aria-expanded="true"
+      >
+        Hide devices
+      </button>
+
+      {% include "device_cards.html" %}
+      
+      <div class="accordion assignee-accordion" id="person-chores">
+        {% for person in persons %}
+          <div
+            class="accordion-item border-{{ person.get('color', 'primary') }}"
+          >
+            <h2 class="accordion-header" id="person-heading-{{ person['id'] }}">
+              <button
+                class="accordion-button collapsed bg-{{ person.get('color', 'primary') }}-subtle"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#person-chores-{{ person['id'] }}"
+                aria-expanded="false"
+                aria-controls="person-chores-{{ person['id'] }}"
+              >
+                {{ person.name }}
+              </button>
+            </h2>
+            <div
+              id="person-chores-{{ person['id'] }}"
+              class="accordion-collapse collapse"
+              aria-labelledby="person-heading-{{ person['id'] }}"
+              data-bs-parent="#person-chores"
+            >
+              <div
+                class="accordion-body bg-{{ person.get('color', 'primary') }}-subtle"
+              >
+                {% set person_chores = [] %}
+                {% for chore in chores %}
+                  {% if person['id'] in chore.get_assigned_to_ids() %}
+                    {% set person_chores = person_chores.append(chore) %}
+                  {% endif %}
+                {% endfor %}
+
+                {% if person_chores %}
+                  <div class="list-group">
+                    {% for chore in person_chores %}
+                      <div
+                        class="list-group-item d-flex justify-content-between align-items-center gap-3"
+                      >
+                        <span>{{ chore.get('name', 'Unnamed chore') }}</span>
+
+                        {% set is_completed = person['id'] in chore.Get('completed_by', []) %}
+                        <form method="post" action="/chores/complete">
+                          <input
+                            type="hidden"
+                            name="chore_id"
+                            value="{{ chore.id }}"
+                          />
+                          <input
+                            type="hidden"
+                            name="person_id"
+                            value="{{ person['id'] }}"
+                          />
+                          <input
+                            type="hidden"
+                            name="is_completed"
+                            value="{{ 'true' if is_completed else 'false' }}"
+                          />
+
+                          <button
+                            class="btn {{ 'btn-success' if is_completed else 'btn-primary' }} btn-sm"
+                            type="submit"
+                          >
+                            {% if chore.get('assignment_mode', None) == 'first-done' %}
+                              🏁
+                            {% endif %}
+                            {{ 'Done ✔️' if is_completed else 'Done' }}
+                          </button>
+                        </form>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p class="text-muted mb-0">No chores assigned.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-light border mb-0">
+            No people have been added yet.
+          </div>
+        {% endfor %}
+      </div>
+    </main>
+
+    <script>
+      const toggleDeviceCardsButton = document.getElementById(
+        "toggle-device-cards",
+      );
+      const deviceCards = document.getElementById("device-cards");
+
+      toggleDeviceCardsButton.addEventListener("click", function () {
+        const isHidden = deviceCards.hasAttribute("hidden");
+        deviceCards.hidden = !isHidden;
+        toggleDeviceCardsButton.setAttribute("aria-expanded", String(isHidden));
+        toggleDeviceCardsButton.textContent = isHidden
+          ? "Hide devices"
+          : "Show devices";
+      });
+
+      document
+        .querySelectorAll('form[action="/chores/complete"]')
+        .forEach(function (form) {
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const button = form.querySelector("button");
+            button.disabled = true;
+
+            fetch(form.action, {
+              method: "POST",
+              body: new FormData(form),
+            })
+              .then(function (response) {
+                if (!response.ok) {
+                  throw new Error("Unable to mark chore as done");
+                }
+
+                const completedInput = form.querySelector(
+                  'input[name="is_completed"]',
+                );
+                const isCompleted = completedInput.value === "true";
+
+                completedInput.value = isCompleted ? "false" : "true";
+                button.classList.toggle("btn-primary", isCompleted);
+                button.classList.toggle("btn-success", !isCompleted);
+                button.textContent = isCompleted ? "Done" : "Done ✔️";
+                button.disabled = false;
+              })
+              .catch(function () {
+                button.disabled = false;
+              });
+          });
+        });
+    </script>
+  </body>
+</html>
