@@ -282,8 +282,13 @@ def setup(a: Flask):
         ):
             return 'chore or person not found', 404
 
-        chore.mark_completed_by(person['id'])
-        return jsonify(chore.ui_safe())
+        is_completed = request.form.get('is_completed', 'false').lower() == 'true'
+        if is_completed:
+            chore.mark_incomplete_by(person['id'])
+        else:
+            chore.mark_completed_by(person['id'])
+
+        return jsonify({**chore.ui_safe(), 'is_completed': not is_completed})
 
     @app.route('/chores/view', methods=['GET'])
     def chores_assignee_view():

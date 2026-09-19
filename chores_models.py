@@ -196,6 +196,12 @@ class Chore(BaseTable):
         '''
         self.Remove('completed_by', person_id, removeAll=True)
 
+        self.SetItem('last_completed', str(person_id), None)
+
+        if self.get('assignment_mode') == 'first-done':
+            for person in self.get_can_be_assigned_to_persons():
+                self.assign_to(person)
+
     def get_scheduled_job_dt(self) -> Optional[datetime.datetime]:
 
         if self.get('job_id', None) is not None:
