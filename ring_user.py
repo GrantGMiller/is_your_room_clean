@@ -1,5 +1,6 @@
 import datetime
 import random
+import string
 import time
 import uuid
 from pathlib import Path
@@ -288,6 +289,19 @@ class RingUser(flask_login.UserMixin, BaseTable):
         )
 
         return ring_image['id']
+
+    def get_new_wall_display_url(self):
+        # generate a new wall display url for the user
+        wall_link_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
+        self['wall_display_url'] = f'{config.SERVER_HOST_URL}wall_display/{wall_link_code}'
+        self['wall_link_expires_at'] = time.time() + (60 * 60 * 1)  
+        return self['wall_display_url']
+
+    def get_wall_link_url(self):
+        if not self.get('wall_display_url', None):
+            return self.get_new_wall_display_url()
+        else:
+            return self['wall_display_url']
 
 
 class RingImage(BaseTable):

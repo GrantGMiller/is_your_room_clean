@@ -31,6 +31,9 @@
 
     <main class="container py-5">
       <section class="mb-5" aria-labelledby="today-heading">
+       <a class="btn btn-outline-success" href="/chores/wall_display">
+            Open wall display
+          </a>
         <div class="mb-3">
           <h1 class="h2 mb-1" id="today-heading">People</h1>
           <p class="text-muted mb-0">A quick view of today&apos;s progress.</p>
@@ -99,6 +102,7 @@
           >
             <span role="img" aria-label="chore settings">&#9881;</span>
           </a>
+         
           <a class="btn btn-primary" href="/chores/wizard/start">Add chore</a>
         </div>
       </div>
@@ -186,13 +190,13 @@
                       <span class="text-muted">Never</span>
                     {% endif %}
                   </dd>
-                 
+
                   {% set scheduled_job_dt = chore.get_scheduled_job_dt() %}
-                
+
                   <dt class="col-5 text-muted fw-normal">Next assignment at</dt>
                   <dd class="col-7 text-end mb-2">
                     {% if scheduled_job_dt %}
-                      {{ get_user_local_dt_from_utc(scheduled_job_dt, user).strftime('%Y-%m-%d %I:%M %p') }} 
+                      {{ get_user_local_dt_from_utc(scheduled_job_dt, user).strftime('%Y-%m-%d %I:%M %p') }}
                     {% else %}
                       <span class="text-muted">(no future assignment)</span>
                     {% endif %}
@@ -214,7 +218,7 @@
                           {% endif %}{% if chore["repeat_time_of_day"] != 'specific' %}
                             , {{ chore["repeat_time_of_day"] }}
                           {% endif %}{% if chore["repeat_time"] %}
-                            at {{ chore["repeat_time"] }} 
+                            at {{ chore["repeat_time"] }}
                           {% endif %}
                         {% endif %}
                       </span>

@@ -1,6 +1,9 @@
 import datetime
+import base64
+from io import BytesIO, StringIO
 from typing import cast
 
+import pyqrcode
 import pytz
 from flask import Flask, flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
@@ -299,4 +302,25 @@ def setup(a: Flask):
             chores=chores_helper.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
             ring_user=get_current_user()
+        )
+
+    @app.route('/chores/wall_display', methods=['GET'])
+    def chores_wall_display_link():
+        user = get_current_user()
+        if not user:
+            flash('You must be logged in to view the wall display.', 'danger')
+            return redirect('/login')
+
+        wall_display_url = user.get_new_wall_display_url()
+
+        qr = pyqrcode.create(wall_display_url)
+        image_buffer = BytesIO()
+        qr.png(image_buffer, scale=6)
+        wall_display_image = base64.b64encode(image_buffer.getvalue()).decode()
+
+
+        return render_template(
+            "chores_wall_display_link.html",
+            wall_display_url=wall_display_url,
+            wall_display_image=wall_display_image,
         )

@@ -392,6 +392,13 @@ def get_user(key):
         return jsonify(existing_user)
     return jsonify({'error': 'nope'})
 
+@app.context_processor
+def inject_app_values():
+    return {
+        'enabled_features': {
+            'chores': config.ENABLE_CHORES,
+        }
+    }
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

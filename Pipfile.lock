@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "51c73e313c0168a33cb5c10fd3b5be63785094fdfaf5ff1430a8798dae84ff69"
+            "sha256": "9b76e9482c34bed833dd3bf05ad05d86b539d8165b44ee8aadd652c304bb368e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -411,6 +411,22 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==26.2"
+        },
+        "pypng": {
+            "hashes": [
+                "sha256:4a43e969b8f5aaafb2a415536c1a8ec7e341cd6a3f957fd5b5f32a4cfeed902c",
+                "sha256:739c433ba96f078315de54c0db975aee537cbc3e1d0ae4ed9aab0ca1e427e2c1"
+            ],
+            "index": "pypi",
+            "version": "==0.20220715.0"
+        },
+        "pyqrcode": {
+            "hashes": [
+                "sha256:1b2812775fa6ff5c527977c4cd2ccb07051ca7d0bc0aecf937a43864abe5eff6",
+                "sha256:fdbf7634733e56b72e27f9bce46e4550b75a3a2c420414035cae9d9d26b234d5"
+            ],
+            "index": "pypi",
+            "version": "==1.2.1"
         },
         "python-crontab": {
             "hashes": [

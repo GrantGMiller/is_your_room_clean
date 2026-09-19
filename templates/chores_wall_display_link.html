@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open Wall Display | Is Your Room Clean</title>
+    {% include "js_css.html" %}
+    <style>
+      .wall-display-qr img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .wall-display-qr {
+        width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-3">Open Wall Display</h1>
+              <p class="lead">
+                Use the Wall Display to display your chores on a device that
+                will be open to the public. People can check off chores as they
+                complete them.
+              </p>
+              <p>
+                The Wall Display device will be restricted to viewing chores and
+                marking them done. It cannot edit chores or people.
+              </p>
+
+              <hr class="my-4" />
+
+              <div class="row align-items-center g-4">
+                <div class="col-12 col-md-6 text-center">
+                  <h2 class="h5 mb-3">Scan to open the Wall Display</h2>
+                  <div
+                    class="wall-display-qr border rounded p-2 bg-white"
+                    role="img"
+                    aria-label="QR code for the Wall Display"
+                  >
+                    <img
+                      src="data:image/png;base64,{{ wall_display_image }}"
+                      alt="QR code for the Wall Display"
+                    />
+                  </div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <h2 class="h5">No camera?</h2>
+                  <p class="text-muted">
+                    Type this address into the device that will show the Wall
+                    Display:
+                  </p>
+                  <p class="bg-light border rounded p-3 mb-0 text-break">
+                    {{ wall_display_url }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
