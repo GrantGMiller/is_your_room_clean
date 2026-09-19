@@ -17,6 +17,20 @@
   </head>
 
   <body class="bg-light">
+    <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">Is Your Room Clean</a>
+
+        <ul class="navbar-nav ms-auto">
+          <a
+            class="nav-item nav-link{% if request.path == '/dashboard' %}active{% endif %}"
+            href="/chores/overview"
+          >
+            Admin Page
+          </a>
+        </ul>
+      </div>
+    </nav>
     {% include "flash_messages.html" %}
 
     <main class="container py-5">
@@ -32,11 +46,11 @@
         aria-controls="device-cards"
         aria-expanded="true"
       >
-        Hide devices
+        Hide Camera Devices
       </button>
 
       {% include "device_cards.html" %}
-      
+
       <div class="accordion assignee-accordion" id="person-chores">
         {% for person in persons %}
           <div
@@ -134,8 +148,8 @@
         deviceCards.hidden = !isHidden;
         toggleDeviceCardsButton.setAttribute("aria-expanded", String(isHidden));
         toggleDeviceCardsButton.textContent = isHidden
-          ? "Hide devices"
-          : "Show devices";
+          ? "Hide Camera Devices"
+          : "Show Camera Devices";
       });
 
       document

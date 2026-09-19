@@ -187,7 +187,10 @@ class Chore(BaseTable):
                     self.unassign(person)
 
     def get_last_completed_dt(self) -> Optional[datetime.datetime]:
-        completed_dates = self.Get('last_completed', {}).values()
+        completed_dates = filter(
+            lambda iso: iso is not None,
+            self.Get('last_completed', {}).values()
+        )
         return max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
 
     def mark_incomplete_by(self, person_id: int) -> None:
