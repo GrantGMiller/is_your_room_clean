@@ -336,12 +336,12 @@ class RingUser(flask_login.UserMixin, BaseTable):
         if self.get('wall_user_id', None) is None:
             kwargs = dict(self)
             kwargs.pop('id', None)
+            kwargs['is_wall_user'] = True
 
             print('creating new wall user')
             wall_user: RingUser = self.app.db.New(
                 RingUser,
                 **kwargs,
-                is_wall_user=True,
             )
 
             self['wall_user_id'] = wall_user['id']

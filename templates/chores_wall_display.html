@@ -55,12 +55,18 @@
 
       <div class="accordion assignee-accordion" id="person-chores">
         {% for person in persons %}
+          {% set undone_count = namespace(value=0) %}
+          {% for chore in chores %}
+            {% if person['id'] in chore.get_assigned_to_ids() and person['id'] not in chore.Get('completed_by', []) %}
+              {% set undone_count.value = undone_count.value + 1 %}
+            {% endif %}
+          {% endfor %}
           <div
             class="accordion-item border-{{ person.get('color', 'primary') }}"
           >
             <h2 class="accordion-header" id="person-heading-{{ person['id'] }}">
               <button
-                class="accordion-button collapsed bg-{{ person.get('color', 'primary') }}-subtle"
+                class="accordion-button collapsed bg-{{ person.get('color', 'primary') }}-subtle fw-bold fs-5"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#person-chores-{{ person['id'] }}"
@@ -68,6 +74,19 @@
                 aria-controls="person-chores-{{ person['id'] }}"
               >
                 {{ person.name }}
+                {% if undone_count.value == 0 %}
+                  <span
+                    class="badge text-bg-success ms-2 undone-count-badge"
+                    data-undone-count="0"
+                  >ALL DONE</span>
+                {% else %}
+                  <span
+                    class="badge text-bg-secondary ms-2 undone-count-badge"
+                    data-undone-count="{{ undone_count.value }}"
+                  >
+                    {{ undone_count.value }} undone
+                  </span>
+                {% endif %}
               </button>
             </h2>
             <div
@@ -180,6 +199,22 @@
             const completedInput = choreContainer.querySelector(
               'input[name="is_completed"]',
             );
+            const wasCompleted = completedInput.value === "true";
+            const badge = button
+              .closest(".accordion-item")
+              .querySelector(".undone-count-badge");
+            let undoneCount = Number(badge.dataset.undoneCount);
+
+            if (wasCompleted !== isCompleted) {
+              undoneCount += isCompleted ? -1 : 1;
+            }
+
+            badge.dataset.undoneCount = String(undoneCount);
+            badge.classList.toggle("text-bg-success", undoneCount === 0);
+            badge.classList.toggle("text-bg-secondary", undoneCount !== 0);
+            badge.textContent = undoneCount === 0
+              ? "ALL DONE"
+              : undoneCount + " undone";
 
             completedInput.value = String(isCompleted);
             button.classList.toggle("btn-success", isCompleted);
