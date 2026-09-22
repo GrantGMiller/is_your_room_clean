@@ -6,7 +6,7 @@ import pytz
 from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
-from ring_user import RingUser
+import ring_user
 from slack import send_slack_error
 
 ChoreKind = Literal["one-time", "repeat"]
@@ -324,7 +324,7 @@ class Chore(BaseTable):
 
     @property
     def user(self):
-        return self.app.db.FindOne(RingUser, id=self['owner_id'])
+        return self.app.db.FindOne(ring_user.RingUser, id=self['owner_id'])
 
     def get_chore_time_usertz(self) -> Optional[datetime.time]:
         '''
@@ -342,7 +342,7 @@ class Chore(BaseTable):
             else:
                 return None
         else:
-            user = self.app.db.FindOne(RingUser, id=self['owner_id'])
+            user = self.app.db.FindOne(ring_user.RingUser, id=self['owner_id'])
             for time_of_day in ['morning', 'afternoon', 'evening']:
                 if self.get('repeat_time_of_day', None) == time_of_day:
                     time_str = user.get_chore_settings().get(f'{time_of_day}_time')
@@ -351,7 +351,7 @@ class Chore(BaseTable):
                     return time
 
 
-def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
+def get_utc_from_users_time(dt: datetime.datetime, user: ring_user.RingUser):
     '''
     The jobs are scheduled in UTC.
     So adjust the datetime from the users timezone to UTC,
@@ -360,7 +360,7 @@ def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
     user_tz = user.get('timezone', 'UTC')
 
     if user_tz == 'UTC':
-        return dt
+        return dt.replace(tzinfo=datetime.timezone.utc)
     else:
         tz = pytz.timezone(user_tz)
         dt_with_tz = tz.localize(dt)
@@ -373,7 +373,7 @@ def get_utc_from_users_time(dt: datetime.datetime, user: RingUser):
         return dt_utc
 
 
-def get_user_local_dt_from_utc(dt: datetime.datetime, user: RingUser):
+def get_user_local_dt_from_utc(dt: datetime.datetime, user: ring_user.RingUser):
     if dt is None or dt.tzinfo is not None and dt.tzinfo not in (
             pytz.UTC,
             datetime.timezone.utc,
@@ -419,3 +419,22 @@ def assign_chore_to_persons(chore_id: int):
             chore.assign_to(person)
 
         return chore
+
+
+def get_persons(user: ring_user.RingUser):
+    print('user=', user)
+    print('user.is_wall_user=', user.is_wall_user)
+
+    with app.app_context():
+        ring_user = user.get_ring_user()
+        print('ring_user.is_wall_user=', ring_user.is_wall_user)
+        ret = list(app.db.FindAll(Person, owner_id=ring_user['id']))
+        print('ret=', ret)
+        return ret
+
+def get_chores(user: ring_user.RingUser):
+    with app.app_context():
+        ring_user = user.get_ring_user()
+        ret = list(app.db.FindAll(Chore, owner_id=ring_user['id']))
+        print('get_chores ret=', ret)
+        return ret

@@ -85,7 +85,6 @@ def dashboard():
                     print('saving latest event')
                     ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
 
-
     # app.logger.error("111 ring_user=" + str(ring_user))
 
     if not ring_user:
@@ -256,7 +255,11 @@ def my_account():
     ring_user = get_current_user()
     if not ring_user:
         return redirect("/dashboard")
-    return render_template("my_account.html")
+
+    email = ring_user.get("email", "")
+    local, _, domain = email.partition("@")
+    masked_email = f"{local[:4]}*****@{domain[-9:]}"
+    return render_template("my_account.html", masked_email=masked_email)
 
 
 @app.route("/delete_account", methods=["POST"])
@@ -392,6 +395,7 @@ def get_user(key):
         return jsonify(existing_user)
     return jsonify({'error': 'nope'})
 
+
 @app.context_processor
 def inject_app_values():
     return {
@@ -399,6 +403,12 @@ def inject_app_values():
             'chores': config.ENABLE_CHORES,
         }
     }
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return redirect("/static/favicon.ico")
+
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

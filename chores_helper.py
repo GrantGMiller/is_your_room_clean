@@ -48,6 +48,7 @@ def get_current_user_person(person_id: int) -> Optional[Person]:
         user = get_current_user()
         if not user:
             return None
+        user = user.get_ring_user()
         return app.db.FindOne(Person, id=person_id, owner_id=user['id'])
 
 
@@ -56,4 +57,5 @@ def get_current_user_chore(chore_id: int) -> Optional[Chore]:
         user = get_current_user()
         if not user:
             return None
+        user = user.get_ring_user()
         return app.db.FindOne(Chore, id=chore_id, owner_id=user['id'])

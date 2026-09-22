@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open Wall Display | Is Your Room Clean</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-3">Open the Wall Display</h1>
+              <p>
+                This page is used to display the chores list so your household
+                can check off the chores they have completed.
+              </p>
+              <p>
+                The account owner will need to provide you with the code to
+                access this Wall Display.
+              </p>
+
+              <form id="wall-code-form" class="mt-4">
+                <label for="wall-code" class="form-label"
+                  >Wall Display code</label
+                >
+                <div class="input-group">
+                  <input
+                    id="wall-code"
+                    class="form-control"
+                    name="code"
+                    type="text"
+                    autocomplete="off"
+                    required
+                  />
+                  <button class="btn btn-primary" type="submit">Open</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      document
+        .getElementById("wall-code-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const code = document.getElementById("wall-code").value.trim();
+
+          if (code) {
+            this.action = "/wall/" + encodeURIComponent(code);
+            this.method = "post";
+            this.submit();
+          }
+        });
+    </script>
+  </body>
+</html>

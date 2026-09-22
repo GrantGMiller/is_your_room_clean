@@ -15,16 +15,32 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <a class="btn btn-info m-1" href="ring://" onclick="openRingApp(event)">
-          Open Ring App
-        </a>
-        <a
-          class="nav-item nav-link {% if request.path == '/dashboard' %}active{% endif %}"
-          href="/dashboard"
-        >
-          Dashboard
-        </a>
-        {% if enabled_features.chores %}
+        {% if current_user and current_user.get and current_user.get('access_token', None) %}
+          <a
+            class="btn btn-info m-1"
+            href="ring://"
+            onclick="openRingApp(event)"
+          >
+            Open Ring App
+          </a>
+        {% endif %}
+        {% if current_user and not current_user.is_wall_user and current_user.is_authenticated and current_user.get('access_token', None) %}
+          <a
+            class="nav-item nav-link {% if request.path == '/dashboard' %}active{% endif %}"
+            href="/dashboard"
+          >
+            Dashboard
+          </a>
+        {% elif current_user and current_user.is_wall_user %}
+          <a
+            class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
+            href="/wall_display"
+          >
+            Wall Display
+          </a>
+        {% endif %}
+
+        {% if enabled_features.chores and current_user and current_user.is_authenticated %}
           <a
             class="nav-item nav-link {% if request.path == '/chores/overview' %}active{% endif %}"
             href="/chores/overview"
@@ -32,12 +48,15 @@
             Chores
           </a>
         {% endif %}
-        <a
-          class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"
-          href="/my_account"
-        >
-          My Account
-        </a>
+
+        {% if current_user and current_user.is_authenticated %}
+          <a
+            class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"
+            href="/my_account"
+          >
+            My Account
+          </a>
+        {% endif %}
         <a
           class="nav-item nav-link {% if request.path == '/contact' %}active{% endif %}"
           href="/contact"
@@ -56,8 +75,12 @@
         >
           Terms & Conditions
         </a>
-        {% if current_user.is_authenticated %}
+        {% if current_user and current_user.is_authenticated %}
           <a class="nav-item nav-link" href="/logout"> Sign Out </a>
+        {% else %}
+          {% if request.path != '/dashboard' %}
+            <a class="nav-item nav-link" href="/"> Sign In </a>
+          {% endif %}
         {% endif %}
       </ul>
     </div>

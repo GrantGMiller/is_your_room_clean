@@ -224,7 +224,7 @@ def setup(a: Flask):
             # success, log this user in
             send_slack_message("user found and magic link NOT expired", uid)
             flask_login.login_user(ring_user, remember=True)
-            # ring_user['login_url_expires_at'] = now_timestamp  # the link is now expired so they cant use it twice
+            ring_user['login_url_expires_at'] = now_timestamp  # the link is now expired so they cant use it twice
             return redirect("/dashboard")
 
         else:
@@ -260,13 +260,11 @@ def setup(a: Flask):
             )
 
         if float(ring_user.get("login_url_expires_at", 0)) <= time.time():
-            return render_template(
-                "email_sent.html",
-                email=session["login_email"],
-                message="Login Code Expired",
-            )
+            flash("Login Code Expired", 'danger')
+            return redirect('/')
 
         flask_login.login_user(ring_user, remember=True)
+        ring_user['login_url_expires_at'] = time.time() # dont let them use the same code twice
         return redirect("/dashboard")
 
 

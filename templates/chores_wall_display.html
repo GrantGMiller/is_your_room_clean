@@ -22,12 +22,12 @@
         <a class="navbar-brand" href="/">Is Your Room Clean</a>
 
         <ul class="navbar-nav ms-auto">
-          <a
+          {# <a
             class="nav-item nav-link{% if request.path == '/dashboard' %}active{% endif %}"
             href="/chores/overview"
           >
             Admin Page
-          </a>
+          </a> #}
         </ul>
       </div>
     </nav>
@@ -39,17 +39,19 @@
         <p class="text-muted mb-0">Choose your name to see your chores.</p>
       </div>
 
-      <button
-        id="toggle-device-cards"
-        class="btn btn-outline-primary mb-3"
-        type="button"
-        aria-controls="device-cards"
-        aria-expanded="true"
-      >
-        Hide Camera Devices
-      </button>
+      {% if ring_user.access_token %}
+        <button
+          id="toggle-device-cards"
+          class="btn btn-outline-primary mb-3"
+          type="button"
+          aria-controls="device-cards"
+          aria-expanded="{true}"
+        >
+          Hide Camera Devices
+        </button>
 
-      {% include "device_cards.html" %}
+        {% include "device_cards.html" %}
+      {% endif %}
 
       <div class="accordion assignee-accordion" id="person-chores">
         {% for person in persons %}
@@ -93,7 +95,7 @@
                         <span>{{ chore.get('name', 'Unnamed chore') }}</span>
 
                         {% set is_completed = person['id'] in chore.Get('completed_by', []) %}
-                        <form method="post" action="/chores/complete">
+                        <div>
                           <input
                             type="hidden"
                             name="chore_id"
@@ -112,14 +114,15 @@
 
                           <button
                             class="btn {{ 'btn-success' if is_completed else 'btn-primary' }} btn-sm"
-                            type="submit"
+                            type="button"
+                            onclick="completeChore(this)"
                           >
                             {% if chore.get('assignment_mode', None) == 'first-done' %}
                               🏁
                             {% endif %}
                             {{ 'Done ✔️' if is_completed else 'Done' }}
                           </button>
-                        </form>
+                        </div>
                       </div>
                     {% endfor %}
                   </div>
@@ -152,40 +155,42 @@
           : "Show Camera Devices";
       });
 
-      document
-        .querySelectorAll('form[action="/chores/complete"]')
-        .forEach(function (form) {
-          form.addEventListener("submit", function (event) {
-            event.preventDefault();
+      function completeChore(button) {
+        const choreContainer = button.parentElement;
+        const formData = new FormData();
 
-            const button = form.querySelector("button");
-            button.disabled = true;
-
-            fetch(form.action, {
-              method: "POST",
-              body: new FormData(form),
-            })
-              .then(function (response) {
-                if (!response.ok) {
-                  throw new Error("Unable to mark chore as done");
-                }
-
-                const completedInput = form.querySelector(
-                  'input[name="is_completed"]',
-                );
-                const isCompleted = completedInput.value === "true";
-
-                completedInput.value = isCompleted ? "false" : "true";
-                button.classList.toggle("btn-primary", isCompleted);
-                button.classList.toggle("btn-success", !isCompleted);
-                button.textContent = isCompleted ? "Done" : "Done ✔️";
-                button.disabled = false;
-              })
-              .catch(function () {
-                button.disabled = false;
-              });
-          });
+        choreContainer.querySelectorAll("input").forEach(function (input) {
+          formData.append(input.name, input.value);
         });
+
+        button.disabled = true;
+
+        fetch("/chores/complete", {
+          method: "POST",
+          body: formData,
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Unable to mark chore as done");
+            }
+            return response.json();
+          })
+          .then(function (chore) {
+            const isCompleted = chore.is_completed;
+            const completedInput = choreContainer.querySelector(
+              'input[name="is_completed"]',
+            );
+
+            completedInput.value = String(isCompleted);
+            button.classList.toggle("btn-success", isCompleted);
+            button.classList.toggle("btn-primary", !isCompleted);
+            button.textContent = isCompleted ? "Done ✔️" : "Done";
+            button.disabled = false;
+          })
+          .catch(function () {
+            button.disabled = false;
+          });
+      }
     </script>
   </body>
 </html>

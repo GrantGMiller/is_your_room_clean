@@ -14,6 +14,7 @@ from flask_dictabase import BaseTable, Dictabase
 import config
 import slack
 from ai_cleanliness import evaluate_cleanliness
+
 from slack import send_slack_message
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
@@ -36,7 +37,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     status: str
     email: str
     login_url: str
-    login_code: str # a six digit code like "012345"
+    login_code: str  # a six digit code like "012345"
     login_url_expires_at: int  # epoch seconds
     last_image_timestamp: dict  # keep track of the last image requested, only request a new image every IMAGE_REQUEST_TIMEOUT seconds
     api_key: Optional[str]
@@ -44,7 +45,10 @@ class RingUser(flask_login.UserMixin, BaseTable):
     ring_user_claimed_at_ms: int  # epoch milliseconds when the app was authorized, used to prevent requesting images before this time
     timezone: str  # store the user's timezone, default to UTC if not set
     enable_daylight_savings: bool
-    latest_events: dict # {device_id: timestamp_ms}
+    latest_events: dict  # {device_id: timestamp_ms}
+    wall_display_url: str
+    wall_link_expires_at: float
+    is_wall_user: bool
 
     def get_chore_settings(self) -> ChoreSettings:
         ret = self.Get('chore_settings', {})
@@ -58,6 +62,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
     def get_id(self, *a, **k):
         # needed for flask_login to identify the user
+        # since im using two classes for a logged in user
+        # RingUser and WallUser
+        # Need to make sure the ids are not duplicated.
         return self['id']
 
     def __str__(self):
@@ -116,11 +123,14 @@ class RingUser(flask_login.UserMixin, BaseTable):
         code exchange, just with grant_type=refresh_token.
         https://developer.amazon.com/docs/ring/api-documentation.html#access-tokens
         """
+        if not self.get('refresh_token', None):
+            return
+
         response = requests.post(
             OAUTH_TOKEN_URL,
             data={
                 'grant_type': 'refresh_token',
-                'refresh_token': self['refresh_token'],
+                'refresh_token': self.get('refresh_token', None),
                 'client_id': config.RING_CLIENT_ID,
                 'client_secret': config.RING_CLIENT_SECRET,
             },
@@ -136,9 +146,10 @@ class RingUser(flask_login.UserMixin, BaseTable):
         self['expires_at'] = time.time() + tokens['expires_in']
 
     def get_valid_access_token(self):
-        if not self.get('expires_at', None) or time.time() >= float(self.get('expires_at', 0)) - 60:  # Refresh 1 minute early
+        if not self.get('expires_at', None) or time.time() >= float(
+                self.get('expires_at', 0)) - 60:  # Refresh 1 minute early
             self._refresh_token_if_needed()
-        return self['access_token']
+        return self.get('access_token', None)
 
     def make_authenticated_request(self, *args, method='GET', **kwargs):
         headers = kwargs.pop('headers', {})
@@ -163,6 +174,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
         `include` controls which related resources get embedded per item
         (comma-separated), e.g. 'status,capabilities'.
         """
+
+        if not self.get('access_token', None):
+            return []
 
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices',
@@ -236,7 +250,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
         five_mins_ago_ms = (time.time() * 1000) - (5 * 60 * 60 * 1000)
         if start_timestamp_ms < int(self.GetItem('latest_events', device_id, five_mins_ago_ms) or five_mins_ago_ms):
             # start one second after app was authorized
-            start_timestamp_ms = int(self.GetItem('latest_events', device_id, five_mins_ago_ms) or five_mins_ago_ms) + 1000
+            start_timestamp_ms = int(
+                self.GetItem('latest_events', device_id, five_mins_ago_ms) or five_mins_ago_ms) + 1000
 
         start_timestamp_ms = int(start_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now
@@ -292,9 +307,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
     def get_new_wall_display_url(self):
         # generate a new wall display url for the user
-        wall_link_code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(6))
-        self['wall_display_url'] = f'{config.SERVER_HOST_URL}wall_display/{wall_link_code}'
-        self['wall_link_expires_at'] = time.time() + (60 * 60 * 1)  
+        wall_link_code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self['wall_display_url'] = f'{config.SERVER_HOST_URL}wall/{wall_link_code}'
+        self['wall_link_expires_at'] = time.time() + (60 * 60 * 1)
         return self['wall_display_url']
 
     def get_wall_link_url(self):
@@ -302,6 +317,43 @@ class RingUser(flask_login.UserMixin, BaseTable):
             return self.get_new_wall_display_url()
         else:
             return self['wall_display_url']
+
+    def get_ring_user(self):
+        print('get_ring_user')
+        if self.get('is_wall_user', False):
+            print('returning ring_user')
+            ret = self.app.db.FindOne(RingUser, wall_user_id=self['id'])
+            print('ret.is_wall_user=', ret.is_wall_user)
+            return ret
+        else:
+            print('returning self')
+            return self
+
+    def get_wall_user(self):
+        if self.get('is_wall_user', False):
+            return self
+
+        if self.get('wall_user_id', None) is None:
+            kwargs = dict(self)
+            kwargs.pop('id', None)
+
+            print('creating new wall user')
+            wall_user: RingUser = self.app.db.New(
+                RingUser,
+                **kwargs,
+                is_wall_user=True,
+            )
+
+            self['wall_user_id'] = wall_user['id']
+            return wall_user
+
+        wall_user: Optional[RingUser] = self.app.db.FindOne(RingUser, id=self.get('wall_user_id', None))
+        return wall_user
+
+    @property
+    def is_wall_user(self):
+        return self.get('is_wall_user', False)
+
 
 
 class RingImage(BaseTable):
@@ -343,6 +395,14 @@ def get_current_user() -> Optional[RingUser]:
         return user
 
 
+def get_current_wall_user() -> Optional[RingUser]:
+    with app.app_context():
+        user = get_current_user()
+        if user:
+            return user.get_wall_user()
+        return None
+
+
 def score_cleanliness(image_id):
     # print('score_cleanliness id=', image_id)
     with app.app_context():
@@ -372,7 +432,7 @@ def score_cleanliness(image_id):
                 print('score_cleanliness error=', e)
                 image['isError'] = True
                 image['error'] = str(e)
-                image['scoring_in_progress'] = False # maybe we will try again
+                image['scoring_in_progress'] = False  # maybe we will try again
                 raise e  # raise so that the error is sent via slack
 
 

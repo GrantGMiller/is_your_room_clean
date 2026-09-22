@@ -1,8 +1,10 @@
-import datetime
 import base64
-from io import BytesIO, StringIO
+import datetime
+import time
+from io import BytesIO
 from typing import cast
 
+import flask_login
 import pyqrcode
 import pytz
 from flask import Flask, flash, redirect, render_template, request, jsonify
@@ -10,13 +12,14 @@ from flask_dictabase import Dictabase
 
 import chores_helper
 import chores_wizard
+import config
 from chores_models import (
     Chore,
     Person,
     assign_chore_to_persons,
-    setup as setup_chores_models, get_user_local_dt_from_utc,
+    setup as setup_chores_models, get_user_local_dt_from_utc, get_persons, get_chores,
 )
-from ring_user import RingUser, get_current_user
+from ring_user import RingUser, get_current_user, get_current_wall_user
 
 global app
 
@@ -160,6 +163,9 @@ def setup(a: Flask):
 
     @app.route("/chores/overview")
     def overview():
+        user = get_current_user()
+        if not user:
+            return redirect('/dashboard')
         return render_template(
             "chores_overview.html",
             persons=chores_helper.get_current_user_persons(),
@@ -279,9 +285,9 @@ def setup(a: Flask):
         person = chores_helper.get_current_user_person(person_id)
 
         if (
-            chore is None
-            or person is None
-            or person['id'] not in chore.get_assigned_to_ids()
+                chore is None
+                or person is None
+                or person['id'] not in chore.get_assigned_to_ids()
         ):
             return 'chore or person not found', 404
 
@@ -309,7 +315,7 @@ def setup(a: Flask):
         user = get_current_user()
         if not user:
             flash('You must be logged in to view the wall display.', 'danger')
-            return redirect('/login')
+            return redirect('/')
 
         wall_display_url = user.get_new_wall_display_url()
 
@@ -318,9 +324,46 @@ def setup(a: Flask):
         qr.png(image_buffer, scale=6)
         wall_display_image = base64.b64encode(image_buffer.getvalue()).decode()
 
-
         return render_template(
             "chores_wall_display_link.html",
             wall_display_url=wall_display_url,
             wall_display_image=wall_display_image,
         )
+
+    @app.route('/wall/<code>', methods=['GET', 'POST'])
+    def chores_wall(code):
+        url = f'{config.SERVER_HOST_URL}wall/{code}'
+        user: RingUser = app.db.FindOne(RingUser, wall_display_url=url)
+        if not user:
+            flash('User not found. Please try again.', 'danger')
+            return redirect('/')
+
+        if user and time.time() > user.get('wall_link_expires_at'):
+            flash('Wall Link expired.', 'danger')
+            return redirect('/')
+
+        print('wall user logged in')
+        wall_user = user.get_wall_user()
+        print('login_user(wall_user=', wall_user)
+        flask_login.login_user(wall_user, remember=True)
+
+        return redirect('/wall_display')
+
+    @app.route('/wall_display', methods=['GET'])
+    def chores_wall_display():
+        wall_user = get_current_wall_user()
+        print('get_current_wall_user=', wall_user)
+        if not wall_user:
+            return render_template(
+                'chores_wall_display_user_unknown.html',
+            )
+
+        ring_user = wall_user.get_ring_user()
+        return render_template(
+            'chores_wall_display.html',
+            ring_user=ring_user,
+            persons=get_persons(ring_user),
+            chores=get_chores(ring_user),
+
+        )
+
