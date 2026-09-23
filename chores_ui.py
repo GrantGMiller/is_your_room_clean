@@ -342,6 +342,9 @@ def setup(a: Flask):
             flash('Wall Link expired.', 'danger')
             return redirect('/')
 
+        # dont let them use the same code twice
+        user['wall_link_expires_at'] = time.time()
+
         print('wall user logged in')
         wall_user = user.get_wall_user()
         print('login_user(wall_user=', wall_user)
@@ -366,4 +369,3 @@ def setup(a: Flask):
             chores=get_chores(ring_user),
 
         )
-

@@ -18,6 +18,7 @@ import ring_token_endpoints
 import ring_webhook
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
+import migrate_helper
 
 if not os.path.exists("images"):
     # this will hold the ring camera screenshots
@@ -39,6 +40,8 @@ ring_user_setup(app)
 api.setup(app)
 repeat_jobs.setup(app)
 chores_ui.setup(app)
+if config.ENABLE_MIGRAGE_CHORES:
+    migrate_helper.setup(app)
 
 
 @app.route("/")

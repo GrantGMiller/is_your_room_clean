@@ -95,9 +95,14 @@ class Chore(BaseTable):
     job_id: Optional[int] = None
     last_completed: LastCompleted
 
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        if self.get('job_id', None):
+            self.refresh_scheduled_job()
+
     def ui_safe(self):
         ret = {
-            'assigned_to_ids': self.get_assigned_to_ids(),
+            'assigned_to': self.get_assigned_to_ids(),
             'can_be_assigned_to_ids': self.get_can_be_assigned_to_ids(),
             "assignment_mode": self.get('assignment_mode', None),
             "kind": self.get('kind', None),
@@ -243,6 +248,7 @@ class Chore(BaseTable):
         user_tz = self.user.get('timezone', 'UTC')
         now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
 
+        print('250 get_next_start_dt_utc chore=', self)
         if self.get('kind') == 'one-time':
             dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
                 'schedule_for') else None
@@ -291,7 +297,7 @@ class Chore(BaseTable):
 
             i = 0
             while i < 7:
-                if dt_usertz.weekday() == correct_day_of_week_index and dt_usertz > now_dt_usertz:
+                if dt_usertz.weekday() == correct_day_of_week_index:
                     dt_utc = get_utc_from_users_time(dt_usertz, self.user)
                     return dt_utc
                 dt_usertz += datetime.timedelta(days=1)
@@ -431,6 +437,7 @@ def get_persons(user: ring_user.RingUser):
         ret = list(app.db.FindAll(Person, owner_id=ring_user['id']))
         print('ret=', ret)
         return ret
+
 
 def get_chores(user: ring_user.RingUser):
     with app.app_context():

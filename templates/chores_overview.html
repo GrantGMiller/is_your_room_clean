@@ -211,7 +211,7 @@
                       <span class="d-block text-muted schedule-text">
                         {% if chore["repeat_interval"] == "other" %}
                           Every {{ chore["repeat_every_number_of"] }}
-                          {{ chore["repeat_units"] }}(s)
+                          {{ chore["repeat_units"] }}
                         {% else %}
                           {{ chore["repeat_interval"] }}{% if chore["repeat_interval"] != 'daily' and chore["repeat_day_of_week"] %}
                             , {{ chore["repeat_day_of_week"] }}
