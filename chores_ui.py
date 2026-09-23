@@ -166,6 +166,7 @@ def setup(a: Flask):
         user = get_current_user()
         if not user:
             return redirect('/dashboard')
+
         return render_template(
             "chores_overview.html",
             persons=chores_helper.get_current_user_persons(),

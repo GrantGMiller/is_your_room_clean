@@ -32,10 +32,14 @@ def setup(app: Flask):
             raise Exception('grant not found')
         new_chore['owner_id'] = grant['id']
 
+        new_chore['tags'] = None
         for name in req_chore.pop('can_be_assigned_to_names', []):
             child = app.db.NewOrFind(Person, name=name, owner_id=grant['id'])
             if child:
                 new_chore.Append('can_be_assigned_to', child['id'], allowDuplicates=False)
+
+        for tag in req_chore.pop('tags', []):
+            new_chore.Append('tags', tag.lower(), allowDuplicates=False)
 
         new_chore.update(req_chore)
 

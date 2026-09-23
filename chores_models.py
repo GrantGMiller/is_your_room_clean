@@ -83,7 +83,7 @@ class Chore(BaseTable):
     name: str
     kind: ChoreKind
     assignment_mode: Optional[AssignmentMode] = None
-    schedule_for: Optional[str] = None
+    schedule_for: Optional[str] = None  # ex. '%Y-%m-%dT%H:%M'
     repeat_interval: Optional[RepeatInterval] = None
     repeat_day_of_week: Optional[RepeatDay] = None
     repeat_time_of_day: Optional[RepeatTimeOfDay] = None
@@ -94,11 +94,7 @@ class Chore(BaseTable):
     tags: List[str] = []
     job_id: Optional[int] = None
     last_completed: LastCompleted
-
-    def __init__(self, *a, **k):
-        super().__init__(*a, **k)
-        if self.get('job_id', None):
-            self.refresh_scheduled_job()
+    enabled: bool
 
     def ui_safe(self):
         ret = {
@@ -116,7 +112,10 @@ class Chore(BaseTable):
             "repeat_units": self.get('repeat_units', None),
             "schedule_for": self.get('schedule_for', None),
             "tags": self.get('tags', None),
+            "next_assignment_dt_utc_iso": self.get_next_start_dt_utc().isoformat(),
+            "assignment_job_id": self.get('job_id', None),
         }
+
         return ret
 
     @property
@@ -211,12 +210,19 @@ class Chore(BaseTable):
                 self.assign_to(person)
 
     def get_scheduled_job_dt(self) -> Optional[datetime.datetime]:
-
+        print('get_scheduled_job_dt name=', self['name'], self.get('job_id', None))
         if self.get('job_id', None) is not None:
             job = self.app.jobs.GetJob(self.get('job_id'))
+            print('job=', job)
             if job is not None:
-                return job.get('dt', None)
+                ret = job.get('dt', None)
+                print('ret=', ret)
+                return ret
+            else:
+                self['job_id'] = None
+                return None
 
+        print('225 no job id')
         return None
 
     def refresh_scheduled_job(self) -> None:
@@ -228,7 +234,8 @@ class Chore(BaseTable):
         dt_utc = self.get_next_start_dt_utc()
         print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
         if dt_utc is None:
-            raise Exception('no scheduled job')
+            print('no scheduled job', self)
+            return
 
         new_job = self.app.jobs.ScheduleJob(
             func=assign_chore_to_persons,
@@ -238,6 +245,7 @@ class Chore(BaseTable):
             name=f"Assign chore '{self['name']}' to persons",
         )
         self['job_id'] = new_job['id']
+        print('new_job=', new_job)
 
     def get_next_start_dt_utc(self) -> Optional[datetime.datetime]:
         '''
@@ -248,7 +256,7 @@ class Chore(BaseTable):
         user_tz = self.user.get('timezone', 'UTC')
         now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
 
-        print('250 get_next_start_dt_utc chore=', self)
+        print('250 get_next_start_dt_utc chore=', self['name'])
         if self.get('kind') == 'one-time':
             dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
                 'schedule_for') else None
@@ -264,6 +272,8 @@ class Chore(BaseTable):
             if self.get('repeat_time_of_day') == 'specific':
                 chore_time_usertz = self.get_chore_time_usertz()
                 print('250 chore_time_usertz=', chore_time_usertz)
+                if not chore_time_usertz:
+                    return None
                 dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
                 print('252 dt_usertz=', dt_usertz)
                 dt_utc = get_utc_from_users_time(dt_usertz, self.user)
@@ -288,6 +298,9 @@ class Chore(BaseTable):
             # set the time
             chrore_time_usertz = self.get_chore_time_usertz()
             dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chrore_time_usertz)
+
+            if dt_usertz < datetime.datetime.now(datetime.timezone.utc):
+                dt_usertz += datetime.timedelta(days=1)
 
             # go forward until with day+=1 we are on the correct day
 
@@ -340,11 +353,14 @@ class Chore(BaseTable):
         if self.get('repeat_time_of_day') == 'specific':
             repeat_time_str: Optional[str] = self.get('repeat_time', None)
             if isinstance(repeat_time_str, str):
-                repeat_time_dt = datetime.datetime.strptime(
-                    repeat_time_str,
-                    '%H:%M'
-                )
-                return repeat_time_dt.time()
+                try:
+                    repeat_time_dt = datetime.datetime.strptime(
+                        repeat_time_str,
+                        '%H:%M'
+                    )
+                    return repeat_time_dt.time()
+                except:
+                    return None
             else:
                 return None
         else:

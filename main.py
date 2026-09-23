@@ -40,7 +40,7 @@ ring_user_setup(app)
 api.setup(app)
 repeat_jobs.setup(app)
 chores_ui.setup(app)
-if config.ENABLE_MIGRAGE_CHORES:
+if config.ENABLE_MIGRATE_CHORES:
     migrate_helper.setup(app)
 
 
