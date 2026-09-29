@@ -27,7 +27,7 @@ PersonColor = Literal[
     "primary", "secondary", "success", "danger", "warning", "info", "light", "dark"
 ]
 
-LastCompleted = Dict[int, datetime.datetime]
+LastCompleted = Dict[int, datetime.datetime.isoformat]
 # LastCompleted is a dictionary where the key is the person_id and the value is the datetime when they last completed the chore.
 
 app: Flask = None
@@ -114,6 +114,7 @@ class Chore(BaseTable):
             "tags": self.get('tags', None),
             "next_assignment_dt_utc_iso": self.get_next_start_dt_utc().isoformat(),
             "assignment_job_id": self.get('job_id', None),
+            "last_completed": self.get('last_completed', {})
         }
 
         return ret

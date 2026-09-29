@@ -14,7 +14,6 @@ from flask_dictabase import BaseTable, Dictabase
 import config
 import slack
 from ai_cleanliness import evaluate_cleanliness
-
 from slack import send_slack_message
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
@@ -355,7 +354,6 @@ class RingUser(flask_login.UserMixin, BaseTable):
         return self.get('is_wall_user', False)
 
 
-
 class RingImage(BaseTable):
     account_id: str
     device_id: str
@@ -381,7 +379,11 @@ def setup(a: Flask):
 
     @login_manager.user_loader
     def user_loader(user_id):
-        return app.db.FindOne(RingUser, id=int(user_id))
+        try:
+            return app.db.FindOne(RingUser, id=int(user_id))
+        except Exception as e:
+            print('Error loading user_id=', user_id, e)
+            return None
 
 
 def get_current_user() -> Optional[RingUser]:
@@ -389,6 +391,7 @@ def get_current_user() -> Optional[RingUser]:
         # return user object if logged in, else return None
 
         user = flask_login.current_user
+        print('392 user=', user)
         if user and user.is_anonymous:
             return None
 

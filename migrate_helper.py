@@ -1,5 +1,7 @@
+import datetime
 from typing import cast
 
+import pytz
 from flask import Flask, request, jsonify
 from flask_dictabase import Dictabase
 
@@ -42,6 +44,16 @@ def setup(app: Flask):
             new_chore.Append('tags', tag.lower(), allowDuplicates=False)
 
         new_chore.update(req_chore)
+
+        if req_chore.get('last_completed', None):
+            for person_name, timestamp in req_chore['last_completed'].items():
+                person = app.db.FindOne(Person, name=person_name, owner_id=grant['id'])
+                new_chore['last_completed'] = None
+                new_chore.SetItem(
+                    'last_completed',
+                    person['id'],
+                    datetime.datetime.fromtimestamp(timestamp, tz=pytz.utc).isoformat(),
+                )
 
         print('db new_chore=', new_chore)
         return jsonify(new_chore)
