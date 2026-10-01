@@ -15,6 +15,10 @@
         display: none;
       }
 
+      .chore-card.is-disabled .card {
+        opacity: 0.72;
+      }
+
       .chore-kind {
         text-transform: capitalize;
       }
@@ -31,9 +35,9 @@
 
     <main class="container py-5">
       <section class="mb-5" aria-labelledby="today-heading">
-       <a class="btn btn-outline-success" href="/chores/wall_display">
-            Open wall display
-          </a>
+        <a class="btn btn-outline-success" href="/chores/wall_display">
+          Open wall display
+        </a>
         <div class="mb-3">
           <h1 class="h2 mb-1" id="today-heading">People</h1>
           <p class="text-muted mb-0">A quick view of today&apos;s progress.</p>
@@ -102,7 +106,7 @@
           >
             <span role="img" aria-label="chore settings">&#9881;</span>
           </a>
-         
+
           <a class="btn btn-primary" href="/chores/wizard/start">Add chore</a>
         </div>
       </div>
@@ -130,7 +134,7 @@
       <div class="row g-3" id="chore-list">
         {% for chore in chores %}
           <div
-            class="col-12 col-md-6 col-xl-4 chore-card"
+            class="col-12 col-md-6 col-xl-4 chore-card {% if chore.get('enabled', None) == False %}is-disabled{% endif %}"
             data-search="{{ chore.get('name', None) }} {{ chore.get('kind', None) }} {{ chore.get_assigned_to_ids() | join(',') }}"
             data-edit-url="/chores/edit?id={{ chore.get('id', None) }}"
             role="link"
@@ -144,6 +148,9 @@
                 >
                   <h2 class="h5 mb-0">{{ chore.get('name', None) }}</h2>
                   <div class="d-flex align-items-center gap-2">
+                    {% if chore.get('enabled', None) == False %}
+                      <span class="badge text-bg-secondary">Disabled</span>
+                    {% endif %}
                     <span class="badge text-bg-secondary chore-kind"
                       >{{ chore.get('kind', None) }}</span
                     >
@@ -192,7 +199,7 @@
                   </dd>
 
                   {% set scheduled_job_dt = chore.get_scheduled_job_dt() %}
-               
+
                   <dt class="col-5 text-muted fw-normal">Next assignment at</dt>
                   <dd class="col-7 text-end mb-2">
                     {% if scheduled_job_dt %}

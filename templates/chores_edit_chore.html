@@ -59,6 +59,11 @@
         method="post"
         id="chore-edit-form"
       >
+      <div class="form-check form-switch">
+      
+  <input name="enabled" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"  >
+  <label class="form-check-label" for="flexSwitchCheckDefault">Enabled Chore</label>
+</div>
         <div class="mb-4">
           <label class="form-label h5 mb-3" for="chore-name">Chore name</label>
           <input
@@ -577,6 +582,17 @@
           .querySelectorAll('input[name="assignment_mode"]')
           .forEach((input) => {
             input.checked = input.value === choreData.assignment_mode;
+          });
+        
+        form
+          .querySelectorAll('input[name="enabled"]')
+          .forEach((input) => {
+            console.info('choreData.enabled=', choreData.enabled)
+            // not working ugh
+            const enabled = choreData.enabled === true|| choreData.enabled === 1|| choreData.enabled === 'true'|| choreData.enabled === '1';
+
+enabledInput.checked = enabled;
+            input.checked = enabled
           });
 
         const assignedIds = new Set(choreData.assigned_to_ids || []);

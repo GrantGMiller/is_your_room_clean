@@ -165,7 +165,10 @@ def image_summary(device_id):
     :return:
     """
     img: RingImage = get_latest_ring_image(device_id)
-    img_dt = datetime.datetime.fromtimestamp(img.get("timestamp_epoch_ms", 0) / 1000)
+    if not img:
+        return 'no image found', 404
+
+    img_dt = datetime.datetime.fromtimestamp((img.get("timestamp_epoch_ms", 0) or 0) / 1000)
     print("140 img_dt=", img_dt, " img=", img)
     if img:
         return jsonify(img.ui_safe())
@@ -403,7 +406,7 @@ def get_user(key):
 def inject_app_values():
     return {
         'enabled_features': {
-            'chores': config.ENABLE_CHORES,
+            'chores': getattr(config, 'ENABLE_CHORES', False),
         }
     }
 

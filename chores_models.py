@@ -114,7 +114,8 @@ class Chore(BaseTable):
             "tags": self.get('tags', None),
             "next_assignment_dt_utc_iso": self.get_next_start_dt_utc().isoformat(),
             "assignment_job_id": self.get('job_id', None),
-            "last_completed": self.get('last_completed', {})
+            "last_completed": self.get('last_completed', {}),
+            'enabled': self.get('enabled', False),
         }
 
         return ret

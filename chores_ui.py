@@ -136,6 +136,9 @@ def setup(a: Flask):
                     "repeat_every_number_of", type=int
                 )
 
+            if "enabled" in request.form:
+                chore['enabled'] = request.form.get("enabled") == 'on'
+
             chore.refresh_scheduled_job()
             return jsonify(chore.ui_safe())
 

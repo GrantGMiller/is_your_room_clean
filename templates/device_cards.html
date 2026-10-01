@@ -39,20 +39,11 @@
           class="card-body d-flex justify-content-between align-items-center"
         >
           <h2 class="h6 mb-0">{{ device['attributes']['name'] }}</h2>
-          <!--                    <button-->
-          <!--                            type="button"-->
-          <!--                            class="btn btn-sm btn-outline-primary refresh-btn"-->
-          <!--                            data-device-id="{{ device['id'] }}"-->
-          <!--                            disabled="true"-->
-          <!--                    >-->
-          <!--                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"-->
-          <!--                             viewBox="0 0 16 16">-->
-          <!--                            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.5.5 0 0 1 .384 0L.342 8.59A.25.25 0 0 1 .534 9z"/>-->
-          <!--                            <path fill-rule="evenodd"-->
-          <!--                                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>-->
-          <!--                        </svg>-->
-          <!--                        Refresh-->
-          <!--                    </button>-->
+          <small
+            class="text-muted text-nowrap timestamp-text"
+            id="timestamp-{{ device['id'] }}"
+            hidden
+          ></small>
         </div>
         <p
           class="text-muted m-2 summary-text"
@@ -75,6 +66,12 @@
 <script>
   const LOOP_TIME_MS = 10000;
   const SNAPSHOT_RETRY_TIME_MS = 5000;
+
+  function updateTimestampLabel(timestampEl) {
+    const timestamp = Number(timestampEl.dataset.timestampEpochMs);
+    const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    timestampEl.textContent = `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  }
 
   function retrySnapshot(image) {
     window.setTimeout(function () {
@@ -108,6 +105,13 @@
       .then(function (data) {
         summaryEl.textContent = data.summary;
 
+        const timestampEl = document.getElementById("timestamp-" + deviceId);
+        if (data.timestamp_epoch_ms != null) {
+          timestampEl.dataset.timestampEpochMs = data.timestamp_epoch_ms;
+          timestampEl.hidden = false;
+          updateTimestampLabel(timestampEl);
+        }
+
         badgeEl.textContent = `${data.cleanliness}% Clean`;
 
         if (data.cleanliness < 40) {
@@ -130,4 +134,10 @@
         }, LOOP_TIME_MS);
       });
   }
+
+  window.setInterval(function () {
+    document
+      .querySelectorAll(".timestamp-text[data-timestamp-epoch-ms]")
+      .forEach(updateTimestampLabel);
+  }, 60000);
 </script>

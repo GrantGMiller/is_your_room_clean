@@ -49,11 +49,12 @@ def setup(app: Flask):
             for person_name, timestamp in req_chore['last_completed'].items():
                 person = app.db.FindOne(Person, name=person_name, owner_id=grant['id'])
                 new_chore['last_completed'] = None
-                new_chore.SetItem(
-                    'last_completed',
-                    person['id'],
-                    datetime.datetime.fromtimestamp(timestamp, tz=pytz.utc).isoformat(),
-                )
+                if timestamp:
+                    new_chore.SetItem(
+                        'last_completed',
+                        person['id'],
+                        datetime.datetime.fromtimestamp(timestamp, tz=pytz.utc).isoformat(),
+                    )
 
         print('db new_chore=', new_chore)
         return jsonify(new_chore)

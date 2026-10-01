@@ -24,7 +24,7 @@ def setup(a):
                 hour=0, minute=0, second=0, microsecond=0
             ) - datetime.timedelta(days=1),  # midnight
             func=delete_old_images,
-            hours=1,
+            minutes=30,
             errorCallback=send_slack_error
         )
 
@@ -57,12 +57,12 @@ def delete_old_images():
     app.db = cast(Dictabase, app.db)
 
     with app.app_context():
-        dt_24hrs_ago = datetime.datetime.now() - datetime.timedelta(hours=24)
+        dt_expired_img = datetime.datetime.now() - datetime.timedelta(hours=1)
         num_img_deleted = 0
         for img in app.db.FindAll(RingImage):
             img_timestamp = (img.get('timestamp_epoch_ms', 0) or 0) / 1000
             img_dt = datetime.datetime.fromtimestamp(img_timestamp)
-            if img_dt > dt_24hrs_ago:
+            if img_dt < dt_expired_img:
                 print('deleting img=', img)
                 app.db.Delete(img)  # delete the obj from the database
                 num_img_deleted += 1
