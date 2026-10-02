@@ -18,6 +18,16 @@
 						<p class="display-6 mb-0">{{ num_of_users }}</p>
 					</div>
 				</section>
+				<section class="mt-4" aria-labelledby="user-emails-heading">
+					<h2 class="h5" id="user-emails-heading">User emails</h2>
+					<ul class="list-group">
+						{% for email in masked_emails %}
+							<li class="list-group-item">{{ email }}</li>
+						{% else %}
+							<li class="list-group-item text-muted">No users found.</li>
+						{% endfor %}
+					</ul>
+				</section>
 			{% endif %}
 		</main>
 	</body>

@@ -17,6 +17,7 @@ import migrate_helper
 import repeat_jobs
 import ring_token_endpoints
 import ring_webhook
+from ring_token_endpoints import mask_email
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
 
@@ -262,8 +263,15 @@ def admin():
     if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
         return redirect("/dashboard")
 
-    num_of_users = len(list(app.db.FindAll(RingUser)))
-    return render_template("admin.html", num_of_users=num_of_users)
+    all_users = list(app.db.FindAll(RingUser, _limit=100))
+    masked_user_emails = [
+        mask_email(user.get("email")) for user in all_users if user.get("email")
+    ]
+    return render_template(
+        "admin.html",
+        num_of_users=len(all_users),
+        masked_emails=masked_user_emails,
+    )
 
 
 @app.route("/my_account", methods=["GET"])
