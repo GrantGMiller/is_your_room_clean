@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Admin - Is Your Room Clean</title>
+		{% include "js_css.html" %}
+	</head>
+	<body class="bg-light">
+		{% include "flash_messages.html" %} {% include "navbar.html" %}
+
+		<main class="container py-5">
+			<h1 class="h3 mb-4">Admin</h1>
+			{% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins %}
+				<section class="card shadow-sm" aria-labelledby="user-count-heading">
+					<div class="card-body">
+						<h2 class="h6 text-muted" id="user-count-heading">Total users</h2>
+						<p class="display-6 mb-0">{{ num_of_users }}</p>
+					</div>
+				</section>
+			{% endif %}
+		</main>
+	</body>
+</html>

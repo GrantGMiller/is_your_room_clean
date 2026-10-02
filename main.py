@@ -256,6 +256,16 @@ def data_flow():
     return render_template("data_flow.html")
 
 
+@app.route("/admin")
+def admin():
+    user = get_current_user()
+    if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
+        return redirect("/dashboard")
+
+    num_of_users = len(list(app.db.FindAll(RingUser)))
+    return render_template("admin.html", num_of_users=num_of_users)
+
+
 @app.route("/my_account", methods=["GET"])
 def my_account():
     ring_user = get_current_user()
@@ -407,6 +417,7 @@ def inject_app_values():
     return {
         'enabled_features': {
             'chores': getattr(config, 'ENABLE_CHORES', False),
+            'admins': getattr(config, 'ADMINS', []),
         }
     }
 

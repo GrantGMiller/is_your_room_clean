@@ -57,6 +57,14 @@
             My Account
           </a>
         {% endif %}
+        {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins %}
+          <a
+            class="nav-item nav-link {% if request.path == '/admin' %}active{% endif %}"
+            href="/admin"
+          >
+            Admin
+          </a>
+        {% endif %}
         <a
           class="nav-item nav-link {% if request.path == '/contact' %}active{% endif %}"
           href="/contact"
