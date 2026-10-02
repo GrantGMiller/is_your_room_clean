@@ -254,12 +254,13 @@
          
 
           <div class="mt-3" id="weekly-options">
-            <label class="form-label" for="repeat-day-of-week">Which day?</label>
-            <select class="form-select" name="repeat_day_of_week" id="repeat-day-of-week">
+            <label class="form-label" for="repeat-day-of-week">Which days?</label>
+            {% set repeat_days = chore.Get('repeat_day_of_week', []) or [] %}
+            <select class="form-select" name="repeat_day_of_week" id="repeat-day-of-week" multiple size="7">
               {% for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] %}
                 <option
                   value="{{ day }}"
-                  {% if chore.get('repeat_day_of_week', None) == day %}selected{% endif %}
+                  {% if day == repeat_days or day in repeat_days %}selected{% endif %}
                 >
                   {{ day | capitalize }}
                 </option>
@@ -573,7 +574,14 @@
         repeatTime.value = choreData.repeat_time || "";
         repeatEvery.value = choreData.repeat_every_number_of || 1;
         repeatUnit.value = choreData.repeat_units || "day";
-        repeatDay.value = choreData.repeat_day_of_week || "monday";
+        const repeatDays = Array.isArray(choreData.repeat_day_of_week)
+          ? choreData.repeat_day_of_week
+          : choreData.repeat_day_of_week
+            ? [choreData.repeat_day_of_week]
+            : [];
+        Array.from(repeatDay.options).forEach((option) => {
+          option.selected = repeatDays.includes(option.value);
+        });
 
         form.querySelectorAll('input[name="kind"]').forEach((input) => {
           input.checked = input.value === choreData.kind;

@@ -112,7 +112,6 @@ def setup(a: Flask):
                 "kind",
                 "schedule_for",
                 "repeat_interval",
-                "repeat_day_of_week",
                 "repeat_time_of_day",
                 "repeat_time",
                 "repeat_units",
@@ -120,6 +119,8 @@ def setup(a: Flask):
             ]:
                 if key in request.form:
                     chore[key] = request.form.get(key)
+
+            chore.Set("repeat_day_of_week", request.form.getlist("repeat_day_of_week"))
 
             if "tags" in request.form:
                 tags = request.form.get("tags", "").split(",")

@@ -26,7 +26,6 @@ def setup(app: Flask):
                 chore_fields.update(
                     {
                         "repeat_interval": request.form.get("repeat_interval"),
-                        "repeat_day_of_week": request.form.get("repeat_day_of_week"),
                         "repeat_time_of_day": request.form.get("repeat_time_of_day"),
                         "repeat_time": request.form.get("repeat_time"),
                         "repeat_every_number_of": request.form.get(
@@ -35,12 +34,15 @@ def setup(app: Flask):
                         "repeat_units": request.form.get("repeat_units"),
                     }
                 )
+                
 
             chore = app.db.New(
                 Chore, 
                 owner_id=get_current_user()["id"],
                   **chore_fields
                   )
+            chore.Set('repeat_day_of_week', request.form.get("repeat_day_of_week"))
+            
             chore.refresh_scheduled_job()
             return redirect(f'/chores/wizard/2/{chore["id"]}')
 

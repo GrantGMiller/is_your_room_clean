@@ -85,7 +85,7 @@ class Chore(BaseTable):
     assignment_mode: Optional[AssignmentMode] = None
     schedule_for: Optional[str] = None  # ex. '%Y-%m-%dT%H:%M'
     repeat_interval: Optional[RepeatInterval] = None
-    repeat_day_of_week: Optional[RepeatDay] = None
+    repeat_day_of_week: Optional[List[RepeatDay]] = None
     repeat_time_of_day: Optional[RepeatTimeOfDay] = None
     repeat_time: Optional[str] = None  # user local timezone
     repeat_every_number_of: Optional[int] = None
@@ -104,7 +104,7 @@ class Chore(BaseTable):
             "kind": self.get('kind', None),
             "name": self.get('name', None),
             "owner_id": self.get('owner_id', None),
-            "repeat_day_of_week": self.get('repeat_day_of_week', None),
+            "repeat_day_of_week": self.Get('repeat_day_of_week', None),
             "repeat_every_number_of": self.get('repeat_every_number_of', None),
             "repeat_interval": self.get('repeat_interval', None),
             "repeat_time_of_day": self.get('repeat_time_of_day', None),
@@ -297,26 +297,30 @@ class Chore(BaseTable):
 
 
         elif self.get('repeat_interval') == 'weekly':
-            # set the time
-            chrore_time_usertz = self.get_chore_time_usertz()
-            dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chrore_time_usertz)
+            repeat_days = self.Get('repeat_day_of_week', []) or []
+            if isinstance(repeat_days, str):
+                repeat_days = [repeat_days]
 
-            if dt_usertz < datetime.datetime.now(datetime.timezone.utc):
-                dt_usertz += datetime.timedelta(days=1)
-
-            # go forward until with day+=1 we are on the correct day
-
-            correct_day_of_week_index = [
+            day_names = [
                 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-            ].index(self.get('repeat_day_of_week'))
+            ]
+            repeat_day_indexes = {
+                day_names.index(day) for day in repeat_days if day in day_names
+            }
+            chore_time_usertz = self.get_chore_time_usertz()
+            if not repeat_day_indexes or not chore_time_usertz:
+                return None
 
-            i = 0
-            while i < 7:
-                if dt_usertz.weekday() == correct_day_of_week_index:
-                    dt_utc = get_utc_from_users_time(dt_usertz, self.user)
+            now_utc = datetime.datetime.now(datetime.timezone.utc)
+            for day_offset in range(8):
+                target_date = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
+                if target_date.weekday() not in repeat_day_indexes:
+                    continue
+
+                dt_usertz = datetime.datetime.combine(target_date, chore_time_usertz)
+                dt_utc = get_utc_from_users_time(dt_usertz, self.user)
+                if dt_utc > now_utc:
                     return dt_utc
-                dt_usertz += datetime.timedelta(days=1)
-                i += 1
 
 
         elif self.get('repeat_interval') == 'other':
