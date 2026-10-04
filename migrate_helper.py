@@ -43,6 +43,11 @@ def setup(app: Flask):
         for tag in req_chore.pop('tags', []):
             new_chore.Append('tags', tag.lower(), allowDuplicates=False)
 
+        if 'repeat_day_of_week' in req_chore:
+            new_chore['repeat_day_of_week'] = None
+            for day in req_chore.pop('repeat_day_of_week', []):
+                new_chore.Append('repeat_day_of_week', day, allowDuplicates=False)
+
         new_chore.update(req_chore)
 
         if req_chore.get('last_completed', None):
@@ -57,4 +62,5 @@ def setup(app: Flask):
                     )
 
         print('db new_chore=', new_chore)
+        new_chore.refresh_scheduled_job()
         return jsonify(new_chore)
