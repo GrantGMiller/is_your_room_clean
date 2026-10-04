@@ -256,16 +256,23 @@
           <div class="mt-3" id="weekly-options">
             <label class="form-label" for="repeat-day-of-week">Which days?</label>
             {% set repeat_days = chore.Get('repeat_day_of_week', []) or [] %}
-            <select class="form-select" name="repeat_day_of_week" id="repeat-day-of-week" multiple size="7">
+            <div class="d-flex flex-column gap-2" id="repeat-day-of-week">
               {% for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] %}
-                <option
-                  value="{{ day }}"
-                  {% if day == repeat_days or day in repeat_days %}selected{% endif %}
-                >
-                  {{ day | capitalize }}
-                </option>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="repeat_day_of_week"
+                    value="{{ day }}"
+                    id="repeat-day-{{ day }}"
+                    {% if day in repeat_days %}checked{% endif %}
+                  />
+                  <label class="form-check-label" for="repeat-day-{{ day }}">
+                    {{ day | capitalize }}
+                  </label>
+                </div>
               {% endfor %}
-            </select>
+            </div>
           </div>
         </div>
 <hr>
@@ -381,7 +388,9 @@
       );
       const repeatTime = document.getElementById("repeat-time");
       const weeklyOptions = document.getElementById("weekly-options");
-      const repeatDay = document.getElementById("repeat-day-of-week");
+      const repeatDayCheckboxes = document.querySelectorAll(
+        'input[name="repeat_day_of_week"]',
+      );
       const customInterval = document.getElementById("custom-interval");
       const repeatEvery = document.getElementById("repeat-every-number-of");
       const repeatUnit = document.getElementById("repeat-units");
@@ -408,7 +417,17 @@
         repeatTime.required =
           hasTimeOfDay && repeatTimeOfDay.value === "specific";
         weeklyOptions.hidden = !isWeekly;
-        repeatDay.required = isWeekly;
+        if (isWeekly) {
+          repeatDayCheckboxes.forEach((checkbox) => {
+            checkbox.required = !Array.from(repeatDayCheckboxes).some(
+              (other) => other.checked,
+            );
+          });
+        } else {
+          repeatDayCheckboxes.forEach((checkbox) => {
+            checkbox.required = false;
+          });
+        }
         customInterval.hidden = repeatInterval.value !== "other";
         repeatEvery.required = repeatInterval.value === "other";
         repeatUnit.required = repeatInterval.value === "other";
@@ -579,9 +598,11 @@
           : choreData.repeat_day_of_week
             ? [choreData.repeat_day_of_week]
             : [];
-        Array.from(repeatDay.options).forEach((option) => {
-          option.selected = repeatDays.includes(option.value);
-        });
+        document
+          .querySelectorAll('input[name="repeat_day_of_week"]')
+          .forEach((checkbox) => {
+            checkbox.checked = repeatDays.includes(checkbox.value);
+          });
 
         form.querySelectorAll('input[name="kind"]').forEach((input) => {
           input.checked = input.value === choreData.kind;
