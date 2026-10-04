@@ -48,18 +48,25 @@ def setup(app: Flask):
             for day in req_chore.pop('repeat_day_of_week', []):
                 new_chore.Append('repeat_day_of_week', day, allowDuplicates=False)
 
-        new_chore.update(req_chore)
+
 
         if req_chore.get('last_completed', None):
-            for person_name, timestamp in req_chore['last_completed'].items():
-                person = app.db.FindOne(Person, name=person_name, owner_id=grant['id'])
-                new_chore['last_completed'] = None
+            new_chore['last_completed'] = None
+            for person_name, timestamp in req_chore.pop('last_completed', {}).items():
+
+                print('person_name=', person_name, timestamp)
+                person = app.db.NewOrFind(Person, name=person_name, owner_id=grant['id'])
+
+                print('last_completed=', timestamp, person)
                 if timestamp:
                     new_chore.SetItem(
                         'last_completed',
-                        person['id'],
+                        str(person['id']),
                         datetime.datetime.fromtimestamp(timestamp, tz=pytz.utc).isoformat(),
                     )
+            print('db last_completed=', new_chore.Get('last_completed', {}))
+
+        new_chore.update(req_chore)
 
         print('db new_chore=', new_chore)
         new_chore.refresh_scheduled_job()
