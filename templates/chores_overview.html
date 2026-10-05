@@ -227,9 +227,12 @@
                           Every {{ chore["repeat_every_number_of"] }}
                           {{ chore["repeat_units"] }}
                         {% else %}
+
                           {{ chore["repeat_interval"] }}{% if chore["repeat_interval"] != 'daily' and chore["repeat_day_of_week"] %}
                             ,
-                            {% if chore.Get("repeat_day_of_week") is string %}{{ chore.Get("repeat_day_of_week") }}{% else %}{{ chore.Get("repeat_day_of_week") | join(', ') }}{% endif %}
+                            <span class="fw-semibold">
+                              {% if chore.Get("repeat_day_of_week") is string %}{{ chore.Get("repeat_day_of_week") }}{% else %}{{ chore.Get("repeat_day_of_week") | join(', ') }}{% endif %}
+                            </span>
                           {% endif %}{% if chore["repeat_time_of_day"] != 'specific' %}
                             , {{ chore["repeat_time_of_day"] }}
                           {% endif %}{% if chore["repeat_time"] %}
