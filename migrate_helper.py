@@ -66,6 +66,11 @@ def setup(app: Flask):
                     )
             print('db last_completed=', new_chore.Get('last_completed', {}))
 
+        if req_chore.get('repeat_time_of_day'):
+            new_chore['repeat_time_of_day'] = None
+            for time_of_day in req_chore.pop('repeat_time_of_day', []):
+                new_chore.Append('repeat_time_of_day', time_of_day, allowDuplicates=False)
+
         new_chore.update(req_chore)
 
         print('db new_chore=', new_chore)

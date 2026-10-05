@@ -321,7 +321,7 @@ class Chore(BaseTable):
                     return min(upcoming)
 
         elif self.get('repeat_interval') == 'other':
-            repeat_every = max(1, self.get('repeat_every_number_of', 1) or 1)
+            repeat_every = max(1, int(self.get('repeat_every_number_of', 1) or 1))
             target_date = now_dt_usertz.date()
             if self.get('repeat_units') == 'day':
                 target_date += datetime.timedelta(days=repeat_every)
