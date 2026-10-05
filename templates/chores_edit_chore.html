@@ -60,10 +60,18 @@
         id="chore-edit-form"
       >
       <div class="form-check form-switch">
-      
-  <input name="enabled" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"  >
-  <label class="form-check-label" for="flexSwitchCheckDefault">Enabled Chore</label>
-</div>
+        <input type="hidden" name="enabled" value="off" />
+        <input
+          name="enabled"
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          id="flexSwitchCheckDefault"
+          value="on"
+          {% if chore.get('enabled', True) %}checked{% endif %}
+        />
+        <label class="form-check-label" for="flexSwitchCheckDefault">Enabled Chore</label>
+      </div>
         <div class="mb-4">
           <label class="form-label h5 mb-3" for="chore-name">Chore name</label>
           <input
@@ -391,6 +399,12 @@
       const repeatDayCheckboxes = document.querySelectorAll(
         'input[name="repeat_day_of_week"]',
       );
+      const enabledCheckbox = document.querySelector(
+        'input[name="enabled"][type="checkbox"]',
+      );
+      const hiddenEnabledInput = document.querySelector(
+        'input[name="enabled"][type="hidden"]',
+      );
       const customInterval = document.getElementById("custom-interval");
       const repeatEvery = document.getElementById("repeat-every-number-of");
       const repeatUnit = document.getElementById("repeat-units");
@@ -440,6 +454,9 @@
 
       function saveChore() {
         const formData = new FormData(form);
+        formData.delete("enabled");
+        formData.append("enabled", enabledCheckbox.checked ? "on" : "off");
+        console.info("formData=", formData);
         formData.delete("person_ids");
 
         fetch(form.action, {
@@ -613,16 +630,19 @@
             input.checked = input.value === choreData.assignment_mode;
           });
         
-        form
-          .querySelectorAll('input[name="enabled"]')
-          .forEach((input) => {
-            console.info('choreData.enabled=', choreData.enabled)
-            // not working ugh
-            const enabled = choreData.enabled === true|| choreData.enabled === 1|| choreData.enabled === 'true'|| choreData.enabled === '1';
+        const enabled = [
+          true,
+          1,
+          "true",
+          "1",
+        ].includes(choreData.enabled);
 
-enabledInput.checked = enabled;
-            input.checked = enabled
-          });
+        if (hiddenEnabledInput) {
+          hiddenEnabledInput.value = enabled ? "on" : "off";
+        }
+        if (enabledCheckbox) {
+          enabledCheckbox.checked = enabled;
+        }
 
         const assignedIds = new Set(choreData.assigned_to_ids || []);
         document

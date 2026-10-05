@@ -16,7 +16,7 @@
       }
 
       .chore-card.is-disabled .card {
-        opacity: 0.72;
+        opacity: 0.32;
       }
 
       .chore-kind {
@@ -149,15 +149,22 @@
                   <h2 class="h5 mb-0">{{ chore.get('name', None) }}</h2>
                   <div class="d-flex align-items-center gap-2">
                     {% if chore.get('enabled', None) == False %}
-                      <span class="badge text-bg-secondary">Disabled</span>
+                      <span class="badge text-bg-danger">Disabled</span>
                     {% endif %}
-                    <span class="badge text-bg-secondary chore-kind"
-                      >{{ chore.get('kind', None) }}</span
-                    >
-                    <span
-                      class="badge {% if chore.get('assignment_mode') == 'random' %}text-bg-danger{% elif chore.get('assignment_mode') == 'first-done' %}text-bg-warning{% elif chore.get('assignment_mode') == 'all' %}text-bg-success{% else %}text-bg-secondary{% endif %}"
-                      >{{ chore.get("assignment_mode", "") }}</span
-                    >
+
+                    {% if chore.get('kind', None) == 'one-time' %}
+                      <span class="badge text-bg-secondary chore-kind"
+                        >{{ chore.get('kind', None) }}</span
+                      >
+                    {% endif %}
+
+                    {% if chore.get("assignment_mode", None) == 'one-time' %}
+                      <span
+                        class="badge {% if chore.get('assignment_mode') == 'random' %}text-bg-danger{% elif chore.get('assignment_mode') == 'first-done' %}text-bg-warning{% elif chore.get('assignment_mode') == 'all' %}text-bg-success{% else %}text-bg-secondary{% endif %}"
+                      >
+                        {{ chore.get("assignment_mode", "") }}
+                      </span>
+                    {% endif %}
                     <a
                       class="btn btn-sm btn-outline-secondary"
                       href="/chores/edit?id={{ chore.get('id', None) }}"

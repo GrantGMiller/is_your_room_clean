@@ -45,28 +45,67 @@
           maxlength="200"
           required
         />
+        <hr>
         <label
           class="form-label fw-semibold mt-3 d-inline-block px-2 py-1 rounded border"
           id="person-color-label"
-          for="person-color"
         >
-          Color
+          {{ person.name }}'s Color
         </label>
-        <select class="form-select" name="color" id="person-color">
-          {% for color in ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"] %}
-            <option
-              value="{{ color }}"
-              {% if (person.get('color', 'primary') if person else 'primary') == color %}selected{% endif %}
+        <input
+          type="hidden"
+          name="color"
+          id="person-color"
+          value="{{ person.get('color', 'primary') if person else 'primary' }}"
+        />
+        <div class="accordion mt-2" id="color-preview-accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#color-preview-collapse"
+                aria-expanded="false"
+                aria-controls="color-preview-collapse"
+              >
+                Change Color
+              </button>
+            </h2>
+            <div
+              id="color-preview-collapse"
+              class="accordion-collapse collapse"
+              data-bs-parent="#color-preview-accordion"
             >
-              {{ color | capitalize }}
-            </option>
-          {% endfor %}
-        </select>
+              <div class="accordion-body">
+                <div class="row row-cols-2 row-cols-sm-4 g-2" id="color-preview-list" aria-label="Color previews">
+                  {% for color in ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"] %}
+                    <div class="col">
+                      <button
+                        class="card color-preview-button h-100 w-100 text-start border-{{ color }} bg-{{ color }}-subtle"
+                        type="button"
+                        data-color="{{ color }}"
+                        aria-label="Select {{ color }} color"
+                        aria-pressed="{{ 'true' if (person.get('color', 'primary') if person else 'primary') == color else 'false' }}"
+                      >
+                        <div class="card-body py-2 px-3">
+                          <span class="fw-semibold">{{ color | capitalize }}</span>
+                        </div>
+                      </button>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {% if mode == 'add' %}
           <button class="btn btn-primary mt-3" type="submit">Save</button>
         {% endif %}
       </form>
 
+<hr>
       {% if mode == 'edit' %}
         <form
           class="mt-5"
@@ -85,6 +124,7 @@
       const personName = document.getElementById("person-name");
       const personColor = document.getElementById("person-color");
       const personColorLabel = document.getElementById("person-color-label");
+      const colorPreviewList = document.getElementById("color-preview-list");
 
       function updateColorLabel() {
         const color = personColor.value;
@@ -110,7 +150,22 @@
           `bg-${color}-subtle`,
           `border-${color}`,
         );
+        colorPreviewList.querySelectorAll("[data-color]").forEach((button) => {
+          const isSelected = button.dataset.color === color;
+          button.setAttribute("aria-pressed", String(isSelected));
+          button.classList.toggle("border-3", isSelected);
+        });
       }
+
+      colorPreviewList.addEventListener("click", (event) => {
+        const preview = event.target.closest("[data-color]");
+        if (!preview) {
+          return;
+        }
+
+        personColor.value = preview.dataset.color;
+        personColor.dispatchEvent(new Event("change", { bubbles: true }));
+      });
 
       function savePerson() {
         fetch(personForm.action, {

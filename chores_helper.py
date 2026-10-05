@@ -38,7 +38,9 @@ def get_current_user_chores() -> List[Chore]:
         return list(
             app.db.FindAll(
                 Chore,
-                owner_id=user['id']
+                owner_id=user['id'],
+                _orderBy='enabled',
+                _reverse=True
             )
         )
 

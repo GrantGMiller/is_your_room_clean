@@ -6,6 +6,10 @@
     <title>Chores | Is Your Room Clean</title>
     {% include "js_css.html" %}
     <style>
+      #device-cards {
+        margin-bottom: 50vh;
+      }
+
       .assignee-accordion {
         position: fixed;
         right: 1rem;
@@ -78,7 +82,8 @@
                   <span
                     class="badge text-bg-success ms-2 undone-count-badge"
                     data-undone-count="0"
-                  >ALL DONE</span>
+                    >ALL DONE</span
+                  >
                 {% else %}
                   <span
                     class="badge text-bg-secondary ms-2 undone-count-badge"
@@ -212,9 +217,8 @@
             badge.dataset.undoneCount = String(undoneCount);
             badge.classList.toggle("text-bg-success", undoneCount === 0);
             badge.classList.toggle("text-bg-secondary", undoneCount !== 0);
-            badge.textContent = undoneCount === 0
-              ? "ALL DONE"
-              : undoneCount + " undone";
+            badge.textContent =
+              undoneCount === 0 ? "ALL DONE" : undoneCount + " undone";
 
             completedInput.value = String(isCompleted);
             button.classList.toggle("btn-success", isCompleted);
