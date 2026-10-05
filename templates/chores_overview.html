@@ -185,7 +185,7 @@
                       <span class="text-muted">---</span>
                     {% endfor %}
                   </dd>
-                  {% set last_completed_dt = chore.get_last_completed_dt() %}
+                  {% set last_completed_dt = chore.get_last_completed_dt_utc() %}
                   <dt class="col-5 text-muted fw-normal">Last completed</dt>
                   <dd class="col-7 text-end mb-2">
                     {% if last_completed_dt %}
@@ -205,7 +205,7 @@
                     {% endif %}
                   </dd>
 
-                  {% set scheduled_job_dt = chore.get_scheduled_job_dt() %}
+                  {% set scheduled_job_dt = chore.get_scheduled_job_dt_utc() %}
 
                   <dt class="col-5 text-muted fw-normal">Next assignment at</dt>
                   <dd class="col-7 text-end mb-2">

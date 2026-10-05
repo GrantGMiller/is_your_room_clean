@@ -1,7 +1,7 @@
-import datetime
 import calendar
-import random
+import datetime
 import json
+import random
 from typing import Dict, List, Literal, Optional, cast
 
 import pytz
@@ -194,13 +194,14 @@ class Chore(BaseTable):
                 if person['id'] != person_id:
                     self.unassign(person)
 
-    def get_last_completed_dt(self) -> Optional[datetime.datetime]:
+    def get_last_completed_dt_utc(self) -> Optional[datetime.datetime]:
         completed_dates = list(filter(
             lambda iso: iso is not None,
             self.Get('last_completed', {}).values()
         ))
         print('200', self['name'], 'completed_dates=', completed_dates)
-        return max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
+        ret_dt_utc = max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
+        return ret_dt_utc
 
     def mark_incomplete_by(self, person_id: int) -> None:
         '''
@@ -214,7 +215,7 @@ class Chore(BaseTable):
             for person in self.get_can_be_assigned_to_persons():
                 self.assign_to(person)
 
-    def get_scheduled_job_dt(self) -> Optional[datetime.datetime]:
+    def get_scheduled_job_dt_utc(self) -> Optional[datetime.datetime]:
         print('get_scheduled_job_dt name=', self['name'], self.get('job_id', None))
         if self.get('job_id', None) is not None:
             job = self.app.jobs.GetJob(self.get('job_id'))
@@ -321,29 +322,42 @@ class Chore(BaseTable):
                     return min(upcoming)
 
         elif self.get('repeat_interval') == 'other':
+            print('324 repeat_interval=', 'other')
             repeat_every = max(1, int(self.get('repeat_every_number_of', 1) or 1))
-            target_date = now_dt_usertz.date()
+            print('repeat_every=', repeat_every)
+            target_date_utc = (self.get_last_completed_dt_utc() or now_utc).date()
+            print('target_date_utc=', target_date_utc)
+            print('repeat_units=', self.get('repeat_units', ''))
+
             if self.get('repeat_units') == 'day':
-                target_date += datetime.timedelta(days=repeat_every)
+                target_date_utc += datetime.timedelta(days=repeat_every)
             elif self.get('repeat_units') == 'week':
-                target_date += datetime.timedelta(days=repeat_every * 7)
+                target_date_utc += datetime.timedelta(days=repeat_every * 7)
             if self.get('repeat_units') == 'month':
-                month_index = target_date.month - 1 + repeat_every
-                target_year = target_date.year + month_index // 12
+                month_index = target_date_utc.month - 1 + repeat_every
+                target_year = target_date_utc.year + month_index // 12
                 target_month = month_index % 12 + 1
                 target_day = min(
-                    target_date.day,
+                    target_date_utc.day,
                     calendar.monthrange(target_year, target_month)[1],
                 )
-                target_date = datetime.date(target_year, target_month, target_day)
+                target_date_utc = datetime.date(target_year, target_month, target_day)
 
             candidates = [
                 get_utc_from_users_time(
-                    datetime.datetime.combine(target_date, chore_time), self.user
+                    datetime.datetime.combine(target_date_utc, chore_time), self.user
                 )
                 for chore_time in chore_times
             ]
-            return min(candidates)
+            print('candidates=', candidates, ', min=', min(candidates))
+            ret_dt_utc = min(candidates)
+
+            if ret_dt_utc > now_utc:
+                print('return ret_dt_utc=', ret_dt_utc)
+                return ret_dt_utc
+            else:
+                print('return now_utc=', now_utc)
+                return now_utc
 
         return None
 
@@ -433,14 +447,20 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user: ring_user.RingUser):
         )
 
     user_has_dst = user.get('enable_daylight_savings', True)
+    print('user_has_dst=', user_has_dst)
     user_tz = pytz.timezone(user.get('timezone', 'UTC'))
-
+    print('user_tz=', user_tz)
     dt_utc = pytz.utc.localize(dt)
-
+    print('dt_utc=', dt_utc)
     local_dt = dt_utc.astimezone(user_tz)
-    if user_has_dst and local_dt.dst():
-        local_dt += local_dt.dst()
+    print('local_dt=', local_dt)
 
+    # copilot says the astimezone already accounts for dst, but i dont believe it
+    
+    # if user_has_dst and local_dt.dst():
+    #     print('ajust for dst local_dt.dst()=', local_dt.dst())
+    #     local_dt += local_dt.dst()
+    print('return local_dt=', local_dt)
     return local_dt
 
 
