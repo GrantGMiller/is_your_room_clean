@@ -455,11 +455,11 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user: ring_user.RingUser):
     local_dt = dt_utc.astimezone(user_tz)
     print('local_dt=', local_dt)
 
-    # copilot says the astimezone already accounts for dst, but i dont believe it
     
-    # if user_has_dst and local_dt.dst():
-    #     print('ajust for dst local_dt.dst()=', local_dt.dst())
-    #     local_dt += local_dt.dst()
+    if user_has_dst and local_dt.dst():
+        print('ajust for dst local_dt.dst()=', local_dt.dst())
+        local_dt += local_dt.dst()
+        
     print('return local_dt=', local_dt)
     return local_dt
 
