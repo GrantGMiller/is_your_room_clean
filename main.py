@@ -17,6 +17,7 @@ import migrate_helper
 import repeat_jobs
 import ring_token_endpoints
 import ring_webhook
+from chores_helper import get_current_user_chores
 from ring_token_endpoints import mask_email
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
@@ -290,6 +291,37 @@ def admin():
         num_of_users=len(user_rows),
         user_rows=user_rows,
     )
+
+
+@app.route("/admin/unassign_all_chores", methods=["POST"])
+def admin_unassign_all_chores():
+    user = get_current_user()
+    if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
+        return jsonify({"error": "forbidden"}), 403
+
+    for chore in get_current_user_chores():
+        chore['assigned_to'] = None
+        chore.refresh_scheduled_job()
+
+    return jsonify({"success": True})
+
+
+@app.route("/admin/delete_all_chores", methods=["POST"])
+def admin_delete_all_chores():
+    user = get_current_user()
+    if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
+        return jsonify({"error": "forbidden"}), 403
+
+    chores = get_current_user_chores()
+    for chore in chores:
+        job_id = chore.get("job_id")
+        if job_id is not None:
+            job = app.jobs.GetJob(job_id)
+            if job:
+                job.Delete()
+        app.db.Delete(chore)
+
+    return jsonify({"success": True, "deleted": len(chores)})
 
 
 @app.route("/my_account", methods=["GET"])

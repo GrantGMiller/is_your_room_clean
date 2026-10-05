@@ -260,6 +260,49 @@
       <div class="alert alert-light border mt-3" id="no-results" hidden>
         No chores match your filter.
       </div>
+
+      {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins %}
+        <section class="accordion mt-5" id="dev-tools-accordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="dev-tools-heading">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#dev-tools-content"
+                aria-expanded="false"
+                aria-controls="dev-tools-content"
+              >
+                Admin Tools
+              </button>
+            </h2>
+            <div
+              id="dev-tools-content"
+              class="accordion-collapse collapse"
+              aria-labelledby="dev-tools-heading"
+              data-bs-parent="#dev-tools-accordion"
+            >
+              <div class="accordion-body">
+                <button
+                  class="btn btn-outline-primary"
+                  id="unassign-all-chores"
+                  type="button"
+                >
+                  Unassign All Chores
+                </button>
+                <button
+                  class="btn btn-outline-danger ms-2"
+                  id="delete-all-chores"
+                  type="button"
+                >
+                  Delete all Chores
+                </button>
+              </div>
+              
+            </div>
+          </div>
+        </section>
+      {% endif %}
     </main>
 
     <script>
@@ -268,6 +311,56 @@
       const personCards = document.querySelectorAll(".person-card");
       const noResults = document.getElementById("no-results");
       const hiddenChoreCount = document.getElementById("hidden-chore-count");
+      const unassignAllChoresButton = document.getElementById(
+        "unassign-all-chores",
+      );
+      const deleteAllChoresButton = document.getElementById(
+        "delete-all-chores",
+      );
+
+      if (unassignAllChoresButton) {
+        unassignAllChoresButton.addEventListener("click", async function () {
+          unassignAllChoresButton.disabled = true;
+
+          try {
+            const response = await fetch("/admin/unassign_all_chores", {
+              method: "POST",
+            });
+            if (!response.ok) {
+              throw new Error("Unable to unassign chores");
+            }
+
+            window.location.reload();
+          } catch (error) {
+            console.error("Error unassigning chores:", error);
+            unassignAllChoresButton.disabled = false;
+          }
+        });
+      }
+
+      if (deleteAllChoresButton) {
+        deleteAllChoresButton.addEventListener("click", async function () {
+          if (!window.confirm("Delete all your chores? This cannot be undone.")) {
+            return;
+          }
+
+          deleteAllChoresButton.disabled = true;
+
+          try {
+            const response = await fetch("/admin/delete_all_chores", {
+              method: "POST",
+            });
+            if (!response.ok) {
+              throw new Error("Unable to delete chores");
+            }
+
+            window.location.reload();
+          } catch (error) {
+            console.error("Error deleting chores:", error);
+            deleteAllChoresButton.disabled = false;
+          }
+        });
+      }
 
       function openChoreEditor(card) {
         window.location.href = card.dataset.editUrl;
