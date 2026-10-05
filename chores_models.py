@@ -197,7 +197,7 @@ class Chore(BaseTable):
             lambda iso: iso is not None,
             self.Get('last_completed', {}).values()
         ))
-        print('200', self['name'],'completed_dates=', completed_dates)
+        print('200', self['name'], 'completed_dates=', completed_dates)
         return max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
 
     def mark_incomplete_by(self, person_id: int) -> None:
@@ -429,6 +429,10 @@ def assign_chore_to_persons(chore_id: int):
     with app.app_context():
         app.db = cast(Dictabase, app.db)
         chore: Chore = app.db.FindOne(Chore, id=chore_id)
+
+        if chore and chore.get('enabled', False) is False:
+            print(f'Chore {chore["name"]} is disbled. No assignment needed.')
+            return
 
         if chore is None:
             print(f"Chore with id {chore_id} not found.")
