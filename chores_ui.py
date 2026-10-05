@@ -112,13 +112,18 @@ def setup(a: Flask):
                 "kind",
                 "schedule_for",
                 "repeat_interval",
-                "repeat_time_of_day",
                 "repeat_time",
                 "repeat_units",
                 "assignment_mode",
             ]:
                 if key in request.form:
                     chore[key] = request.form.get(key)
+
+            if "repeat_time_of_day" in request.form:
+                chore.Set(
+                    "repeat_time_of_day",
+                    request.form.getlist("repeat_time_of_day"),
+                )
 
             chore.Set("repeat_day_of_week", request.form.getlist("repeat_day_of_week"))
 

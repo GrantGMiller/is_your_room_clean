@@ -1,5 +1,7 @@
 import datetime
+import calendar
 import random
+import json
 from typing import Dict, List, Literal, Optional, cast
 
 import pytz
@@ -86,7 +88,7 @@ class Chore(BaseTable):
     schedule_for: Optional[str] = None  # ex. '%Y-%m-%dT%H:%M'
     repeat_interval: Optional[RepeatInterval] = None
     repeat_day_of_week: Optional[List[RepeatDay]] = None
-    repeat_time_of_day: Optional[RepeatTimeOfDay] = None
+    repeat_time_of_day: Optional[List[RepeatTimeOfDay]] = None
     repeat_time: Optional[str] = None  # user local timezone
     repeat_every_number_of: Optional[int] = None
     repeat_units: Optional[RepeatUnit] = None
@@ -107,7 +109,7 @@ class Chore(BaseTable):
             "repeat_day_of_week": self.Get('repeat_day_of_week', None),
             "repeat_every_number_of": self.get('repeat_every_number_of', None),
             "repeat_interval": self.get('repeat_interval', None),
-            "repeat_time_of_day": self.get('repeat_time_of_day', None),
+            "repeat_time_of_day": self.get_repeat_time_of_day(),
             "repeat_time": self.get('repeat_time', None),
             "repeat_units": self.get('repeat_units', None),
             "schedule_for": self.get('schedule_for', None),
@@ -271,31 +273,23 @@ class Chore(BaseTable):
 
         # For repeat chores, calculate the next start datetime based on the repeat settings
 
-        if self.get('repeat_interval') == 'daily':
-            if self.get('repeat_time_of_day') == 'specific':
-                chore_time_usertz = self.get_chore_time_usertz()
-                print('250 chore_time_usertz=', chore_time_usertz)
-                if not chore_time_usertz:
-                    return None
-                dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
-                print('252 dt_usertz=', dt_usertz)
-                dt_utc = get_utc_from_users_time(dt_usertz, self.user)
-                print('253 dt_utc=', dt_utc)
-                if dt_utc < datetime.datetime.now(datetime.timezone.utc):
-                    dt_utc += datetime.timedelta(days=1)
-                    print('257 dt_utc=', dt_utc)
-                print('258 return dt_utc=', dt_utc)
-                return dt_utc
-            else:
-                for time_of_day in ['morning', 'afternoon', 'evening']:
-                    if self.get('repeat_time_of_day', None) == time_of_day:
-                        chore_time_usertz = self.get_chore_time_usertz()
-                        dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
-                        dt_utc = get_utc_from_users_time(dt_usertz, self.user)
-                        if dt_utc < datetime.datetime.now(datetime.timezone.utc):
-                            dt_utc += datetime.timedelta(days=1)
-                        return dt_utc
+        chore_times = self.get_chore_times_usertz()
+        if not chore_times:
+            return None
 
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        if self.get('repeat_interval') == 'daily':
+            for day_offset in range(2):
+                target_date = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
+                candidates = [
+                    get_utc_from_users_time(
+                        datetime.datetime.combine(target_date, chore_time), self.user
+                    )
+                    for chore_time in chore_times
+                ]
+                upcoming = [candidate for candidate in candidates if candidate > now_utc]
+                if upcoming:
+                    return min(upcoming)
 
         elif self.get('repeat_interval') == 'weekly':
             repeat_days = self.Get('repeat_day_of_week', []) or []
@@ -308,43 +302,48 @@ class Chore(BaseTable):
             repeat_day_indexes = {
                 day_names.index(day) for day in repeat_days if day in day_names
             }
-            chore_time_usertz = self.get_chore_time_usertz()
-            if not repeat_day_indexes or not chore_time_usertz:
+            if not repeat_day_indexes:
                 return None
 
-            now_utc = datetime.datetime.now(datetime.timezone.utc)
             for day_offset in range(8):
                 target_date = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
                 if target_date.weekday() not in repeat_day_indexes:
                     continue
 
-                dt_usertz = datetime.datetime.combine(target_date, chore_time_usertz)
-                dt_utc = get_utc_from_users_time(dt_usertz, self.user)
-                if dt_utc > now_utc:
-                    return dt_utc
-
+                candidates = [
+                    get_utc_from_users_time(
+                        datetime.datetime.combine(target_date, chore_time), self.user
+                    )
+                    for chore_time in chore_times
+                ]
+                upcoming = [candidate for candidate in candidates if candidate > now_utc]
+                if upcoming:
+                    return min(upcoming)
 
         elif self.get('repeat_interval') == 'other':
-            timedelta_kwargs = {}
+            repeat_every = max(1, self.get('repeat_every_number_of', 1) or 1)
+            target_date = now_dt_usertz.date()
             if self.get('repeat_units') == 'day':
-                timedelta_kwargs['days'] = self.get('repeat_every_number_of', 1)
+                target_date += datetime.timedelta(days=repeat_every)
             elif self.get('repeat_units') == 'week':
-                timedelta_kwargs['days'] = self.get('repeat_every_number_of', 1) * 7
-
-            chore_time_usertz = self.get_chore_time_usertz()
-            print('247 chore_time_usertz=', chore_time_usertz)
-            dt_usertz = datetime.datetime.combine(now_dt_usertz.date(), chore_time_usertz)
-            print('249 dt_usertz=', dt_usertz)
+                target_date += datetime.timedelta(days=repeat_every * 7)
             if self.get('repeat_units') == 'month':
-                # bump the dt out by x num of months
-                num_months = self.get('repeat_every_number_of', 1)
-                dt = dt_usertz.replace(month=(dt_usertz.month - 1 + num_months) % 12 + 1,
-                                       year=dt_usertz.year + (dt_usertz.month - 1 + num_months) // 12)
-            else:
-                dt_usertz = dt_usertz + datetime.timedelta(**timedelta_kwargs)
-            print('259 dt_usertz=', dt_usertz)
-            dt_utc = get_utc_from_users_time(dt_usertz, self.user)
-            return dt_utc
+                month_index = target_date.month - 1 + repeat_every
+                target_year = target_date.year + month_index // 12
+                target_month = month_index % 12 + 1
+                target_day = min(
+                    target_date.day,
+                    calendar.monthrange(target_year, target_month)[1],
+                )
+                target_date = datetime.date(target_year, target_month, target_day)
+
+            candidates = [
+                get_utc_from_users_time(
+                    datetime.datetime.combine(target_date, chore_time), self.user
+                )
+                for chore_time in chore_times
+            ]
+            return min(candidates)
 
         return None
 
@@ -352,32 +351,53 @@ class Chore(BaseTable):
     def user(self):
         return self.app.db.FindOne(ring_user.RingUser, id=self['owner_id'])
 
-    def get_chore_time_usertz(self) -> Optional[datetime.time]:
-        '''
-        This returns only the datetime.time that this chore should be assigned
-        The return datetime.time() is in user_local_timezone
-        '''
-        if self.get('repeat_time_of_day') == 'specific':
-            repeat_time_str: Optional[str] = self.get('repeat_time', None)
-            if isinstance(repeat_time_str, str):
-                try:
-                    repeat_time_dt = datetime.datetime.strptime(
-                        repeat_time_str,
-                        '%H:%M'
-                    )
-                    return repeat_time_dt.time()
-                except:
-                    return None
-            else:
-                return None
-        else:
-            user = self.app.db.FindOne(ring_user.RingUser, id=self['owner_id'])
-            for time_of_day in ['morning', 'afternoon', 'evening']:
-                if self.get('repeat_time_of_day', None) == time_of_day:
-                    time_str = user.get_chore_settings().get(f'{time_of_day}_time')
-                    print('time_str=', time_str)
-                    time = datetime.datetime.strptime(time_str, '%H:%M:%S').time()
-                    return time
+    def get_repeat_time_of_day(self) -> List[RepeatTimeOfDay]:
+        # just in case the chore has an old repeat_time_of_day
+        repeat_times = self.get('repeat_time_of_day')
+        if not repeat_times:
+            return []
+
+        if isinstance(repeat_times, str):
+            try:
+                repeat_times = json.loads(repeat_times)
+            except json.JSONDecodeError:
+                return [repeat_times]
+
+        if isinstance(repeat_times, str):
+            return [repeat_times]
+        if isinstance(repeat_times, list):
+            return repeat_times
+        return []
+
+    def get_chore_times_usertz(self) -> List[datetime.time]:
+        repeat_times = self.get_repeat_time_of_day()
+        user_settings = self.user.get_chore_settings()
+        chore_times = []
+        for time_of_day in repeat_times or []:
+            if time_of_day == 'specific':
+                repeat_time = self.get('repeat_time')
+                if isinstance(repeat_time, str):
+                    try:
+                        chore_times.append(
+                            datetime.datetime.strptime(repeat_time, '%H:%M').time()
+                        )
+                    except ValueError:
+                        pass
+            elif time_of_day in ['morning', 'afternoon', 'evening']:
+                time_string = user_settings.get(f'{time_of_day}_time')
+                if isinstance(time_string, str):
+                    for time_format in ['%H:%M:%S', '%H:%M']:
+                        try:
+                            chore_times.append(
+                                datetime.datetime.strptime(
+                                    time_string, time_format
+                                ).time()
+                            )
+                            break
+                        except ValueError:
+                            continue
+
+        return chore_times
 
 
 def get_utc_from_users_time(dt: datetime.datetime, user: ring_user.RingUser):

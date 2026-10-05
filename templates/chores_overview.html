@@ -233,9 +233,9 @@
                             <span class="fw-semibold">
                               {% if chore.Get("repeat_day_of_week") is string %}{{ chore.Get("repeat_day_of_week") }}{% else %}{{ chore.Get("repeat_day_of_week") | join(', ') }}{% endif %}
                             </span>
-                          {% endif %}{% if chore["repeat_time_of_day"] != 'specific' %}
-                            , {{ chore["repeat_time_of_day"] }}
-                          {% endif %}{% if chore["repeat_time"] %}
+                          {% endif %}{% set repeat_times = chore.get_repeat_time_of_day() %}{% set named_repeat_times = repeat_times | reject('equalto', 'specific') | list %}{% if named_repeat_times %}
+                            , {{ named_repeat_times | join(', ') }}
+                          {% endif %}{% if 'specific' in repeat_times and chore["repeat_time"] %}
                             at {{ chore["repeat_time"] }}
                           {% endif %}
                         {% endif %}
@@ -298,7 +298,6 @@
                   Delete all Chores
                 </button>
               </div>
-              
             </div>
           </div>
         </section>
@@ -314,9 +313,8 @@
       const unassignAllChoresButton = document.getElementById(
         "unassign-all-chores",
       );
-      const deleteAllChoresButton = document.getElementById(
-        "delete-all-chores",
-      );
+      const deleteAllChoresButton =
+        document.getElementById("delete-all-chores");
 
       if (unassignAllChoresButton) {
         unassignAllChoresButton.addEventListener("click", async function () {
@@ -340,7 +338,9 @@
 
       if (deleteAllChoresButton) {
         deleteAllChoresButton.addEventListener("click", async function () {
-          if (!window.confirm("Delete all your chores? This cannot be undone.")) {
+          if (
+            !window.confirm("Delete all your chores? This cannot be undone.")
+          ) {
             return;
           }
 
