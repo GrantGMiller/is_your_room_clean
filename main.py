@@ -263,14 +263,32 @@ def admin():
     if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
         return redirect("/dashboard")
 
-    all_users = list(app.db.FindAll(RingUser, _limit=100))
-    masked_user_emails = [
-        mask_email(user.get("email")) for user in all_users if user.get("email")
-    ]
+    now_ms = time.time() * 1000
+    user_rows = {}
+    for registered_user in app.db.FindAll(RingUser, _limit=100):
+        email = registered_user.get("email")
+        if not email:
+            continue
+
+        claimed_at_ms = registered_user.get("ring_user_claimed_at_ms")
+        created_age = "Unknown"
+        if claimed_at_ms is not None:
+            try:
+                days_ago = max(
+                    0,
+                    int((now_ms - float(claimed_at_ms)) // 86_400_000),
+                )
+                day_label = "day" if days_ago == 1 else "days"
+                created_age = f"{days_ago} {day_label} ago"
+            except (TypeError, ValueError):
+                pass
+
+        user_rows[mask_email(email)] = created_age
+
     return render_template(
         "admin.html",
-        num_of_users=len(all_users),
-        masked_emails=masked_user_emails,
+        num_of_users=len(user_rows),
+        user_rows=user_rows,
     )
 
 

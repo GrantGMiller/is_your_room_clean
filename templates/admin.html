@@ -1,34 +1,49 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Admin - Is Your Room Clean</title>
-		{% include "js_css.html" %}
-	</head>
-	<body class="bg-light">
-		{% include "flash_messages.html" %} {% include "navbar.html" %}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Is Your Room Clean</title>
+    {% include "js_css.html" %}
+  </head>
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
 
-		<main class="container py-5">
-			<h1 class="h3 mb-4">Admin</h1>
-			{% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins %}
-				<section class="card shadow-sm" aria-labelledby="user-count-heading">
-					<div class="card-body">
-						<h2 class="h6 text-muted" id="user-count-heading">Total users</h2>
-						<p class="display-6 mb-0">{{ num_of_users }}</p>
-					</div>
-				</section>
-				<section class="mt-4" aria-labelledby="user-emails-heading">
-					<h2 class="h5" id="user-emails-heading">User emails</h2>
-					<ul class="list-group">
-						{% for email in masked_emails %}
-							<li class="list-group-item">{{ email }}</li>
-						{% else %}
-							<li class="list-group-item text-muted">No users found.</li>
-						{% endfor %}
-					</ul>
-				</section>
-			{% endif %}
-		</main>
-	</body>
+    <main class="container py-5">
+      <h1 class="h3 mb-4">Admin</h1>
+      {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins %}
+        <section class="card shadow-sm" aria-labelledby="user-count-heading">
+          <div class="card-body">
+            <h2 class="h6 text-muted" id="user-count-heading">Total users</h2>
+            <p class="display-6 mb-0">{{ num_of_users }}</p>
+          </div>
+        </section>
+        <section class="mt-4" aria-labelledby="user-emails-heading">
+          <h2 class="h5" id="user-emails-heading">Users</h2>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th scope="col">Masked email</th>
+                  <th scope="col">Account created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for email, created_age in user_rows.items() %}
+                  <tr>
+                    <td>{{ email }}</td>
+                    <td>{{ created_age }}</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td class="text-muted" colspan="2">No users found.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endif %}
+    </main>
+  </body>
 </html>
