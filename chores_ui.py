@@ -191,6 +191,7 @@ def setup(a: Flask):
 
         if request.method == "POST":
             print('request.form=', request.form)
+            should_refresh_chores = False
             for key in ['morning_time', 'afternoon_time', 'evening_time']:
                 if key in request.form:
                     user.SetItem(
@@ -200,6 +201,9 @@ def setup(a: Flask):
                         datetime.datetime.strptime(request.form.get(key), "%H:%M").time().isoformat()
                         # datetime.datetime.now().time().isoformat()
                     )
+                    should_refresh_chores = True
+
+            chores_helper.refresh_all_current_user_chores()
 
             timezone = request.form.get("timezone")
             if timezone in pytz.all_timezones:

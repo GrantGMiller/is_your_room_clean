@@ -61,3 +61,12 @@ def get_current_user_chore(chore_id: int) -> Optional[Chore]:
             return None
         user = user.get_ring_user()
         return app.db.FindOne(Chore, id=chore_id, owner_id=user['id'])
+
+def refresh_all_current_user_chores():
+    with app.app_context():
+        user = get_current_user()
+        if not user:
+            return
+
+        for chore in get_current_user_chores():
+            chore.refresh_scheduled_job()
