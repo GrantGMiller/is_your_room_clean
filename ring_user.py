@@ -48,6 +48,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     wall_display_url: str
     wall_link_expires_at: float
     is_wall_user: bool
+    enabled_features: dict  # {str(feature_name): bool(enabled)}
 
     def get_chore_settings(self) -> ChoreSettings:
         ret = self.Get('chore_settings', {})

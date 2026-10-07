@@ -33,24 +33,24 @@
           </a>
         {% endif %}
         {% if current_user and enabled_features.chores %}
-        {% if current_user.is_wall_user %}
-          <a
-            class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
-            href="/wall_display"
-          >
-            Wall Display
-          </a>
-          {% else%}
-          <a
-            class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
-            href="/chores/wall_display"
-          >
-            Wall Display
-          </a>
-          {% endif%}
+          {% if current_user.is_wall_user %}
+            <a
+              class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
+              href="/wall_display"
+            >
+              Wall Display
+            </a>
+          {% else %}
+            <a
+              class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
+              href="/chores/wall_display"
+            >
+              Wall Display
+            </a>
+          {% endif %}
         {% endif %}
 
-        {% if enabled_features.chores and current_user and current_user.is_authenticated %}
+        {% if enabled_features.chores and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'chores') %}
           <a
             class="nav-item nav-link {% if request.path == '/chores/overview' %}active{% endif %}"
             href="/chores/overview"

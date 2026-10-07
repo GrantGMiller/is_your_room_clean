@@ -266,7 +266,7 @@ def admin():
 
     now_ms = time.time() * 1000
     user_rows = {}
-    for registered_user in app.db.FindAll(RingUser, _limit=100):
+    for registered_user in app.db.FindAll(RingUser, _limit=100, _orderBy="timestamp_epoch_ms"):
         email = registered_user.get("email")
         if not email:
             continue
@@ -324,7 +324,7 @@ def admin_delete_all_chores():
     return jsonify({"success": True, "deleted": len(chores)})
 
 
-@app.route("/my_account", methods=["GET"])
+@app.route("/my_account", methods=["GET", "POST"])
 def my_account():
     ring_user = get_current_user()
     if not ring_user:
@@ -333,7 +333,27 @@ def my_account():
     email = ring_user.get("email", "")
     local, _, domain = email.partition("@")
     masked_email = f"{local[:4]}*****@{domain[-9:]}"
-    return render_template("my_account.html", masked_email=masked_email)
+
+    if request.method == "POST":
+        for key in ['chores']:
+            if key in request.form and request.form.get(key, type=bool):
+                new_state = True
+            else:
+                new_state = False
+            ring_user.SetItem('enabled_features', key, new_state)
+
+    advanced_features = {
+        # 'feature_name': bool(enabled)
+    }
+    if config.ENABLE_CHORES:
+        advanced_features['chores'] = ring_user.GetItem('enabled_features', 'chores')
+
+
+    return render_template(
+        "my_account.html",
+          masked_email=masked_email, 
+          advanced_features=advanced_features
+          )
 
 
 @app.route("/delete_account", methods=["POST"])

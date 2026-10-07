@@ -7,17 +7,56 @@
     {% include "js_css.html" %}
   </head>
 
-  <body class="bg-light">
+  <body class="bg-body-tertiary">
     {% include "flash_messages.html" %} {% include "navbar.html" %}
 
     <div class="container py-5">
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-6">
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h3 mb-3 text-dark">My Account ({{ masked_email }})</h1>
+
+              <div class="card border-0 bg-secondary shadow-sm mb-4">
+                <div class="card-body p-3 p-md-4">
+                  <h2 class="h5 mb-3">Advanced Features</h2>
+
+                  <form
+                    id="advanced-features-form"
+                    method="POST"
+                    action="/my_account"
+                    class="d-grid gap-2"
+                  >
+                    {% for feature_name, is_enabled in advanced_features.items() %}
+                      <div
+                        class="d-flex justify-content-between align-items-center border border-secondary-subtle rounded-3 bg-white px-3 py-2"
+                      >
+                        <label
+                          class="form-check-label fw-medium text-capitalize"
+                          for="{{ feature_name }}"
+                        >
+                          {{ feature_name|replace('_', ' ')|title }}
+                        </label>
+                        <div class="form-check form-switch mb-0">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="{{ feature_name }}"
+                            name="{{ feature_name }}"
+                            {% if is_enabled %}checked{% endif %}
+                          />
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="card shadow-sm border-danger">
             <div class="card-body p-4 p-md-5">
-              <h1 class="h3 mb-3 text-danger">
-                My Account ({{ masked_email }})
-              </h1>
+              <h2 class="h3 mb-3 text-danger">Delete My Account</h2>
 
               <div class="alert alert-danger" role="alert">
                 <strong>Warning:</strong> All of your data will be deleted
@@ -75,5 +114,29 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const advancedFeaturesForm = document.getElementById(
+        "advanced-features-form",
+      );
+      if (advancedFeaturesForm) {
+        advancedFeaturesForm.addEventListener("change", async (event) => {
+          const formData = new FormData(advancedFeaturesForm);
+
+          const response = await fetch(advancedFeaturesForm.action, {
+            method: "POST",
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            body: formData,
+            credentials: "same-origin",
+          });
+
+          if (!response.ok) {
+            console.error("Failed to save advanced features");
+          }
+          window.location.reload();
+        });
+      }
+    </script>
   </body>
 </html>
