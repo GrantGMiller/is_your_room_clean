@@ -496,7 +496,9 @@ def inject_app_values():
         'enabled_features': {
             'chores': getattr(config, 'ENABLE_CHORES', False),
             'admins': getattr(config, 'ADMINS', []),
-        }
+        },
+        'app_name': getattr(config, 'APP_NAME', 'Is Your Room Clean'),
+        'app_url': getattr(config, 'APP_URL', '/'),
     }
 
 
