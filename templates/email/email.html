@@ -18,7 +18,7 @@
             Choose which updates you would like to receive by email.
           </p>
 
-          <form method="POST" action="/email">
+          <form method="POST" action="/email" id="email-notification-form">
             <section class="card shadow-sm border-0 mb-4">
               <div class="card-body p-4">
                 <h2 class="h5 mb-3">Room status</h2>
@@ -99,13 +99,39 @@
                 />
               </div>
             </section>
-
-            <button type="submit" class="btn btn-primary">
-              Save notification settings
-            </button>
           </form>
         </div>
       </div>
     </main>
+    <script>
+      const notificationForm = document.getElementById(
+        "email-notification-form",
+      );
+      let saveQueue = Promise.resolve();
+
+      notificationForm.addEventListener("change", () => {
+        const formData = new FormData(notificationForm);
+        saveQueue = saveQueue
+          .then(() =>
+            fetch(notificationForm.action, {
+              method: "POST",
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+              },
+              body: formData,
+              credentials: "same-origin",
+            }),
+          )
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to save email notification settings");
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            window.location.reload();
+          });
+      });
+    </script>
   </body>
 </html>
