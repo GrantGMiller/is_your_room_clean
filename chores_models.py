@@ -215,6 +215,9 @@ class Chore(BaseTable):
             for person in self.get_can_be_assigned_to_persons():
                 self.assign_to(person)
 
+    def clear_completed_by(self) -> None:
+        self.Set('completed_by', [])
+
     def get_scheduled_job_dt_utc(self) -> Optional[datetime.datetime]:
         print('get_scheduled_job_dt name=', self['name'], self.get('job_id', None))
         if self.get('job_id', None) is not None:
@@ -414,25 +417,29 @@ class Chore(BaseTable):
         return chore_times
 
 
-def get_utc_from_users_time(dt: datetime.datetime, user: ring_user.RingUser):
+def get_utc_from_users_time(dt_usertz: datetime.datetime, user: ring_user.RingUser):
     '''
     The jobs are scheduled in UTC.
     So adjust the datetime from the users timezone to UTC,
     including daylight savings if the user has it enabled.
     '''
-    user_tz = user.get('timezone', 'UTC')
+    print('426 dt_usertz=', dt_usertz)
+    user_tz_str = user.get('timezone', 'UTC')
+    print('user_tz_str=', user_tz_str)
 
-    if user_tz == 'UTC':
-        return dt.replace(tzinfo=datetime.timezone.utc)
+    if user_tz_str == 'UTC':
+        return dt_usertz.replace(tzinfo=datetime.timezone.utc)
     else:
-        tz = pytz.timezone(user_tz)
-        dt_with_tz = tz.localize(dt)
+        dt_now_utc = datetime.datetime.now(pytz.timezone(user_tz_str))
+        print('now.dst=', dt_now_utc.dst())
+        user_tz = pytz.timezone(user_tz_str)
+        dt_with_tz = user_tz.localize(
+            dt_usertz,
+        )
         dt_utc = dt_with_tz.astimezone(pytz.utc)
-        # adjust for daylight savings if the user has it enabled
-        if user.get('enable_daylight_savings', True):
-            if dt_with_tz.dst():
-                dt_utc -= dt_with_tz.dst()
 
+        print('dt_with_tz=', dt_with_tz)
+        print('442 return dt_utc=', dt_utc)
         return dt_utc
 
 
@@ -451,15 +458,17 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user: ring_user.RingUser):
     user_tz = pytz.timezone(user.get('timezone', 'UTC'))
     print('user_tz=', user_tz)
     dt_utc = pytz.utc.localize(dt)
-    print('dt_utc=', dt_utc)
-    local_dt = dt_utc.astimezone(user_tz)
+    print('before normalize dt_utc=', dt_utc)
+    dt_utc = pytz.utc.normalize(dt_utc)
+    print('after normalize dt_utc=', dt_utc)
+    # local_dt = dt_utc.astimezone(user_tz)
+    local_dt = user_tz.normalize(dt_utc)
     print('local_dt=', local_dt)
 
-    
-    if user_has_dst and local_dt.dst():
-        print('ajust for dst local_dt.dst()=', local_dt.dst())
-        local_dt += local_dt.dst()
-        
+    # if user_has_dst and local_dt.dst():
+    #     print('469 adjust for dst local_dt.dst()=', local_dt.dst())
+    #     local_dt = local_dt.dst()
+
     print('return local_dt=', local_dt)
     return local_dt
 
@@ -478,6 +487,7 @@ def assign_chore_to_persons(chore_id: int):
             print(f"Chore with id {chore_id} not found.")
             return
 
+        chore.clear_completed_by()
         possible_assignees = chore.get_can_be_assigned_to_persons()
         if not possible_assignees:
             print(f"No possible assignees for chore '{chore['name']}' (id: {chore_id}).")
