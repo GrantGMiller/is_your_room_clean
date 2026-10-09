@@ -153,6 +153,7 @@ def setup(a: Flask):
             chore=chore,
             user=get_current_user(),
             persons=chores_helper.get_current_user_persons(),
+            get_user_local_dt_from_utc=get_user_local_dt_from_utc,
         )
 
     @app.route("/chores/delete", methods=["POST"])

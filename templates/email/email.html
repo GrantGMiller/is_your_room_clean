@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email Notifications - Is Your Room Clean</title>
+    {% include "js_css.html" %}
+  </head>
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-9 col-lg-7">
+          <h1 class="h3 mb-2">Email Notifications</h1>
+          <p class="text-muted mb-4">
+            Choose which updates you would like to receive by email.
+          </p>
+
+          <form method="POST" action="/email">
+            <section class="card shadow-sm border-0 mb-4">
+              <div class="card-body p-4">
+                <h2 class="h5 mb-3">Room status</h2>
+
+                <div
+                  class="form-check form-switch border rounded bg-white px-3 py-3 mb-3 d-flex justify-content-between align-items-center"
+                >
+                  <label
+                    class="form-check-label fw-medium"
+                    for="email-when-clean"
+                  >
+                    Email me when all rooms are clean
+                  </label>
+                  <input
+                    class="form-check-input ms-3"
+                    type="checkbox"
+                    role="switch"
+                    id="email-when-clean"
+                    name="email_when_all_rooms_clean"
+                    {% if settings.email_when_all_rooms_clean %}checked{% endif %}
+                  />
+                </div>
+
+                <div
+                  class="form-check form-switch border rounded bg-white px-3 py-3 d-flex justify-content-between align-items-center"
+                >
+                  <label
+                    class="form-check-label fw-medium"
+                    for="email-when-dirty"
+                  >
+                    Email me when one or more rooms is dirty
+                  </label>
+                  <input
+                    class="form-check-input ms-3"
+                    type="checkbox"
+                    role="switch"
+                    id="email-when-dirty"
+                    name="email_when_rooms_dirty"
+                    {% if settings.email_when_rooms_dirty %}checked{% endif %}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section class="card shadow-sm border-0 mb-4">
+              <div class="card-body p-4">
+                <h2 class="h5 mb-3">Daily chore summary</h2>
+
+                <div
+                  class="form-check form-switch border rounded bg-white px-3 py-3 mb-3 d-flex justify-content-between align-items-center"
+                >
+                  <label
+                    class="form-check-label fw-medium"
+                    for="daily-chore-summary"
+                  >
+                    Email me a chore summary every day
+                  </label>
+                  <input
+                    class="form-check-input ms-3"
+                    type="checkbox"
+                    role="switch"
+                    id="daily-chore-summary"
+                    name="daily_chore_summary"
+                    {% if settings.daily_chore_summary %}checked{% endif %}
+                  />
+                </div>
+
+                <label class="form-label" for="daily-chore-summary-time">
+                  Send summary at
+                </label>
+                <input
+                  class="form-control"
+                  type="time"
+                  id="daily-chore-summary-time"
+                  name="daily_chore_summary_time"
+                  value="{{ settings.daily_chore_summary_time }}"
+                  required
+                />
+              </div>
+            </section>
+
+            <button type="submit" class="btn btn-primary">
+              Save notification settings
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

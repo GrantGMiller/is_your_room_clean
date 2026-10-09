@@ -194,14 +194,31 @@ class Chore(BaseTable):
                 if person['id'] != person_id:
                     self.unassign(person)
 
-    def get_last_completed_dt_utc(self) -> Optional[datetime.datetime]:
-        completed_dates = list(filter(
-            lambda iso: iso is not None,
-            self.Get('last_completed', {}).values()
-        ))
-        print('200', self['name'], 'completed_dates=', completed_dates)
-        ret_dt_utc = max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
-        return ret_dt_utc
+    def get_last_completed_dt_utc(self, person_id: Optional[int] = None) -> Optional[datetime.datetime]:
+        '''
+
+        :param person_id: pass this if you want the last time a specific person completed this chore,
+            if None then return the most recent time ANYONE completed the chore
+        :return: datetime.datetime with pytz.utc
+        '''
+        if person_id:
+            iso = self.GetItem('last_completed', str(person_id), None)
+            print('iso=', iso)
+            if iso:
+                dt_utc = datetime.datetime.fromisoformat(iso)
+                print('return dt_utc=', dt_utc)
+                return dt_utc
+            else:
+                return None
+        else:
+            # return the most recent of all persons
+            completed_dates = list(filter(
+                lambda iso: iso is not None,
+                self.Get('last_completed', {}).values()
+            ))
+            print('200', self['name'], 'completed_dates=', completed_dates)
+            ret_dt_utc = max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
+            return ret_dt_utc
 
     def mark_incomplete_by(self, person_id: int) -> None:
         '''
@@ -234,13 +251,16 @@ class Chore(BaseTable):
         print('225 no job id')
         return None
 
-    def refresh_scheduled_job(self) -> None:
+    def refresh_scheduled_job(self, person_ids: Optional[List[int]] = None) -> None:
         if self.get('job_id', None) is not None:
             old_job = self.app.jobs.GetJob(self.get('job_id'))
             if old_job:
                 old_job.Delete()
 
-        dt_utc = self.get_next_start_dt_utc()
+        if person_ids:
+            dt_utc = min([self.get_next_start_dt_utc(person_id) for person_id in person_ids])
+        else:
+            dt_utc = self.get_next_start_dt_utc()
         print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
         if dt_utc is None:
             print('no scheduled job', self)
@@ -256,7 +276,7 @@ class Chore(BaseTable):
         self['job_id'] = new_job['id']
         print('new_job=', new_job)
 
-    def get_next_start_dt_utc(self) -> Optional[datetime.datetime]:
+    def get_next_start_dt_utc(self, person_id: Optional[int] = None) -> Optional[datetime.datetime]:
         '''
         Get the next start datetime for the chore, based on its repeat settings.
         If the chore is a one-time chore, return None.
@@ -294,6 +314,8 @@ class Chore(BaseTable):
                 upcoming = [candidate for candidate in candidates if candidate > now_utc]
                 if upcoming:
                     return min(upcoming)
+                else:
+                    return now_utc
 
         elif self.get('repeat_interval') == 'weekly':
             repeat_days = self.Get('repeat_day_of_week', []) or []
@@ -328,7 +350,7 @@ class Chore(BaseTable):
             print('324 repeat_interval=', 'other')
             repeat_every = max(1, int(self.get('repeat_every_number_of', 1) or 1))
             print('repeat_every=', repeat_every)
-            target_date_utc = (self.get_last_completed_dt_utc() or now_utc).date()
+            target_date_utc = (self.get_last_completed_dt_utc(person_id) or now_utc).date()
             print('target_date_utc=', target_date_utc)
             print('repeat_units=', self.get('repeat_units', ''))
 
@@ -457,7 +479,10 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user: ring_user.RingUser):
     print('user_has_dst=', user_has_dst)
     user_tz = pytz.timezone(user.get('timezone', 'UTC'))
     print('user_tz=', user_tz)
-    dt_utc = pytz.utc.localize(dt)
+    if dt.tzinfo is None:
+        dt_utc = pytz.utc.localize(dt)
+    else:
+        dt_utc = dt.astimezone(pytz.utc)
     print('before normalize dt_utc=', dt_utc)
     dt_utc = pytz.utc.normalize(dt_utc)
     print('after normalize dt_utc=', dt_utc)

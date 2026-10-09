@@ -42,6 +42,12 @@ ring_user_setup(app)
 api.setup(app)
 repeat_jobs.setup(app)
 chores_ui.setup(app)
+
+if getattr(config,'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
+    from feature_email import setup as setup_email
+
+    setup_email(app)
+
 if getattr(config, 'ENABLE_MIGRATE_CHORES', False):
     migrate_helper.setup(app)
 
@@ -335,7 +341,7 @@ def my_account():
     masked_email = f"{local[:4]}*****@{domain[-9:]}"
 
     if request.method == "POST":
-        for key in ['chores']:
+        for key in ['chores', 'email_notifications']:
             if key in request.form and request.form.get(key, type=bool):
                 new_state = True
             else:
@@ -345,15 +351,17 @@ def my_account():
     advanced_features = {
         # 'feature_name': bool(enabled)
     }
-    if config.ENABLE_CHORES:
+    if getattr(config, 'ENABLE_CHORES', False)  :
         advanced_features['chores'] = ring_user.GetItem('enabled_features', 'chores')
 
+    if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False) :
+        advanced_features['email_notifications'] = ring_user.GetItem('enabled_features', 'email_notifications')
 
     return render_template(
         "my_account.html",
-          masked_email=masked_email, 
-          advanced_features=advanced_features
-          )
+        masked_email=masked_email,
+        advanced_features=advanced_features
+    )
 
 
 @app.route("/delete_account", methods=["POST"])
@@ -496,6 +504,7 @@ def inject_app_values():
         'enabled_features': {
             'chores': getattr(config, 'ENABLE_CHORES', False),
             'admins': getattr(config, 'ADMINS', []),
+            'email_notifications': getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False),
         },
         'app_name': getattr(config, 'APP_NAME', 'Is Your Room Clean'),
         'app_url': getattr(config, 'APP_URL', '/'),

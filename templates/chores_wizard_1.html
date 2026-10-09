@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Create a Chore | Is Your Room Clean</title>
+    <title>Create a Chore | {{ app_name }}</title>
     <style>
       .btn-check:checked + label {
         border-color: var(--bs-primary);
@@ -139,7 +139,10 @@
                     value="{{ time_of_day }}"
                     id="repeat-time-{{ time_of_day }}"
                   />
-                  <label class="form-check-label" for="repeat-time-{{ time_of_day }}">
+                  <label
+                    class="form-check-label"
+                    for="repeat-time-{{ time_of_day }}"
+                  >
                     {{ "A specific time" if time_of_day == "specific" else time_of_day | capitalize }}
                   </label>
                 </div>
@@ -249,16 +252,19 @@
       function updateIntervalFields() {
         const isDaily = repeatInterval.value === "daily";
         const isWeekly = repeatInterval.value === "weekly";
-        const hasTimeOfDay = isDaily || isWeekly || repeatInterval.value === "other";
+        const hasTimeOfDay =
+          isDaily || isWeekly || repeatInterval.value === "other";
         const selectedTimes = Array.from(repeatTimeOfDayCheckboxes).filter(
           (checkbox) => checkbox.checked,
         );
 
         repeatTimeOptions.hidden = !hasTimeOfDay;
         specificTimeOption.hidden =
-          !hasTimeOfDay || !selectedTimes.some((checkbox) => checkbox.value === "specific");
+          !hasTimeOfDay ||
+          !selectedTimes.some((checkbox) => checkbox.value === "specific");
         repeatTime.required =
-          hasTimeOfDay && selectedTimes.some((checkbox) => checkbox.value === "specific");
+          hasTimeOfDay &&
+          selectedTimes.some((checkbox) => checkbox.value === "specific");
         repeatTimeOfDayCheckboxes.forEach((checkbox) => {
           checkbox.required = false;
         });

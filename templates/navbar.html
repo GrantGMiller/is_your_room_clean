@@ -61,6 +61,15 @@
           </a>
         {% endif %}
 
+        {% if enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') %}
+          <a
+            class="nav-item nav-link {% if request.path == '/email_notifications' %}active{% endif %}"
+            href="/email"
+          >
+            Email Settings
+          </a>
+        {% endif %}
+
         {% if current_user and current_user.is_authenticated %}
           <a
             class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"

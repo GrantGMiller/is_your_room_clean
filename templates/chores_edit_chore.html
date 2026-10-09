@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Edit Chore | Is Your Room Clean</title>
+    <title>Edit Chore | {{ app_name }}</title>
     <style>
       .person-check:checked + label,
       .mode-check:checked + label {
@@ -99,9 +99,18 @@
                   {% if chore.is_assigned_to(person['id']) %}checked{% endif %}
                   onclick="assign_chore({{ chore.get('id', None) }}, {{ person['id'] }}, this.checked)"
                 />
-                <label class="card card-body py-3" for="person-{{ loop.index }}"
-                  >{{ person.name }}</label
-                >
+                <label class="card card-body py-3" for="person-{{ loop.index }}">
+                  <span>{{ person.name }}</span>
+                  {% set last_completed_dt_utc = chore.get_last_completed_dt_utc(person.id) %}
+                  {% if last_completed_dt_utc %}
+                    {% set last_completed_dt_local = get_user_local_dt_from_utc(last_completed_dt_utc, user) %}
+                    <small class="text-muted mt-1">
+                      Last completed: {{ last_completed_dt_local.strftime('%b %d, %Y at %I:%M %p %Z') }}
+                    </small>
+                  {% else %}
+                    <small class="text-muted mt-1">Never completed</small>
+                  {% endif %}
+                </label>
               </div>
             {% endfor %}
           </div>
