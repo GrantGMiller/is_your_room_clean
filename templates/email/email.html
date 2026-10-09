@@ -107,30 +107,34 @@
       const notificationForm = document.getElementById(
         "email-notification-form",
       );
+      let saveTimer;
       let saveQueue = Promise.resolve();
 
       notificationForm.addEventListener("change", () => {
-        const formData = new FormData(notificationForm);
-        saveQueue = saveQueue
-          .then(() =>
-            fetch(notificationForm.action, {
-              method: "POST",
-              headers: {
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              body: formData,
-              credentials: "same-origin",
-            }),
-          )
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to save email notification settings");
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-            window.location.reload();
-          });
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          const formData = new FormData(notificationForm);
+          saveQueue = saveQueue
+            .then(() =>
+              fetch(notificationForm.action, {
+                method: "POST",
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+                body: formData,
+                credentials: "same-origin",
+              }),
+            )
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Failed to save email notification settings");
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              window.location.reload();
+            });
+        }, 1000);
       });
     </script>
   </body>
