@@ -64,8 +64,8 @@
 </div>
 
 <script>
-  const LOOP_TIME_MS = 10000;
-  const SNAPSHOT_RETRY_TIME_MS = 5000;
+  const LOOP_TIME_MS = 8000;
+  const SNAPSHOT_RETRY_TIME_MS = 3000;
 
   function updateTimestampLabel(timestampEl) {
     const timestamp = Number(timestampEl.dataset.timestampEpochMs);
@@ -77,7 +77,7 @@
     window.setTimeout(function () {
       const separator = image.src.includes("?") ? "&" : "?";
       image.src = image.src.split("#")[0] + separator + "retry=" + Date.now();
-    }, SNAPSHOT_RETRY_TIME_MS);
+    }, SNAPSHOT_RETRY_TIME_MS + Math.random() * 2000);
   }
 
   function imageLoaded(deviceId) {
@@ -131,7 +131,7 @@
 
         setTimeout(function () {
           fetchSummary(deviceId);
-        }, LOOP_TIME_MS);
+        }, LOOP_TIME_MS + Math.random() * 2000);
       });
   }
 

@@ -1,4 +1,5 @@
 import datetime
+import json
 import random
 import string
 import time
@@ -14,6 +15,8 @@ from flask_dictabase import BaseTable, Dictabase
 import config
 import slack
 from ai_cleanliness import evaluate_cleanliness
+from feature_email import render_room_clean_email, SETTINGS_KEY
+from feature_email.helpers import send_email
 from slack import send_slack_message
 
 OAUTH_TOKEN_URL = 'https://oauth.ring.com/oauth/token'
@@ -49,6 +52,52 @@ class RingUser(flask_login.UserMixin, BaseTable):
     wall_link_expires_at: float
     is_wall_user: bool
     enabled_features: dict  # {str(feature_name): bool(enabled)}
+    last_clean_score: str
+
+    def log_cleanliness_score(self, device_id: str, cleanliness_score: float):
+        print('log_cleanliness_score', device_id[:10], cleanliness_score)
+
+        old_are_all_rooms_clean = self.are_all_rooms_clean
+
+        device_name = None
+        for dev in self.get_devices():
+            if dev['id'] == device_id:
+                device_name = dev['attributes']['name']
+
+        self.SetItem(
+            'last_clean_score',
+            device_name,
+            cleanliness_score
+        )
+
+        new_are_all_rooms_clean = self.are_all_rooms_clean
+        if new_are_all_rooms_clean != old_are_all_rooms_clean:
+            self.send_clean_email()
+
+    @property
+    def are_all_rooms_clean(self):
+        return all([score > 50 for score in self.Get('last_clean_score', {}).values()])
+
+    def send_clean_email(self):
+        are_all_rooms_clean = self.are_all_rooms_clean
+        should_send_clean_email = self.Get(SETTINGS_KEY, 'email_when_all_rooms_clean', False)
+        should_send_dirty_email = self.Get(SETTINGS_KEY, 'email_when_rooms_dirty', False)
+
+        if are_all_rooms_clean:
+            if not should_send_clean_email:
+                return
+        else:
+            # at least one room is dirty
+            if not should_send_dirty_email:
+                return
+
+        room_data = self.Get('last_clean_score', {})
+        send_email(
+            to=self['email'],
+            subject='Room Cleanliness Update',
+            html=render_room_clean_email(room_data),
+            body=json.dumps(room_data, indent=2),
+        )
 
     def get_chore_settings(self) -> ChoreSettings:
         ret = self.Get('chore_settings', {})
@@ -369,6 +418,23 @@ class RingImage(BaseTable):
     def ui_safe(self):
         return dict(self)
 
+    @property
+    def user(self):
+        return self.app.db.FindOne(
+            RingUser,
+            account_id=self['account_id'],
+        ).get_ring_user()
+
+    def log_cleanliness(self, score: float):
+        print('390 log_cleanliness(', score)
+        user: RingUser = self.user
+        print('392 user=', user)
+        if user:
+            user.log_cleanliness_score(
+                self['device_id'],
+                score,
+            )
+
 
 def setup(a: Flask):
     global app
@@ -427,6 +493,7 @@ def score_cleanliness(image_id):
                 res = evaluate_cleanliness(image_bytes=image_bytes)
                 print('ai returned score_cleanliness id=', image_id, ', res=', res)
                 if res:
+                    image.log_cleanliness(res['cleanliness'])
                     image['cleanliness'] = res['cleanliness']
                     image['summary'] = res['summary']
                 else:

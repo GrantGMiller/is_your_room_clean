@@ -439,12 +439,13 @@ class Chore(BaseTable):
         return chore_times
 
 
-def get_utc_from_users_time(dt_usertz: datetime.datetime, user: ring_user.RingUser):
+def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
     '''
     The jobs are scheduled in UTC.
     So adjust the datetime from the users timezone to UTC,
     including daylight savings if the user has it enabled.
     '''
+    user = cast(ring_user.RingUser, user)
     print('426 dt_usertz=', dt_usertz)
     user_tz_str = user.get('timezone', 'UTC')
     print('user_tz_str=', user_tz_str)
@@ -465,7 +466,8 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user: ring_user.RingUs
         return dt_utc
 
 
-def get_user_local_dt_from_utc(dt: datetime.datetime, user: ring_user.RingUser):
+def get_user_local_dt_from_utc(dt: datetime.datetime, user):
+    user = cast(ring_user.RingUser, user)
     if dt is None or dt.tzinfo is not None and dt.tzinfo not in (
             pytz.UTC,
             datetime.timezone.utc,
@@ -529,7 +531,8 @@ def assign_chore_to_persons(chore_id: int):
         return chore
 
 
-def get_persons(user: ring_user.RingUser):
+def get_persons(user):
+    user = cast(ring_user.RingUser, user)
     print('user=', user)
     print('user.is_wall_user=', user.is_wall_user)
 
@@ -541,7 +544,8 @@ def get_persons(user: ring_user.RingUser):
         return ret
 
 
-def get_chores(user: ring_user.RingUser):
+def get_chores(user) -> List[Chore]:
+    user = cast(ring_user.RingUser, user)
     with app.app_context():
         ring_user = user.get_ring_user()
         ret = list(app.db.FindAll(Chore, owner_id=ring_user['id']))

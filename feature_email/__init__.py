@@ -1,9 +1,15 @@
 import datetime
 
-from flask import Flask, flash, jsonify, redirect, render_template, request
+from flask import Flask, abort, flash, jsonify, redirect, render_template, request
 
-from feature_email.jobs import update_email_job, setup as setup_email_jobs
-from ring_user import get_current_user
+import config
+import ring_user
+from feature_email.jobs import (
+    get_summary_data,
+    render_daily_summary,
+    update_email_job,
+    setup as setup_email_jobs,
+)
 
 SETTINGS_KEY = 'email_notification_settings'
 
@@ -13,7 +19,7 @@ def setup(app: Flask):
 
     @app.route('/email', methods=['GET', 'POST'])
     def email():
-        user = get_current_user()
+        user = ring_user.get_current_user()
         if not user:
             return redirect('/dashboard')
 
@@ -64,3 +70,29 @@ def setup(app: Flask):
             ),
         }
         return render_template('email/email.html', user=user, settings=settings)
+
+    @app.route('/email/preview_daily_summary')
+    def preview_daily_summary():
+        user = ring_user.get_current_user()
+        if not user or user.get('email') not in getattr(config, 'ADMINS', []):
+            abort(403)
+
+        data = get_summary_data(user['id'])
+        return render_daily_summary(data)
+
+    @app.route('/email/preview_room_clean')
+    def preview_room_clean():
+        current_user = ring_user.get_current_user()
+        if not current_user or current_user.get('email') not in getattr(config, 'ADMINS', []):
+            abort(403)
+
+        data = current_user.Get('last_clean_score', {})
+        return render_room_clean_email(data)
+
+
+def render_room_clean_email(data):
+    return render_template(
+        'email/room_clean_email.html',
+        data=data,
+        app_url=config.SERVER_HOST_URL.rstrip('/'),
+    )

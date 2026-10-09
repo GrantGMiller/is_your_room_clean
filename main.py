@@ -26,7 +26,7 @@ if not os.path.exists("images"):
     # this will hold the ring camera screenshots
     os.mkdir("images")
 
-app = Flask("Is Your Room Clean")
+app = Flask(getattr(config, 'APP_NAME', '{{ app_name }}'))
 app.secret_key = config.SECRET_KEY
 app.db = Dictabase(app)
 app.jobs = JobScheduler(
@@ -74,6 +74,7 @@ def dashboard():
     # Ring calls this the "App Homepage"
 
     ring_user = get_current_user()
+    print('77 ring_user=', ring_user)
     if ring_user:
         # if no events have occured since the app was authorized
         # then no snapshots can be grabbed and this app is useless
@@ -506,7 +507,7 @@ def inject_app_values():
             'admins': getattr(config, 'ADMINS', []),
             'email_notifications': getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False),
         },
-        'app_name': getattr(config, 'APP_NAME', 'Is Your Room Clean'),
+        'app_name': getattr(config, 'APP_NAME', '{{ app_name }}'),
         'app_url': getattr(config, 'APP_URL', '/'),
     }
 
