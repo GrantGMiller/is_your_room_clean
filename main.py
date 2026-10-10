@@ -117,8 +117,8 @@ def dashboard():
 
 @app.route("/send_login_email", methods=["GET", "POST"])
 def send_login_email():
-    email = request.form.get("email", None)
-    if IsValidEmail(email):
+    email = request.form.get("email", "")
+    if email and IsValidEmail(email):
         session["login_email"] = email.lower()
         user = app.db.NewOrFind(RingUser, email=email.lower())
         if user:
