@@ -45,7 +45,7 @@ def setup(a: Flask):
             person = app.db.FindOne(Person, id=person_id,
                                     owner_id=get_current_user()['id']) if person_id is not None else None
             mode = 'edit' if person is not None else 'add'
-            return render_template("chores_person_edit.html", person=person, mode=mode)
+            return render_template("chores/chores_person_edit.html", person=person, mode=mode)
 
         elif request.method == "POST":
             person_id = request.args.get("id", type=int)
@@ -80,7 +80,7 @@ def setup(a: Flask):
 
                 return redirect("/chores/overview")
 
-        return render_template("chores_person_edit.html", person=person, mode='edit')
+        return render_template("chores/chores_person_edit.html", person=person, mode='edit')
 
     @app.route("/chores/person/delete", methods=["POST"])
     def delete_person():
@@ -150,7 +150,7 @@ def setup(a: Flask):
             return jsonify(chore.ui_safe())
 
         return render_template(
-            "chores_edit_chore.html",
+            "chores/chores_edit_chore.html",
             chore=chore,
             user=get_current_user(),
             persons=chores_helper.get_current_user_persons(),
@@ -179,7 +179,7 @@ def setup(a: Flask):
             return redirect('/dashboard')
 
         return render_template(
-            "chores_overview.html",
+            "chores/chores_overview.html",
             persons=chores_helper.get_current_user_persons(),
             chores=chores_helper.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
@@ -231,7 +231,7 @@ def setup(a: Flask):
             return redirect("/chores/overview")
 
         return render_template(
-            "chores_settings.html",
+            "chores/chores_settings.html",
             settings=user.get_chore_settings(),
             timezone=user.get("timezone", "US/Eastern"),
             timezones=pytz.all_timezones,
@@ -323,7 +323,7 @@ def setup(a: Flask):
     def chores_assignee_view():
         print('test284')
         return render_template(
-            "chores_assignee_view.html",
+            "chores/chores_assignee_view.html",
             persons=chores_helper.get_current_user_persons(),
             chores=chores_helper.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
@@ -345,7 +345,7 @@ def setup(a: Flask):
         wall_display_image = base64.b64encode(image_buffer.getvalue()).decode()
 
         return render_template(
-            "chores_wall_display_link.html",
+            "chores/chores_wall_display_link.html",
             wall_display_url=wall_display_url,
             wall_display_image=wall_display_image,
         )
@@ -378,12 +378,12 @@ def setup(a: Flask):
         print('get_current_wall_user=', wall_user)
         if not wall_user:
             return render_template(
-                'chores_wall_display_user_unknown.html',
+                'chores/chores_wall_display_user_unknown.html',
             )
 
         ring_user = wall_user.get_ring_user()
         return render_template(
-            'chores_wall_display.html',
+            'chores/chores_wall_display.html',
             ring_user=ring_user,
             persons=get_persons(ring_user),
             chores=get_chores(ring_user),

@@ -51,7 +51,7 @@ def setup(app: Flask):
             return redirect(f'/chores/wizard/2/{chore["id"]}')
 
         return render_template(
-            "chores_wizard_1.html",
+            "chores/chores_wizard_1.html",
         )
 
     @app.route("/chores/wizard/2/<new_chore_id>", methods=["GET", "POST"])
@@ -70,7 +70,7 @@ def setup(app: Flask):
             return redirect("/chores/overview")
 
         return render_template(
-            "chores_wizard_2.html",
+            "chores/chores_wizard_2.html",
             chore=chore,
             persons=get_current_user_persons(),
         )
