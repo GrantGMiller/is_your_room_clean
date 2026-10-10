@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Did you clean your room?</title>
+  </head>
+  <body
+    style="margin: 0; padding: 0; background-color: #f3f6f9; color: #243447; font-family: Arial, Helvetica, sans-serif;"
+  >
+    {% set result = namespace(all_clean=(data|length > 0)) %}
+    {% for room_name, score in data.items() %}
+      {% if score|int <= 70 %}
+        {% set result.all_clean = false %}
+      {% endif %}
+    {% endfor %}
+
+    {% if result.all_clean %}
+      {% set verdict_color = '#198754' %}
+      {% set verdict_bg = '#d1e7dd' %}
+      {% set verdict_text_color = '#0f5132' %}
+    {% else %}
+      {% set verdict_color = '#dc3545' %}
+      {% set verdict_bg = '#f8d7da' %}
+      {% set verdict_text_color = '#842029' %}
+    {% endif %}
+
+    <div style="padding: 32px 16px">
+      <div style="width: 100%; max-width: 640px; margin: 0 auto">
+        <div
+          style="padding: 28px 24px; background-color: #ffffff; border-top: 5px solid {{ verdict_color }}; border-radius: 8px;"
+        >
+          <div
+            style="margin-bottom: 20px; color: #0d6efd; font-size: 13px; font-weight: bold; text-transform: uppercase;"
+          >
+            Is Your Room Clean
+          </div>
+
+          <h1
+            style="margin: 0 0 16px; color: #172b4d; font-size: 26px; line-height: 1.3;"
+          >
+            Did you clean your room?
+          </h1>
+
+          <div
+            style="display: inline-block; margin-bottom: 24px; padding: 10px 18px; background-color: {{ verdict_bg }}; border-radius: 5px; color: {{ verdict_text_color }}; font-size: 22px; font-weight: bold; line-height: 1;"
+          >
+            {{ 'YES' if result.all_clean else 'NO' }}
+          </div>
+
+          <h2
+            style="margin: 0 0 12px; color: #172b4d; font-size: 18px; line-height: 1.4;"
+          >
+            Room cleanliness
+          </h2>
+
+          {% if data %}
+            <table
+              role="presentation"
+              cellpadding="0"
+              cellspacing="0"
+              width="100%"
+              style="border-collapse: collapse;"
+            >
+              {% for room_name, score in data.items() %}
+                {% set room_score = score|int %}
+                {% if room_score > 70 %}
+                  {% set room_color = '#198754' %}
+                  {% set room_bg = '#d1e7dd' %}
+                  {% set room_text_color = '#0f5132' %}
+                {% elif room_score >= 40 %}
+                  {% set room_color = '#ffc107' %}
+                  {% set room_bg = '#fff3cd' %}
+                  {% set room_text_color = '#664d03' %}
+                {% else %}
+                  {% set room_color = '#dc3545' %}
+                  {% set room_bg = '#f8d7da' %}
+                  {% set room_text_color = '#842029' %}
+                {% endif %}
+                <tr>
+                  <td
+                    style="padding: 12px 10px; border-bottom: 1px solid #dfe5eb; color: #243447; font-size: 15px; line-height: 1.4;"
+                  >
+                    {{ room_name }}
+                  </td>
+                  <td
+                    align="right"
+                    style="padding: 12px 10px; border-bottom: 1px solid #dfe5eb; white-space: nowrap;"
+                  >
+                    <span
+                      style="display: inline-block; padding: 6px 9px; background-color: {{ room_bg }}; border-left: 3px solid {{ room_color }}; border-radius: 4px; color: {{ room_text_color }}; font-size: 14px; font-weight: bold;"
+                    >
+                      {{ room_score }}%
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </table>
+          {% else %}
+            <p
+              style="margin: 0; padding: 14px; background-color: #f8f9fa; color: #52606d; font-size: 14px; line-height: 1.5;"
+            >
+              No room cleanliness data is available.
+            </p>
+          {% endif %}
+
+          <p
+            style="margin: 24px 0 0; color: #7b8794; font-size: 12px; line-height: 1.5;"
+          >
+            To stop receiving these emails,
+            <a href="{{ app_url }}/email" style="color: #0d6efd;"
+              >unsubscribe here</a
+            >.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

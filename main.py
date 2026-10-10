@@ -450,7 +450,7 @@ def handle_error(e):
 
         send_slack_message("HTTP Error" + msg)
 
-    flash("An error has occurred. The admin has been notified. " "danger")
+    flash("An error has occurred. The admin has been notified. ", "danger")
     return redirect("/dashboard")
 
 

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daily Chore Summary</title>
+  </head>
+  <body
+    style="margin: 0; background-color: #f3f6f9; color: #243447; font-family: Arial, Helvetica, sans-serif;"
+  >
+    <div style="padding: 32px 16px">
+      <div style="width: 100%; max-width: 640px; margin: 0 auto">
+        <div
+          style="padding: 28px 24px; background-color: #ffffff; border-top: 5px solid #0d6efd; border-radius: 8px;"
+        >
+          <div
+            style="margin-bottom: 12px; color: #0d6efd; font-size: 13px; font-weight: bold; text-transform: uppercase;"
+          >
+            {{ app_name }}
+          </div>
+
+          <h1
+            style="margin: 0 0 8px; color: #172b4d; font-size: 26px; line-height: 1.3;"
+          >
+            Daily Chore Summary
+          </h1>
+          <p
+            style="margin: 0 0 24px; color: #52606d; font-size: 15px; line-height: 1.5;"
+          >
+            Here are the chores completed by each person.
+          </p>
+
+          {% for person, chores in data.items() %}
+            <div
+              style="margin: 0 0 16px; padding: 16px 18px; border: 1px solid #dfe5eb; border-radius: 6px;"
+            >
+              <h2
+                style="margin: 0 0 10px; color: #172b4d; font-size: 18px; line-height: 1.4;"
+              >
+                {{ person }}
+              </h2>
+              {% if chores %}
+                <ul
+                  style="margin: 0; padding-left: 22px; color: #52606d; font-size: 15px; line-height: 1.7;"
+                >
+                  {% for chore in chores %}
+                    <li style="padding-left: 2px">{{ chore }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p
+                  style="margin: 0; color: #7b8794; font-size: 14px; line-height: 1.5;"
+                >
+                  No chores completed.
+                </p>
+              {% endif %}
+            </div>
+          {% else %}
+            <p
+              style="margin: 0; padding: 16px; background-color: #f8f9fa; color: #52606d; font-size: 15px; line-height: 1.5;"
+            >
+              No chores were completed today.
+            </p>
+          {% endfor %}
+
+          <p
+            style="margin: 24px 0 0; color: #7b8794; font-size: 12px; line-height: 1.5;"
+          >
+            This is an automated message from {{ app_name }}.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
