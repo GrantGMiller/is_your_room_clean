@@ -3,8 +3,13 @@ from flask_tools import SendEmail_SMTP
 import config
 
 
-def send_email(**kwargs):
+def send_email(to, subject, body, html, **kwargs):
     SendEmail_SMTP(
+        to=to,
+        subject=subject,
+        body=body,
+        html=html,
+        #
         **kwargs,
         #
         frm=config.ADMINS[0],

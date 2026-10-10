@@ -8,8 +8,9 @@ from feature_email.jobs import (
     get_summary_data,
     render_daily_summary,
     update_email_job,
-    setup as setup_email_jobs,
+    setup as setup_email_jobs, send_daily_email_summary,
 )
+from slack import send_slack_message
 
 SETTINGS_KEY = 'email_notification_settings'
 
@@ -91,6 +92,7 @@ def setup(app: Flask):
 
 
 def render_room_clean_email(data):
+    send_slack_message('render room clean email data=', data)
     return render_template(
         'email/room_clean_email.html',
         data=data,

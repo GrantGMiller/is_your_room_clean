@@ -203,10 +203,10 @@ class Chore(BaseTable):
         '''
         if person_id:
             iso = self.GetItem('last_completed', str(person_id), None)
-            print('iso=', iso)
+
             if iso:
                 dt_utc = datetime.datetime.fromisoformat(iso)
-                print('return dt_utc=', dt_utc)
+                #print('return dt_utc=', dt_utc)
                 return dt_utc
             else:
                 return None
@@ -547,5 +547,5 @@ def get_chores(user) -> List[Chore]:
     with app.app_context():
         owner_user = user.get_ring_user()
         ret = list(app.db.FindAll(Chore, owner_id=owner_user['id']))
-        print('get_chores ret=', ret)
+        #print('get_chores ret=', ret)
         return ret
