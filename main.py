@@ -21,6 +21,8 @@ from chores_helper import get_current_user_chores
 from ring_token_endpoints import mask_email
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
+from feature_email import setup as setup_email
+from feature_chores import setup as setup_chores
 
 if not os.path.exists("images"):
     # this will hold the ring camera screenshots
@@ -42,10 +44,9 @@ ring_user_setup(app)
 api.setup(app)
 repeat_jobs.setup(app)
 chores_ui.setup(app)
+setup_chores(app)
 
 if getattr(config,'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
-    from feature_email import setup as setup_email
-
     setup_email(app)
 
 if getattr(config, 'ENABLE_MIGRATE_CHORES', False):

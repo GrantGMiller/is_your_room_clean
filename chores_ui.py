@@ -19,6 +19,7 @@ from chores_models import (
     assign_chore_to_persons,
     setup as setup_chores_models, get_user_local_dt_from_utc, get_persons, get_chores,
 )
+from feature_chores import update_job_clear_completed_chores
 from ring_user import RingUser, get_current_user, get_current_wall_user
 
 global app
@@ -204,8 +205,7 @@ def setup(a: Flask):
                     )
                     should_refresh_chores = True
 
-            chores_helper.refresh_all_current_user_chores()
-
+            
             timezone = request.form.get("timezone")
             if timezone in pytz.all_timezones:
                 user['timezone'] = timezone
@@ -214,6 +214,10 @@ def setup(a: Flask):
                     request.form.get("enable_daylight_savings") == "on"
             )
 
+            chores_helper.refresh_all_current_user_chores()
+            print('218 update clean completed jobs')
+            update_job_clear_completed_chores(user)
+            
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify({
                     **user.get_chore_settings(),
@@ -223,6 +227,7 @@ def setup(a: Flask):
                     ),
                 })
 
+            
             return redirect("/chores/overview")
 
         return render_template(

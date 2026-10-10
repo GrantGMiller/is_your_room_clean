@@ -63,6 +63,7 @@ def get_current_user_chore(chore_id: int) -> Optional[Chore]:
         return app.db.FindOne(Chore, id=chore_id, owner_id=user['id'])
 
 def refresh_all_current_user_chores():
+    print('Refreshing all current user chores')
     with app.app_context():
         user = get_current_user()
         if not user:
