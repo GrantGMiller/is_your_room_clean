@@ -108,7 +108,7 @@ def dashboard():
         #
         # )
         # ask for the users email, send them a link
-        return render_template("email_input.html")
+        return render_template("login/email_input.html")
 
     if ring_user and ring_user.get('access_token', None) is None:
         return render_template("dashboard_unauth.html")
@@ -138,7 +138,7 @@ def send_login_email():
                         "subject": "Login with a Magic Link",
                         "body": f"Click this link to login.\r{user.get_last_login_url()}\r\rYour login code is: {user['login_code']}",
                         "html": render_template(
-                            "email_body_magic_link.html",
+                            "login/email_body_magic_link.html",
                             login_url=user.get_last_login_url(),
                             login_code=user["login_code"],
                         ),
@@ -154,11 +154,11 @@ def send_login_email():
 
         # note, if the user was not found, we dont actually send an email, but dont tell them that
         return render_template(
-            "email_sent.html",
+            "login/email_sent.html",
             email=session["login_email"],
         )
 
-    return render_template("email_input.html", message="Invalid Email Address")
+    return render_template("login/email_input.html", message="Invalid Email Address")
 
 
 @app.route('/logout')
@@ -253,12 +253,12 @@ def contact():
 
 @app.route("/privacy")
 def privacy():
-    return render_template("privacy.html")
+    return render_template("legal/privacy.html")
 
 
 @app.route("/terms")
 def terms():
-    return render_template("terms.html")
+    return render_template("legal/terms.html")
 
 
 @app.route("/data_flow")

@@ -246,7 +246,7 @@ def setup(a: Flask):
 
         if "@" not in email or len(code) != 6 or not code.isdigit():
             return render_template(
-                "email_sent.html",
+                "login/email_sent.html",
                 email=session.get("login_email", ""),
                 message="Enter a valid email address and six-digit login code",
             )
@@ -254,7 +254,7 @@ def setup(a: Flask):
         ring_user: RingUser = app.db.FindOne(RingUser, email=email, login_code=code)
         if not ring_user:
             return render_template(
-                "email_sent.html",
+                "login/email_sent.html",
                 email=session["login_email"],
                 message="Invalid Login Code",
             )
