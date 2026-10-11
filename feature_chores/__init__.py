@@ -5,8 +5,8 @@ from typing import cast
 from flask import Flask
 from flask_jobs import Job, JobScheduler
 
-from feature_chores.chores_models import Person, get_utc_from_users_time
-from feature_chores.chores_helper import get_chores
+from feature_chores.models import Person, get_utc_from_users_time
+from feature_chores.helpers import get_chores
 
 def setup(a:Flask):
     global app

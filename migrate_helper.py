@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 from flask_dictabase import Dictabase
 
 import config
-from feature_chores.chores_models import Chore, Person
+from feature_chores.models import Chore, Person
 from ring_user import RingUser
 
 

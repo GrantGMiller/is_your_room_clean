@@ -8,8 +8,8 @@ from flask import Flask, render_template
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler, Job
 
-from feature_chores import chores_models
-from feature_chores.chores_helper import get_chores
+from feature_chores import models
+from feature_chores.helpers import get_chores
 import feature_email
 import ring_user
 from feature_email.helpers import send_email
@@ -53,7 +53,7 @@ def update_email_job(user_id: int):
         start_dt_usertz = datetime.datetime.combine(
             datetime.datetime.now(), start_time_usertz
         )
-        start_dt_utc = chores_models.get_utc_from_users_time(start_dt_usertz, user)
+        start_dt_utc = models.get_utc_from_users_time(start_dt_usertz, user)
 
         job = app.jobs.RepeatJob(
             name=get_daily_job_name(user_id),
@@ -87,7 +87,7 @@ def get_summary_data(user_id: int):
 
         @lru_cache
         def get_person_name(person_id: int):
-            person = app.db.FindOne(chores_models.Person, id=person_id)
+            person = app.db.FindOne(models.Person, id=person_id)
             return person['name']
 
         print('90 user=', user, ', user_id=', user_id)

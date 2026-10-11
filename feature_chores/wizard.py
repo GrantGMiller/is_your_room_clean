@@ -4,8 +4,8 @@ from flask import Flask, redirect, render_template, request
 from flask_dictabase import Dictabase
 from typing import cast
 
-from feature_chores.chores_helper import get_current_user_persons
-from feature_chores.chores_models import Chore
+from feature_chores.helpers import get_current_user_persons
+from feature_chores.models import Chore
 from ring_user import get_current_user
 
 

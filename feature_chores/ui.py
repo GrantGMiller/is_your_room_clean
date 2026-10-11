@@ -11,9 +11,9 @@ from flask import Flask, flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
 
 import config
-from feature_chores import chores_helper
-from feature_chores import chores_wizard
-from feature_chores.chores_models import (
+from feature_chores import helpers
+from feature_chores import wizard
+from feature_chores.models import (
     Chore,
     Person,
     assign_chore_to_persons,
@@ -29,8 +29,8 @@ def setup(a: Flask):
     global app
     app = a
     app.db = cast(Dictabase, app.db)
-    chores_wizard.setup(app)
-    chores_helper.setup(app)
+    wizard.setup(app)
+    helpers.setup(app)
     setup_chores_models(app)
 
     @app.route("/chores")
@@ -100,7 +100,7 @@ def setup(a: Flask):
     @app.route("/chores/edit", methods=["GET", "POST"])
     def edit_chore():
         chore_id = request.args.get("id", type=int)
-        chore = chores_helper.get_current_user_chore(chore_id)
+        chore = helpers.get_current_user_chore(chore_id)
 
         if chore is None:
             print('Chore not found', 'danger')
@@ -153,7 +153,7 @@ def setup(a: Flask):
             "chores/chores_edit_chore.html",
             chore=chore,
             user=get_current_user(),
-            persons=chores_helper.get_current_user_persons(),
+            persons=helpers.get_current_user_persons(),
             get_user_local_dt_from_utc=get_user_local_dt_from_utc,
         )
 
@@ -180,8 +180,8 @@ def setup(a: Flask):
 
         return render_template(
             "chores/chores_overview.html",
-            persons=chores_helper.get_current_user_persons(),
-            chores=chores_helper.get_current_user_chores(),
+            persons=helpers.get_current_user_persons(),
+            chores=helpers.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
             get_user_local_dt_from_utc=get_user_local_dt_from_utc,
             user=get_current_user(),
@@ -214,7 +214,7 @@ def setup(a: Flask):
                     request.form.get("enable_daylight_savings") == "on"
             )
 
-            chores_helper.refresh_all_current_user_chores()
+            helpers.refresh_all_current_user_chores()
             print('218 update clean completed jobs')
             update_job_clear_completed_chores(user)
             
@@ -248,8 +248,8 @@ def setup(a: Flask):
         user = get_current_user()
         print('new_state=', new_state)
         if user and chore_id and person_id and new_state is not None:
-            chore = chores_helper.get_current_user_chore(chore_id)
-            person = chores_helper.get_current_user_person(person_id)
+            chore = helpers.get_current_user_chore(chore_id)
+            person = helpers.get_current_user_person(person_id)
             if chore and person:
                 if new_state:
                     chore.assign_to(person)
@@ -271,8 +271,8 @@ def setup(a: Flask):
         if chore_id is None or person_id is None or is_assignable is None:
             return 'chore or person not found', 404
 
-        chore = chores_helper.get_current_user_chore(int(chore_id))
-        person = chores_helper.get_current_user_person(int(person_id))
+        chore = helpers.get_current_user_chore(int(chore_id))
+        person = helpers.get_current_user_person(int(person_id))
         if not chore or not person:
             return 'chore or person not found', 404
 
@@ -289,7 +289,7 @@ def setup(a: Flask):
         data = request.get_json(silent=True) or {}
         chore_id = data.get("chore_id")
 
-        if chore_id is None or chores_helper.get_current_user_chore(int(chore_id)) is None:
+        if chore_id is None or helpers.get_current_user_chore(int(chore_id)) is None:
             return jsonify({"error": "chore not found"}), 404
 
         updated_chore = assign_chore_to_persons(int(chore_id))
@@ -301,8 +301,8 @@ def setup(a: Flask):
     def chore_complete():
         chore_id = request.form.get('chore_id', type=int)
         person_id = request.form.get('person_id', type=int)
-        chore = chores_helper.get_current_user_chore(chore_id)
-        person = chores_helper.get_current_user_person(person_id)
+        chore = helpers.get_current_user_chore(chore_id)
+        person = helpers.get_current_user_person(person_id)
 
         if (
                 chore is None
@@ -324,8 +324,8 @@ def setup(a: Flask):
         print('test284')
         return render_template(
             "chores/chores_assignee_view.html",
-            persons=chores_helper.get_current_user_persons(),
-            chores=chores_helper.get_current_user_chores(),
+            persons=helpers.get_current_user_persons(),
+            chores=helpers.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
             ring_user=get_current_user()
         )
@@ -385,7 +385,7 @@ def setup(a: Flask):
         return render_template(
             'chores/chores_wall_display.html',
             ring_user=ring_user,
-            persons=chores_helper.get_persons(ring_user),
-            chores=chores_helper.get_chores(ring_user),
+            persons=helpers.get_persons(ring_user),
+            chores=helpers.get_chores(ring_user),
 
         )
