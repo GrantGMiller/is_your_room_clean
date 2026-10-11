@@ -109,15 +109,7 @@ def dashboard():
                 'warning',
             )
 
-    # app.logger.error("111 ring_user=" + str(ring_user))
-
     if not ring_user:
-        # send_slack_message(
-        #     'form=', request.form,
-        #     ', args=', request.args,
-        #     ', headers=', request.headers
-        #
-        # )
         # ask for the users email, send them a link
         return render_template("login/email_input.html")
 
@@ -126,6 +118,30 @@ def dashboard():
 
     return render_template("dashboard.html", ring_user=ring_user)
 
+@app.route('/events_exist')
+def events_exist():
+
+    ring_user = get_current_user()
+    print('125 ring_user=', ring_user)
+    if not ring_user:
+        return 'no events exist', 404
+
+    devs = ring_user.get_devices()
+    devices_without_events = []
+
+    for dev in devs:
+        if not ring_user.GetItem('latest_events', dev['id'], None):
+            latest_event = ring_user.get_latest_event(dev['id'])
+            if not latest_event:
+                devices_without_events.append(dev["attributes"]["name"])
+            else:
+                print('saving latest event')
+                ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
+
+    if not devs or len(devices_without_events) == len(devs):
+        return 'no events exist', 404
+
+    return 'events exist', 200
 
 @app.route("/send_login_email", methods=["GET", "POST"])
 def send_login_email():
@@ -437,9 +453,13 @@ def delete_stored_images():
     return redirect("/my_account")
 
 
-@app.route("/tutorial")
-def tutorial():
-    return render_template("tutorial.html")
+@app.route("/no_events")
+def no_events():
+    # show this page when there are no ring events
+    return render_template(
+        "ring/no_events.html",
+                           device_names=['Living Room', 'Bonus Room'],
+                           )
 
 
 @app.errorhandler(404)

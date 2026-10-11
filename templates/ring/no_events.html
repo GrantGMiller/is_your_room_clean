@@ -87,7 +87,10 @@
         One motion event is all this app needs to start checking your room.
       </p>
 
-      <section class="setup-step p-4 p-md-5" aria-labelledby="motion-step-title">
+      <section
+        class="setup-step p-4 p-md-5"
+        aria-labelledby="motion-step-title"
+      >
         <div class="d-flex align-items-start gap-3 mb-4">
           <div class="step-icon" aria-hidden="true">
             <svg
@@ -107,7 +110,7 @@
           </div>
           <div>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <span class="step-label small fw-semibold">STEP 2</span>
+              <span class="step-label small fw-semibold">STEP 1</span>
               <span class="badge rounded-pill text-bg-info">Almost there</span>
             </div>
             <h2 class="h4 fw-bold mb-2" id="motion-step-title">
@@ -128,35 +131,38 @@
           </p>
         {% endif %}
 
-        <aside class="settings-guide p-3 p-md-4 ms-md-5" aria-label="Ring motion settings">
-          <p class="fw-bold mb-2">Not seeing motion events? Check your Ring settings:</p>
+        <aside
+          class="settings-guide p-3 p-md-4 ms-md-5"
+          aria-label="Ring motion settings"
+        >
+          <p class="fw-bold mb-2">
+            Not seeing motion events? Check your Ring settings:
+          </p>
           <ol class="mb-3">
             <li class="mb-2">
               In the Ring app, select your camera and open
               <strong>Motion Settings</strong>.
             </li>
             <li class="mb-2">
-              Open <strong>Smart Alerts</strong> and check the motion types
-              your camera records and reports.
+              Open <strong>Smart Alerts</strong> and check the motion types your
+              camera records and reports.
             </li>
             <li>
               Make sure motion recording and alerts are enabled, including
-              <strong>Record</strong> and <strong>Send Alert</strong> when
-              those options are available.
+              <strong>Record</strong> and <strong>Send Alert</strong> when those
+              options are available.
             </li>
           </ol>
           <p class="small mb-0">
-            This app can only check events created after your Ring camera was
-            connected. Once a new event arrives, your room snapshot and
+            This app can only see events that happened after you subsribed to
+            this app. Once a new event arrives, your room snapshot and
             cleanliness score will appear on the dashboard.
           </p>
         </aside>
       </section>
 
       <section class="mt-4 p-4 rounded-4 border bg-white">
-        <p class="text-uppercase fw-semibold small text-muted mb-2">
-          NEXT STEP
-        </p>
+        <p class="text-uppercase fw-semibold small text-muted mb-2">STEP 2</p>
         <h2 class="h5 mb-2">See your room's cleanliness score</h2>
         <p class="text-muted mb-3">
           After the first motion event, return to the dashboard to see the
@@ -167,5 +173,35 @@
         </a>
       </section>
     </main>
+    <script>
+      const EVENT_POLL_INTERVAL_MS = 5000;
+
+      async function pollForEvents() {
+        try {
+          const response = await fetch("/events_exist", {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+
+          if (response.status === 200) {
+            window.location.replace("/dashboard");
+            return;
+          }
+
+          if (response.status !== 404) {
+            console.warn(
+              "Unexpected response while checking for Ring events:",
+              response.status,
+            );
+          }
+        } catch (error) {
+          console.warn("Unable to check for Ring events; will retry.", error);
+        }
+
+        window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
+      }
+
+      window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
+    </script>
   </body>
 </html>
