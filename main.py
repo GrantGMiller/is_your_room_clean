@@ -14,14 +14,14 @@ import api
 import config
 import migrate_helper
 import repeat_jobs
-from ring.user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
-from ring.token_endpoints import mask_email
-from ring import token_endpoints, webhook
-from slack import send_slack_message, setup as slack_setup, send_slack_error
-from feature_email import setup as setup_email
-from feature_chores import ui
 from feature_chores import setup as setup_chores
+from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
+from feature_email import setup as setup_email
+from ring import token_endpoints, webhook
+from ring.token_endpoints import mask_email
+from ring.user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
+from slack import send_slack_message, setup as slack_setup, send_slack_error
 
 if not os.path.exists("images"):
     # this will hold the ring camera screenshots
@@ -45,7 +45,7 @@ repeat_jobs.setup(app)
 ui.setup(app)
 setup_chores(app)
 
-if getattr(config,'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
+if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
     setup_email(app)
 
 if getattr(config, 'ENABLE_MIGRATE_CHORES', False):
@@ -118,9 +118,9 @@ def dashboard():
 
     return render_template("dashboard.html", ring_user=ring_user)
 
+
 @app.route('/events_exist')
 def events_exist():
-
     ring_user = get_current_user()
     print('125 ring_user=', ring_user)
     if not ring_user:
@@ -144,6 +144,7 @@ def events_exist():
         return 'no events exist', 404
 
     return 'events exist', 200
+
 
 @app.route("/send_login_email", methods=["GET", "POST"])
 def send_login_email():
@@ -382,10 +383,10 @@ def my_account():
     advanced_features = {
         # 'feature_name': bool(enabled)
     }
-    if getattr(config, 'ENABLE_CHORES', False)  :
+    if getattr(config, 'ENABLE_CHORES', False):
         advanced_features['chores'] = ring_user.GetItem('enabled_features', 'chores')
 
-    if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False) :
+    if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
         advanced_features['email_notifications'] = ring_user.GetItem('enabled_features', 'email_notifications')
 
     return render_template(
@@ -459,14 +460,14 @@ def delete_stored_images():
 def no_events():
     # show this page when there are no ring events
     supress_auto_redirect = (
-        request.args.get("supress_auto_redirect", "false").lower() == "true"
+            request.args.get("supress_auto_redirect", "false").lower() == "true"
     )
     print('supress_auto_redirect=', supress_auto_redirect)
     return render_template(
         "ring/no_events.html",
-                           device_names=['Living Room', 'Bonus Room'],
-                          supress_auto_redirect=supress_auto_redirect
-                           )
+
+        supress_auto_redirect=supress_auto_redirect
+    )
 
 
 @app.errorhandler(404)
