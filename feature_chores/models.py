@@ -281,7 +281,7 @@ class Chore(BaseTable):
         If the chore is a one-time chore, return None.
         The return datetime is in UTC
         '''
-        user_tz = self.user.get('timezone', 'UTC')
+        user_tz = self.user.get('timezone', 'UTC') or 'UTC'
         now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
 
         print('250 get_next_start_dt_utc chore=', self['name'])
@@ -450,7 +450,7 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
 
     user = cast(ring_user.RingUser, user)
     print('426 dt_usertz=', dt_usertz)
-    user_tz_str = user.get('timezone', 'UTC')
+    user_tz_str = user.get('timezone') or 'UTC'
     print('user_tz_str=', user_tz_str)
 
     if user_tz_str == 'UTC':
@@ -484,7 +484,7 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user):
 
     user_has_dst = user.get('enable_daylight_savings', True)
     print('user_has_dst=', user_has_dst)
-    user_tz = pytz.timezone(user.get('timezone', 'UTC'))
+    user_tz = pytz.timezone(user.get('timezone') or 'UTC')
     print('user_tz=', user_tz)
     if dt.tzinfo is None:
         dt_utc = pytz.utc.localize(dt)
