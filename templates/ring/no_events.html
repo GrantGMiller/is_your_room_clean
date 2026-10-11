@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Waiting for Ring Motion | {{ app_name }}</title>
+    {% include "js_css.html" %}
+    <style>
+      :root {
+        --ink: #183044;
+        --muted: #607487;
+        --paper: #f5f8f7;
+        --blue: #2698c4;
+        --pale-blue: #e7f5fb;
+        --pale-yellow: #fffbea;
+        --yellow-border: #f1df91;
+      }
+
+      body {
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 0%, #e1f4ec 0, transparent 32%),
+          linear-gradient(135deg, var(--paper) 0%, #edf3f7 100%);
+      }
+
+      .setup-page {
+        max-width: 760px;
+      }
+
+      .setup-step {
+        border: 1px solid rgba(38, 152, 196, 0.45);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 0.5rem 1.5rem rgba(24, 48, 68, 0.08);
+      }
+
+      .step-icon {
+        display: grid;
+        width: 3.5rem;
+        height: 3.5rem;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 0.8rem;
+        color: #2185ad;
+        background: var(--pale-blue);
+      }
+
+      .step-label {
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+
+      .settings-guide {
+        border: 1px solid var(--yellow-border);
+        border-radius: 0.8rem;
+        background: var(--pale-yellow);
+        color: #684d1b;
+      }
+
+      .settings-guide ol {
+        padding-left: 1.25rem;
+      }
+
+      .settings-guide li {
+        padding-left: 0.2rem;
+      }
+
+      @media (max-width: 575.98px) {
+        .setup-page {
+          padding-right: 1rem;
+          padding-left: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container setup-page py-5">
+      <p class="text-uppercase fw-semibold small text-primary mb-2">
+        Ring camera setup
+      </p>
+      <h1 class="h3 mb-2">Your camera is connected</h1>
+      <p class="text-muted mb-4">
+        One motion event is all this app needs to start checking your room.
+      </p>
+
+      <section class="setup-step p-4 p-md-5" aria-labelledby="motion-step-title">
+        <div class="d-flex align-items-start gap-3 mb-4">
+          <div class="step-icon" aria-hidden="true">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M8 3.5a.5.5 0 0 1 .5.5v3.25l2.1 1.26a.5.5 0 1 1-.514.858l-2.343-1.406A.5.5 0 0 1 7.5 7.5V4a.5.5 0 0 1 .5-.5"
+              />
+              <path
+                d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14"
+              />
+            </svg>
+          </div>
+          <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <span class="step-label small fw-semibold">STEP 2</span>
+              <span class="badge rounded-pill text-bg-info">Almost there</span>
+            </div>
+            <h2 class="h4 fw-bold mb-2" id="motion-step-title">
+              Wait for a motion event
+            </h2>
+            <p class="text-secondary fs-5 mb-0">
+              When your Ring camera detects motion, it sends an event to this
+              app. We use that event to get a room snapshot and estimate how
+              clean the room is.
+            </p>
+          </div>
+        </div>
+
+        {% if device_names %}
+          <p class="small text-muted mb-3">
+            Waiting for the first event from:
+            <strong>{{ device_names | join(", ") }}</strong>
+          </p>
+        {% endif %}
+
+        <aside class="settings-guide p-3 p-md-4 ms-md-5" aria-label="Ring motion settings">
+          <p class="fw-bold mb-2">Not seeing motion events? Check your Ring settings:</p>
+          <ol class="mb-3">
+            <li class="mb-2">
+              In the Ring app, select your camera and open
+              <strong>Motion Settings</strong>.
+            </li>
+            <li class="mb-2">
+              Open <strong>Smart Alerts</strong> and check the motion types
+              your camera records and reports.
+            </li>
+            <li>
+              Make sure motion recording and alerts are enabled, including
+              <strong>Record</strong> and <strong>Send Alert</strong> when
+              those options are available.
+            </li>
+          </ol>
+          <p class="small mb-0">
+            This app can only check events created after your Ring camera was
+            connected. Once a new event arrives, your room snapshot and
+            cleanliness score will appear on the dashboard.
+          </p>
+        </aside>
+      </section>
+
+      <section class="mt-4 p-4 rounded-4 border bg-white">
+        <p class="text-uppercase fw-semibold small text-muted mb-2">
+          NEXT STEP
+        </p>
+        <h2 class="h5 mb-2">See your room's cleanliness score</h2>
+        <p class="text-muted mb-3">
+          After the first motion event, return to the dashboard to see the
+          latest room image, cleanliness score, and summary.
+        </p>
+        <a class="btn btn-outline-primary" href="/dashboard">
+          Refresh dashboard
+        </a>
+      </section>
+    </main>
+  </body>
+</html>
