@@ -10,7 +10,6 @@ import pytz
 from flask import Flask, flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
 
-import chores_helper
 import chores_wizard
 import config
 from chores_models import (
@@ -19,7 +18,7 @@ from chores_models import (
     assign_chore_to_persons,
     setup as setup_chores_models, get_user_local_dt_from_utc, get_persons, get_chores,
 )
-from feature_chores import update_job_clear_completed_chores
+from feature_chores import chores_helper, update_job_clear_completed_chores
 from ring_user import RingUser, get_current_user, get_current_wall_user
 
 global app
