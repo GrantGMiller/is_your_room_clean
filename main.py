@@ -224,7 +224,7 @@ def job(job_id):
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "GET":
-        return render_template("contact_us.html")
+        return render_template("email/contact_us.html")
 
     elif request.method == "POST":
         flash("Thank you. Your message has been sent to our support staff.", "success")
@@ -263,7 +263,7 @@ def terms():
 
 @app.route("/data_flow")
 def data_flow():
-    return render_template("data_flow.html")
+    return render_template("legal/data_flow.html")
 
 
 @app.route("/admin")
