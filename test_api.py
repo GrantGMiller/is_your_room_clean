@@ -25,6 +25,6 @@ devices = get(f'{PARAMS["BASE_URL"]}api/get_devices').json()
 
 for device in devices:
     print('device=', json.dumps(device, indent=2))
-    # print('name=', device['attributes']['name'], ', device_id=', device['id'], )
-    # data = get(f'{BASE_URL}/get_summary/{device["id"]}').json()
-    # print('summary=', data.get('summary', None), ', cleanliness=', data.get('cleanliness', None))
+    print('name=', device['attributes']['name'], ', device_id=', device['id'], )
+    data = get(f'{LOCAL_PARAMS["BASE_URL"]}/get_summary/{device["id"]}').json()
+    print('summary=', data.get('summary', None), ', cleanliness=', data.get('cleanliness', None))

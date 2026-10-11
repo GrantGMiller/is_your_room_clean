@@ -8,7 +8,6 @@ import pytz
 from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
-import ring_user
 from slack import send_slack_error
 
 ChoreKind = Literal["one-time", "repeat"]
@@ -388,6 +387,8 @@ class Chore(BaseTable):
 
     @property
     def user(self):
+        import ring_user
+
         return self.app.db.FindOne(ring_user.RingUser, id=self['owner_id'])
 
     def get_repeat_time_of_day(self) -> List[RepeatTimeOfDay]:
@@ -445,6 +446,8 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
     So adjust the datetime from the users timezone to UTC,
     including daylight savings if the user has it enabled.
     '''
+    import ring_user
+
     user = cast(ring_user.RingUser, user)
     print('426 dt_usertz=', dt_usertz)
     user_tz_str = user.get('timezone', 'UTC')
@@ -467,6 +470,8 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
 
 
 def get_user_local_dt_from_utc(dt: datetime.datetime, user):
+    import ring_user
+
     user = cast(ring_user.RingUser, user)
     if dt is None or dt.tzinfo is not None and dt.tzinfo not in (
             pytz.UTC,
@@ -529,4 +534,3 @@ def assign_chore_to_persons(chore_id: int):
             chore.assign_to(person)
 
         return chore
-

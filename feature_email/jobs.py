@@ -8,7 +8,7 @@ from flask import Flask, render_template
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler, Job
 
-import chores_models
+from feature_chores import chores_models
 from feature_chores.chores_helper import get_chores
 import feature_email
 import ring_user

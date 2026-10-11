@@ -3,7 +3,7 @@ from typing import cast, Optional, List
 from flask import Flask
 from flask_dictabase import Dictabase
 
-from chores_models import Person, Chore
+from feature_chores.chores_models import Person, Chore
 
 global app
 

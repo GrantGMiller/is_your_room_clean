@@ -13,7 +13,7 @@ from flask_dictabase import Dictabase
 from feature_chores import chores_helper
 import chores_wizard
 import config
-from chores_models import (
+from feature_chores.chores_models import (
     Chore,
     Person,
     assign_chore_to_persons,

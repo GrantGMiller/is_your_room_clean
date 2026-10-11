@@ -5,7 +5,7 @@ from flask_dictabase import Dictabase
 from typing import cast
 
 from feature_chores.chores_helper import get_current_user_persons
-from chores_models import Chore
+from feature_chores.chores_models import Chore
 from ring_user import get_current_user
 
 
