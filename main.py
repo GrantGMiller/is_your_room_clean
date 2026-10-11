@@ -81,6 +81,7 @@ def dashboard():
         # then no snapshots can be grabbed and this app is useless
         # send a flash message to the user to let them know
         devs = ring_user.get_devices()
+        devices_without_events = []
         if len(devs) == 0:
             # all devices were unauthorized, clear the stored latest events
             ring_user.Set('latest_events', {})
@@ -90,13 +91,24 @@ def dashboard():
             if not ring_user.GetItem('latest_events', dev['id'], None):
                 latest_event = ring_user.get_latest_event(dev['id'])
                 if not latest_event:
-                    flash(
-                        f'No events found for {dev["attributes"]["name"]}. Note: This app cannot access events that happened before the app was authorized. Please wait for a new event to occur.',
-                        'warning')
-                    break
+                    devices_without_events.append(dev["attributes"]["name"])
                 else:
                     print('saving latest event')
                     ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
+
+        if devs and len(devices_without_events) == len(devs):
+            return render_template(
+                "ring/no_events.html",
+                ring_user=ring_user,
+                device_names=devices_without_events,
+            )
+
+        if devices_without_events:
+            flash(
+                f'No events found yet for {", ".join(devices_without_events)}. '
+                'Please wait for a new motion event to occur.',
+                'warning',
+            )
 
     # app.logger.error("111 ring_user=" + str(ring_user))
 
