@@ -90,7 +90,7 @@
     summaryEl.replaceChildren(document.createTextNode("No Events Found — "));
 
     const link = document.createElement("a");
-    link.href = "/no_events?supress_auto_redirect=false";
+    link.href = "/no_events?supress_auto_redirect=true";
     link.textContent = "check Ring event settings";
     summaryEl.append(link);
 
