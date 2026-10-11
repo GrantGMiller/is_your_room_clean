@@ -127,10 +127,12 @@ def events_exist():
         return 'no events exist', 404
 
     devs = ring_user.get_devices()
+    print('130 devs=', devs)
     devices_without_events = []
 
     for dev in devs:
         if not ring_user.GetItem('latest_events', dev['id'], None):
+            print('get_latest_event')
             latest_event = ring_user.get_latest_event(dev['id'])
             if not latest_event:
                 devices_without_events.append(dev["attributes"]["name"])
@@ -456,9 +458,14 @@ def delete_stored_images():
 @app.route("/no_events")
 def no_events():
     # show this page when there are no ring events
+    supress_auto_redirect = (
+        request.args.get("supress_auto_redirect", "false").lower() == "true"
+    )
+    print('supress_auto_redirect=', supress_auto_redirect)
     return render_template(
         "ring/no_events.html",
                            device_names=['Living Room', 'Bonus Room'],
+                          supress_auto_redirect=supress_auto_redirect
                            )
 
 

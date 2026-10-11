@@ -173,35 +173,37 @@
         </a>
       </section>
     </main>
-    <script>
-      const EVENT_POLL_INTERVAL_MS = 5000;
+    {% if not supress_auto_redirect %}
+      <script>
+        const EVENT_POLL_INTERVAL_MS = 5000;
 
-      async function pollForEvents() {
-        try {
-          const response = await fetch("/events_exist", {
-            cache: "no-store",
-            credentials: "same-origin",
-          });
+        async function pollForEvents() {
+          try {
+            const response = await fetch("/events_exist", {
+              cache: "no-store",
+              credentials: "same-origin",
+            });
 
-          if (response.status === 200) {
-            window.location.replace("/dashboard");
-            return;
+            if (response.status === 200) {
+              window.location.replace("/dashboard");
+              return;
+            }
+
+            if (response.status !== 404) {
+              console.warn(
+                "Unexpected response while checking for Ring events:",
+                response.status,
+              );
+            }
+          } catch (error) {
+            console.warn("Unable to check for Ring events; will retry.", error);
           }
 
-          if (response.status !== 404) {
-            console.warn(
-              "Unexpected response while checking for Ring events:",
-              response.status,
-            );
-          }
-        } catch (error) {
-          console.warn("Unable to check for Ring events; will retry.", error);
+          window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
         }
 
         window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
-      }
-
-      window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
-    </script>
+      </script>
+    {% endif %}
   </body>
 </html>

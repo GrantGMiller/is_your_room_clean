@@ -428,7 +428,7 @@ class RingImage(BaseTable):
     def log_cleanliness(self, score: float):
         print('390 log_cleanliness(', score)
         user: RingUser = self.user
-        print('392 user=', user)
+        print('431 user=', user)
         if user:
             user.log_cleanliness_score(
                 self['device_id'],

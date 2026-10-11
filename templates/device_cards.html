@@ -26,7 +26,7 @@
             id="snapshot-{{ device['id'] }}"
             alt="{{ device['attributes']['name'] }} snapshot"
             onload="imageLoaded('{{ device['id'] }}');"
-            onerror="retrySnapshot(this);"
+            onerror="snapshotFailed(this);"
           />
 
           <span
@@ -74,15 +74,33 @@
   }
 
   function retrySnapshot(image) {
-    window.setTimeout(function () {
-      const separator = image.src.includes("?") ? "&" : "?";
-      image.src = image.src.split("#")[0] + separator + "retry=" + Date.now();
-    }, SNAPSHOT_RETRY_TIME_MS + Math.random() * 2000);
+    window.setTimeout(
+      function () {
+        const separator = image.src.includes("?") ? "&" : "?";
+        image.src = image.src.split("#")[0] + separator + "retry=" + Date.now();
+      },
+      SNAPSHOT_RETRY_TIME_MS + Math.random() * 2000,
+    );
+  }
+
+  function snapshotFailed(image) {
+    const deviceId = image.id.replace("snapshot-", "");
+    const summaryEl = document.getElementById("summary-" + deviceId);
+    summaryEl.hidden = false;
+    summaryEl.replaceChildren(document.createTextNode("No Events Found — "));
+
+    const link = document.createElement("a");
+    link.href = "/no_events?supress_auto_redirect=false";
+    link.textContent = "check Ring event settings";
+    summaryEl.append(link);
+
+    retrySnapshot(image);
   }
 
   function imageLoaded(deviceId) {
     const summaryEl = document.getElementById("summary-" + deviceId);
     summaryEl.hidden = false;
+    summaryEl.textContent = "Analyzing room...";
     fetchSummary(deviceId);
   }
 
@@ -129,9 +147,12 @@
 
         // Try again in 10 seconds
 
-        setTimeout(function () {
-          fetchSummary(deviceId);
-        }, LOOP_TIME_MS + Math.random() * 2000);
+        setTimeout(
+          function () {
+            fetchSummary(deviceId);
+          },
+          LOOP_TIME_MS + Math.random() * 2000,
+        );
       });
   }
 
