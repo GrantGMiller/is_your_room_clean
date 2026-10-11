@@ -5,7 +5,7 @@ from typing import cast
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 
-from ring_user import RingImage
+from ring.user import RingImage
 from slack import send_slack_message, send_slack_error, send_all_slack_messages
 
 global app

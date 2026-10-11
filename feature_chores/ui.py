@@ -20,7 +20,7 @@ from feature_chores.models import (
     setup as setup_chores_models, get_user_local_dt_from_utc,
 )
 from feature_chores import update_job_clear_completed_chores
-from ring_user import RingUser, get_current_user, get_current_wall_user
+from ring.user import RingUser, get_current_user, get_current_wall_user
 
 global app
 

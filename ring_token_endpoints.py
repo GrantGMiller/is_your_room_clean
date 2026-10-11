@@ -31,7 +31,7 @@ import requests
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 
 import config
-from ring_user import RingUser
+from ring.user import RingUser
 from slack import send_slack_message
 
 # --- Partner credentials (issued once, in the Ring Developer Portal) ---

@@ -11,7 +11,7 @@ from flask_jobs import JobScheduler, Job
 from feature_chores import models
 from feature_chores.helpers import get_chores
 import feature_email
-import ring_user
+from ring import user as ring_user
 from feature_email.helpers import send_email
 from slack import send_slack_message
 

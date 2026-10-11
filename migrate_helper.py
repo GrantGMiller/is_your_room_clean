@@ -7,7 +7,7 @@ from flask_dictabase import Dictabase
 
 import config
 from feature_chores.models import Chore, Person
-from ring_user import RingUser
+from ring.user import RingUser
 
 
 def setup(app: Flask):

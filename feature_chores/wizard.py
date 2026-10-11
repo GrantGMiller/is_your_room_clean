@@ -6,7 +6,7 @@ from typing import cast
 
 from feature_chores.helpers import get_current_user_persons
 from feature_chores.models import Chore
-from ring_user import get_current_user
+from ring.user import get_current_user
 
 
 def setup(app: Flask):

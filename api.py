@@ -7,7 +7,7 @@ from flask import request, jsonify, send_file, flash, redirect, render_template
 from flask_dictabase import Dictabase
 
 import config
-from ring_user import RingUser, RingImage, get_current_user
+from ring.user import RingUser, RingImage, get_current_user
 
 app = None
 

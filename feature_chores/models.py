@@ -387,7 +387,7 @@ class Chore(BaseTable):
 
     @property
     def user(self):
-        import ring_user
+        from ring import user as ring_user
 
         return self.app.db.FindOne(ring_user.RingUser, id=self['owner_id'])
 
@@ -446,7 +446,7 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
     So adjust the datetime from the users timezone to UTC,
     including daylight savings if the user has it enabled.
     '''
-    import ring_user
+    from ring import user as ring_user
 
     user = cast(ring_user.RingUser, user)
     print('426 dt_usertz=', dt_usertz)
@@ -470,7 +470,7 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
 
 
 def get_user_local_dt_from_utc(dt: datetime.datetime, user):
-    import ring_user
+    from ring import user as ring_user
 
     user = cast(ring_user.RingUser, user)
     if dt is None or dt.tzinfo is not None and dt.tzinfo not in (

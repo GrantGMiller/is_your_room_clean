@@ -52,7 +52,7 @@ def clear_completed_chores(user_id:int):
     '''
     Unsassign and clear the completed_by for all chores
     '''
-    from ring_user import RingUser
+    from ring.user import RingUser
 
     print('clear_completed_chores called')
     with app.app_context():

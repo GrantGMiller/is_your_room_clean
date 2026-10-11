@@ -3,7 +3,7 @@ import datetime
 from flask import Flask, abort, flash, jsonify, redirect, render_template, request
 
 import config
-import ring_user
+from ring import user as ring_user
 from feature_email.jobs import (
     get_summary_data,
     render_daily_summary,
