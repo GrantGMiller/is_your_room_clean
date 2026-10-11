@@ -5,8 +5,8 @@ from typing import cast
 from flask import Flask
 from flask_jobs import Job, JobScheduler
 
-from chores_models import Person, get_chores, get_utc_from_users_time
-from ring_user import RingUser
+from chores_models import Person, get_utc_from_users_time
+from feature_chores.chores_helper import get_chores
 
 def setup(a:Flask):
     global app
@@ -52,6 +52,8 @@ def clear_completed_chores(user_id:int):
     '''
     Unsassign and clear the completed_by for all chores
     '''
+    from ring_user import RingUser
+
     print('clear_completed_chores called')
     with app.app_context():
         user:RingUser = app.db.FindOne(RingUser, id=user_id)
@@ -63,4 +65,3 @@ def clear_completed_chores(user_id:int):
                     if person:
                         chore.unassign(person)
                     chore.clear_completed_by()
-

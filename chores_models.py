@@ -530,22 +530,3 @@ def assign_chore_to_persons(chore_id: int):
 
         return chore
 
-
-def get_persons(user):
-    print('user=', user)
-    print('user.is_wall_user=', user.is_wall_user)
-
-    with app.app_context():
-        owner_user = user.get_ring_user()
-        print('ring_user.is_wall_user=', owner_user.is_wall_user)
-        ret = list(app.db.FindAll(Person, owner_id=owner_user['id']))
-        print('ret=', ret)
-        return ret
-
-
-def get_chores(user) -> List[Chore]:
-    with app.app_context():
-        owner_user = user.get_ring_user()
-        ret = list(app.db.FindAll(Chore, owner_id=owner_user['id']))
-        #print('get_chores ret=', ret)
-        return ret

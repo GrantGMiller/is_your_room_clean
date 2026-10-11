@@ -9,6 +9,7 @@ from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler, Job
 
 import chores_models
+from feature_chores.chores_helper import get_chores
 import feature_email
 import ring_user
 from feature_email.helpers import send_email
@@ -90,7 +91,7 @@ def get_summary_data(user_id: int):
             return person['name']
 
         print('90 user=', user, ', user_id=', user_id)
-        chores = chores_models.get_chores(user)
+        chores = get_chores(user)
         print('93 chores len=', len(chores))
         for chore in chores:
             possible_assignees_ids = chore.get_can_be_assigned_to_ids()
