@@ -14,10 +14,10 @@ import api
 import config
 import migrate_helper
 import repeat_jobs
-import ring_token_endpoints
 import ring_webhook
-from ring_token_endpoints import mask_email
 from ring.user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
+from ring.token_endpoints import mask_email
+from ring import token_endpoints
 from slack import send_slack_message, setup as slack_setup, send_slack_error
 from feature_email import setup as setup_email
 from feature_chores import ui
@@ -37,7 +37,7 @@ app.jobs = JobScheduler(
     deleteOldJobs=False,  # whether to keep old jobs in the database
 )
 
-ring_token_endpoints.setup(app)
+token_endpoints.setup(app)
 ring_webhook.setup(app)
 slack_setup(app)
 ring_user_setup(app)
