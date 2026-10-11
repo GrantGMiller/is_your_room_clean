@@ -18,6 +18,7 @@ def setup(app: Flask):
             chore_fields = {
                 "name": request.form.get("name", "").strip(),
                 "kind": kind,
+                "enable": True,
             }
 
             if kind == "one-time":

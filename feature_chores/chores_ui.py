@@ -10,9 +10,9 @@ import pytz
 from flask import Flask, flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
 
-from feature_chores import chores_helper
-import chores_wizard
 import config
+from feature_chores import chores_helper
+from feature_chores import chores_wizard
 from feature_chores.chores_models import (
     Chore,
     Person,

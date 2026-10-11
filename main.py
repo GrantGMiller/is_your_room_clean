@@ -11,7 +11,6 @@ from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
-import chores_ui
 import config
 import migrate_helper
 import repeat_jobs
@@ -21,6 +20,7 @@ from ring_token_endpoints import mask_email
 from ring_user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
 from feature_email import setup as setup_email
+from feature_chores import chores_ui
 from feature_chores import setup as setup_chores
 from feature_chores.chores_helper import get_current_user_chores
 
