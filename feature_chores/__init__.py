@@ -65,3 +65,4 @@ def clear_completed_chores(user_id:int):
                     if person:
                         chore.unassign(person)
                     chore.clear_completed_by()
+                    chore.refresh_scheduled_job()
