@@ -69,8 +69,23 @@
 
   function updateTimestampLabel(timestampEl) {
     const timestamp = Number(timestampEl.dataset.timestampEpochMs);
-    const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    const ageMs = Date.now() - timestamp;
+    const minutes = Math.max(0, Math.floor(ageMs / 60000));
     timestampEl.textContent = `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+
+    const lastRefreshAt = Number(
+      timestampEl.dataset.lastSnapshotRefreshAt || 0,
+    );
+    if (
+      Number.isFinite(timestamp) &&
+      ageMs > 5 * 60 * 1000 &&
+      Date.now() - lastRefreshAt > 5 * 60 * 1000
+    ) {
+      timestampEl.dataset.lastSnapshotRefreshAt = Date.now();
+      const deviceId = timestampEl.id.replace("timestamp-", "");
+      const snapshotEl = document.getElementById("snapshot-" + deviceId);
+      snapshotEl.src = snapshotEl.src.split("?")[0] + "?refresh=" + Date.now();
+    }
   }
 
   function retrySnapshot(image) {
