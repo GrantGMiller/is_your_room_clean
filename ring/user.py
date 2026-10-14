@@ -353,7 +353,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
             kwargs={
                 'image_id': ring_image['id'],
             },
-            errorCallback=slack.send_slack_message
+            errorCallback=slack.send_slack_error
         )
 
         return ring_image['id']
