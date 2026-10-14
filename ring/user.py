@@ -83,8 +83,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
     def send_clean_email(self):
         send_slack_message('84 send_clean_email')
         are_all_rooms_clean = self.are_all_rooms_clean
-        should_send_clean_email = self.Get(SETTINGS_KEY, 'email_when_all_rooms_clean', False)
-        should_send_dirty_email = self.Get(SETTINGS_KEY, 'email_when_rooms_dirty', False)
+        should_send_clean_email = self.GetItem(SETTINGS_KEY, 'email_when_all_rooms_clean', False)
+        should_send_dirty_email = self.GetItem(SETTINGS_KEY, 'email_when_rooms_dirty', False)
 
         if are_all_rooms_clean:
             if not should_send_clean_email:
