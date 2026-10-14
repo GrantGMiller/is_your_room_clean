@@ -58,13 +58,13 @@ class RingUser(flask_login.UserMixin, BaseTable):
         print('log_cleanliness_score', device_id[:10], cleanliness_score)
 
         old_are_all_rooms_clean = self.are_all_rooms_clean
-        print('old_are_all_rooms_clean', old_are_all_rooms_clean)
+        send_slack_message('61 old_are_all_rooms_clean', old_are_all_rooms_clean)
 
         device_name = None
         for dev in self.get_devices():
             if dev['id'] == device_id:
                 device_name = dev['attributes']['name']
-        print('device_name', device_name)
+        send_slack_message('67 device_name', device_name)
         self.SetItem(
             'last_clean_score',
             device_name,
@@ -72,7 +72,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         )
 
         new_are_all_rooms_clean = self.are_all_rooms_clean
-        print('new_are_all_rooms_clean', new_are_all_rooms_clean)
+        send_slack_message('75 new_are_all_rooms_clean', new_are_all_rooms_clean)
         if new_are_all_rooms_clean != old_are_all_rooms_clean:
             self.send_clean_email()
 
@@ -81,7 +81,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         return all([score > 50 for score in self.Get('last_clean_score', {}).values()])
 
     def send_clean_email(self):
-        print('send_clean_email')
+        send_slack_message('84 send_clean_email')
         are_all_rooms_clean = self.are_all_rooms_clean
         should_send_clean_email = self.Get(SETTINGS_KEY, 'email_when_all_rooms_clean', False)
         should_send_dirty_email = self.Get(SETTINGS_KEY, 'email_when_rooms_dirty', False)
@@ -433,6 +433,7 @@ class RingImage(BaseTable):
         print('390 log_cleanliness(', score)
         user: RingUser = self.user
         print('431 user=', user)
+        send_slack_message('436')
         if user:
             user.log_cleanliness_score(
                 self['device_id'],
@@ -494,8 +495,9 @@ def score_cleanliness(image_id):
                 image_bytes = f.read()
 
             try:
+                send_slack_message('before evaluate_cleanliness')
                 res = evaluate_cleanliness(image_bytes=image_bytes)
-                print('ai returned score_cleanliness id=', image_id, ', res=', res)
+                send_slack_message('ai returned score_cleanliness id=', image_id, ', res=', res)
                 if res:
                     image.log_cleanliness(res['cleanliness'])
                     image['cleanliness'] = res['cleanliness']
