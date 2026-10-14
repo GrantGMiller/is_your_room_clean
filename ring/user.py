@@ -58,12 +58,13 @@ class RingUser(flask_login.UserMixin, BaseTable):
         print('log_cleanliness_score', device_id[:10], cleanliness_score)
 
         old_are_all_rooms_clean = self.are_all_rooms_clean
+        print('old_are_all_rooms_clean', old_are_all_rooms_clean)
 
         device_name = None
         for dev in self.get_devices():
             if dev['id'] == device_id:
                 device_name = dev['attributes']['name']
-
+        print('device_name', device_name)
         self.SetItem(
             'last_clean_score',
             device_name,
@@ -71,6 +72,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         )
 
         new_are_all_rooms_clean = self.are_all_rooms_clean
+        print('new_are_all_rooms_clean', new_are_all_rooms_clean)
         if new_are_all_rooms_clean != old_are_all_rooms_clean:
             self.send_clean_email()
 
@@ -79,6 +81,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         return all([score > 50 for score in self.Get('last_clean_score', {}).values()])
 
     def send_clean_email(self):
+        print('send_clean_email')
         are_all_rooms_clean = self.are_all_rooms_clean
         should_send_clean_email = self.Get(SETTINGS_KEY, 'email_when_all_rooms_clean', False)
         should_send_dirty_email = self.Get(SETTINGS_KEY, 'email_when_rooms_dirty', False)
@@ -91,13 +94,14 @@ class RingUser(flask_login.UserMixin, BaseTable):
             if not should_send_dirty_email:
                 return
 
-        room_data = self.Get('last_clean_score', {})
-        send_email(
-            to=self['email'],
-            subject='Room Cleanliness Update',
-            html=render_room_clean_email(room_data),
-            body=json.dumps(room_data, indent=2),
-        )
+        room_data = self.Get('last_clean_score', {}) or {}
+        if room_data:
+            send_email(
+                to=self['email'],
+                subject='Room Cleanliness Update',
+                html=render_room_clean_email(room_data),
+                body=json.dumps(room_data, indent=2),
+            )
 
     def get_chore_settings(self) -> ChoreSettings:
         ret = self.Get('chore_settings', {})
@@ -474,7 +478,7 @@ def get_current_wall_user() -> Optional[RingUser]:
 
 
 def score_cleanliness(image_id):
-    # print('score_cleanliness id=', image_id)
+    print('score_cleanliness id=', image_id)
     with app.app_context():
         app.db = cast(Dictabase, app.db)
         image = app.db.FindOne(
@@ -489,7 +493,7 @@ def score_cleanliness(image_id):
             ) as f:
                 image_bytes = f.read()
 
-            try:
+            # try:
                 res = evaluate_cleanliness(image_bytes=image_bytes)
                 print('ai returned score_cleanliness id=', image_id, ', res=', res)
                 if res:
@@ -499,12 +503,12 @@ def score_cleanliness(image_id):
                 else:
                     print('evaluation failed')
                     return
-            except Exception as e:
-                print('score_cleanliness error=', e)
-                image['isError'] = True
-                image['error'] = str(e)
-                image['scoring_in_progress'] = False  # maybe we will try again
-                raise e  # raise so that the error is sent via slack
+            # except Exception as e:
+            #     print('score_cleanliness error=', e)
+            #     image['isError'] = True
+            #     image['error'] = str(e)
+            #     image['scoring_in_progress'] = False  # maybe we will try again
+            #     raise e  # raise so that the error is sent via slack
 
 
 def get_snapshots_for_user_id(id: int):
