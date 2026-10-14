@@ -493,7 +493,7 @@ def score_cleanliness(image_id):
             ) as f:
                 image_bytes = f.read()
 
-            # try:
+            try:
                 res = evaluate_cleanliness(image_bytes=image_bytes)
                 print('ai returned score_cleanliness id=', image_id, ', res=', res)
                 if res:
@@ -503,12 +503,12 @@ def score_cleanliness(image_id):
                 else:
                     print('evaluation failed')
                     return
-            # except Exception as e:
-            #     print('score_cleanliness error=', e)
-            #     image['isError'] = True
-            #     image['error'] = str(e)
-            #     image['scoring_in_progress'] = False  # maybe we will try again
-            #     raise e  # raise so that the error is sent via slack
+            except Exception as e:
+                print('score_cleanliness error=', e)
+                image['isError'] = True
+                image['error'] = str(e)
+                image['scoring_in_progress'] = False  # maybe we will try again
+                raise e  # raise so that the error is sent via slack
 
 
 def get_snapshots_for_user_id(id: int):

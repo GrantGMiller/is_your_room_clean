@@ -57,7 +57,7 @@ def send_error(err):
 
 def send_slack_error(job):
     send_slack_message("Error:", job)
-    raise Exception(str(job))
+    send_slack_message("Error:", job.get('error', None))
 
 
 class SlackMessage(BaseTable):
