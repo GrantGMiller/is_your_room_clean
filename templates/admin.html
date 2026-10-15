@@ -21,6 +21,14 @@
             <h2 class="h6 text-muted" id="user-count-heading">Total devices</h2>
             <p class="display-6 mb-0">{{ num_devices }}</p>
           </div>
+          <div class="card-body">
+            <h2 class="h6 text-muted" id="user-count-heading">
+              Estimated revenue
+            </h2>
+            <p class="display-6 mb-0">
+              {{ "${:,.2f}".format(num_devices * 2.99) }}/month
+            </p>
+          </div>
         </section>
         <section class="mt-4" aria-labelledby="user-emails-heading">
           <h2 class="h5" id="user-emails-heading">Users</h2>
