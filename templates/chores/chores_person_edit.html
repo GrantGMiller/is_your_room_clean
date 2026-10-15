@@ -12,6 +12,32 @@
       |  {{ app_name }}
     </title>
     {% include "js_css.html" %}
+    <style>
+      .assigned-chore-list {
+        max-width: 42rem;
+      }
+
+      .assigned-chore-item {
+        border-radius: 0.75rem;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        padding: 0.9rem 1rem;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+      }
+
+      .assigned-chore-item:nth-child(even) {
+        background-color: rgba(0, 0, 0, 0.01);
+      }
+
+      .assigned-chore-item:nth-child(odd) {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+
+      .assigned-chore-item .chore-name {
+        margin: 0;
+        font-weight: 600;
+        color: #212529;
+      }
+    </style>
   </head>
   <body class="bg-light">
     {% include "navbar.html" %}
@@ -46,11 +72,12 @@
           required
         />
         <hr>
+        
         <label
           class="form-label fw-semibold mt-3 d-inline-block px-2 py-1 rounded border"
           id="person-color-label"
         >
-          {{ person.name }}'s Color
+          {{ person.name or 'Person' }}'s Color
         </label>
         <input
           type="hidden"
@@ -104,7 +131,33 @@
           <button class="btn btn-primary mt-3" type="submit">Save</button>
         {% endif %}
       </form>
-
+<hr>
+<div class="mt-4 mb-3">
+  <h2 class="h4 mb-2">Currently Assigned Chores</h2>
+  {% if assigned_chores %}
+    <div class="list-group assigned-chore-list" aria-label="Assigned chores list">
+      {% for chore in assigned_chores %}
+        <div
+          class="list-group-item assigned-chore-item d-flex justify-content-between align-items-center gap-3"
+          id="chore-{{ chore.id }}"
+        >
+          <p class="chore-name mb-0">{{ chore.name }}</p>
+          <button
+            class="btn btn-outline-primary btn-sm"
+            type="button"
+            onclick="unassignChore({{ person.id }}, {{ chore.id }})"
+          >
+            Unassign
+          </button>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light border mb-0" role="status">
+      No chores are currently assigned to this person.
+    </div>
+  {% endif %}
+</div>
 <hr>
       {% if mode == 'edit' %}
         <form
@@ -181,6 +234,14 @@
       {% endif %}
       personColor.addEventListener("change", updateColorLabel);
       updateColorLabel();
+
+      const unassignChore = (personId, choreId) => {
+        fetch(`/chores/unassign/${personId}/${choreId}/`, {
+          method: "POST",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        }).catch((error) => console.error("Error unassigning chore:", error))
+        .then(() => $(`#chore-${choreId}`).remove());
+      };
     </script>
   </body>
 </html>

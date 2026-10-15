@@ -12,6 +12,7 @@ from flask_dictabase import Dictabase
 
 import config
 from feature_chores import helpers
+from feature_chores import update_job_clear_completed_chores
 from feature_chores import wizard
 from feature_chores.models import (
     Chore,
@@ -19,7 +20,6 @@ from feature_chores.models import (
     assign_chore_to_persons,
     setup as setup_chores_models, get_user_local_dt_from_utc,
 )
-from feature_chores import update_job_clear_completed_chores
 from ring.user import RingUser, get_current_user, get_current_wall_user
 
 global app
@@ -40,12 +40,22 @@ def setup(a: Flask):
     @app.route("/chores/person/edit", methods=["GET", "POST"])
     @app.route('/chores/person/add', methods=["GET"])
     def edit_person():
+
+        user = get_current_user()
+        assigned_chores = app.db.FindAll(Chore, owner_id=user['id'])
+        person_id = request.args.get("id", type=int)
+        assigned_chores = [chore for chore in assigned_chores if person_id in chore.get_assigned_to_ids()]
+
         if request.method == 'GET':
-            person_id = request.args.get("id", type=int)
             person = app.db.FindOne(Person, id=person_id,
-                                    owner_id=get_current_user()['id']) if person_id is not None else None
+                                    owner_id=user['id']) if person_id is not None else None
             mode = 'edit' if person is not None else 'add'
-            return render_template("chores/chores_person_edit.html", person=person, mode=mode)
+            return render_template(
+                "chores/chores_person_edit.html",
+                person=person,
+                mode=mode,
+                assigned_chores=assigned_chores
+            )
 
         elif request.method == "POST":
             person_id = request.args.get("id", type=int)
@@ -62,7 +72,7 @@ def setup(a: Flask):
                 "dark",
             }
             if name:
-                person = app.db.FindOne(Person, id=person_id, owner_id=get_current_user()['id'])
+                person = app.db.FindOne(Person, id=person_id, owner_id=user['id'])
                 if not person:
                     person = app.db.New(
                         Person,
@@ -80,7 +90,12 @@ def setup(a: Flask):
 
                 return redirect("/chores/overview")
 
-        return render_template("chores/chores_person_edit.html", person=person, mode='edit')
+        return render_template(
+            "chores/chores_person_edit.html",
+            person=person,
+            mode='edit',
+            assigned_chores=assigned_chores
+        )
 
     @app.route("/chores/person/delete", methods=["POST"])
     def delete_person():
@@ -205,7 +220,6 @@ def setup(a: Flask):
                     )
                     should_refresh_chores = True
 
-            
             timezone = request.form.get("timezone")
             if timezone in pytz.all_timezones:
                 user['timezone'] = timezone
@@ -217,7 +231,7 @@ def setup(a: Flask):
             helpers.refresh_all_current_user_chores()
             print('218 update clean completed jobs')
             update_job_clear_completed_chores(user)
-            
+
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify({
                     **user.get_chore_settings(),
@@ -227,7 +241,6 @@ def setup(a: Flask):
                     ),
                 })
 
-            
             return redirect("/chores/overview")
 
         return render_template(
@@ -260,6 +273,19 @@ def setup(a: Flask):
                 return jsonify(chore.ui_safe())
 
         return 'chore or person not found', 404
+
+    @app.route('/chores/unassign/<int:person_id>/<int:chore_id>/', methods=['POST'])
+    def chore_unassign(person_id, chore_id):
+        chore = helpers.get_current_user_chore(chore_id)
+        if not chore:
+            return 'chore not found', 404
+
+        chore.unassign(
+            helpers.get_current_user_person(
+                person_id
+                )
+            )
+        return jsonify(chore.ui_safe())
 
     @app.route('/chores/assignable', methods=['POST'])
     def chore_assignable():

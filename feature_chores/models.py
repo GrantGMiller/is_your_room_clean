@@ -42,8 +42,6 @@ def setup(a: Flask):
 class Person(BaseTable):
     name: str
     color: Optional[PersonColor] = "primary"
-    chores_assigned: List["Chore"] = []
-    chores_completed: List["Chore"] = []
     owner_id: int
 
     def ui_safe(self):
