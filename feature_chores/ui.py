@@ -384,7 +384,7 @@ def setup(a: Flask):
             flash('User not found. Please try again.', 'danger')
             return redirect('/')
 
-        if user and time.time() > user.get('wall_link_expires_at'):
+        if user and time.time() > float(user.get('wall_link_expires_at', 0)):
             flash('Wall Link expired.', 'danger')
             return redirect('/')
 

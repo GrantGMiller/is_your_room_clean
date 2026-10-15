@@ -323,11 +323,14 @@ def admin():
             except (TypeError, ValueError):
                 pass
 
-        user_rows[mask_email(email)] = created_age
+        masked_email = mask_email(email)
 
-        if created_age != "Unknown":
-            num_devices += len(registered_user.Get('last_devices', []) or [])
+        if masked_email not in user_rows and created_age != "Unknown":
+            devs = user.Get('last_devices', []) or []
+            print('devs=', [dev['attributes']['name'] for dev in devs])
+            num_devices += len(devs)
 
+        user_rows[masked_email] = created_age
 
     return render_template(
         "admin.html",
