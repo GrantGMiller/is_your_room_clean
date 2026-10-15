@@ -324,8 +324,9 @@ def admin():
                 pass
 
         user_rows[mask_email(email)] = created_age
-        
-        num_devices += len(user.Get('last_devices', []) or [])
+
+        if created_age != "Unknown":
+            num_devices += len(registered_user.Get('last_devices', []) or [])
 
 
     return render_template(
