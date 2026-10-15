@@ -77,8 +77,12 @@ class RingUser(flask_login.UserMixin, BaseTable):
             self.send_clean_email()
 
     @property
+    def clean_threshold(self):
+        return 50 # percent
+
+    @property
     def are_all_rooms_clean(self):
-        return all([score > 50 for score in self.Get('last_clean_score', {}).values()])
+        return all([score > self.clean_threshold for score in self.Get('last_clean_score', {}).values()])
 
     def send_clean_email(self):
         # send_slack_message('84 send_clean_email')

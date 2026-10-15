@@ -304,6 +304,7 @@ def admin():
 
     now_ms = time.time() * 1000
     user_rows = {}
+    num_devices = 0
     for registered_user in app.db.FindAll(RingUser, _limit=100, _orderBy="timestamp_epoch_ms"):
         email = registered_user.get("email")
         if not email:
@@ -323,11 +324,15 @@ def admin():
                 pass
 
         user_rows[mask_email(email)] = created_age
+        
+        num_devices += len(user.Get('last_devices', []) or [])
+
 
     return render_template(
         "admin.html",
         num_of_users=len(user_rows),
         user_rows=user_rows,
+        num_devices=num_devices
     )
 
 
