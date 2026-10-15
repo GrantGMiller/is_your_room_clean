@@ -66,6 +66,8 @@
 <script>
   const LOOP_TIME_MS = 8000;
   const SNAPSHOT_RETRY_TIME_MS = 3000;
+  const MAX_NUM_REFRESHES = 5;
+  const currentNumRefreshes = 0;
 
   function updateTimestampLabel(timestampEl) {
     const timestamp = Number(timestampEl.dataset.timestampEpochMs);
@@ -81,6 +83,10 @@
       ageMs > 5 * 60 * 1000 &&
       Date.now() - lastRefreshAt > 5 * 60 * 1000
     ) {
+      currentNumRefreshes += 1;
+      if (currentNumRefreshes >= MAX_NUM_REFRESHES) {
+        return;
+      }
       timestampEl.dataset.lastSnapshotRefreshAt = Date.now();
       const deviceId = timestampEl.id.replace("timestamp-", "");
       const snapshotEl = document.getElementById("snapshot-" + deviceId);
