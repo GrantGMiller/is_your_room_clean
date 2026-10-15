@@ -88,7 +88,7 @@
           {% endif %}
         </fieldset>
         <hr />
-        <fieldset class="mt-4">
+        <fieldset class="mt-4" id="assignment_mode_fieldset">
           <legend class="h5 mb-3">Assignment method</legend>
           <div class="vstack gap-2">
             <div>
@@ -188,17 +188,6 @@
         },
       };
 
-      assignmentForm.addEventListener("change", function () {
-        const selectedMode = assignmentForm.elements.assignment_mode.value;
-        const details = modeDetails[selectedMode];
-
-        if (details) {
-          modeExplanation.hidden = false;
-          modeTitle.textContent = details.title;
-          modeText.textContent = details.text;
-        }
-      });
-
       assignmentForm.addEventListener("submit", function (event) {
         if (!assignmentForm.querySelector('input[name="person_ids"]:checked')) {
           event.preventDefault();
@@ -208,6 +197,29 @@
             "Choose who should be considered for this assignment.";
         }
       });
+      const updateAssignmentMode = () => {
+        const numberOfPeopleSelected = assignmentForm.querySelectorAll(
+          'input[name="person_ids"]:checked',
+        ).length;
+        console.log(`Number of people selected: ${numberOfPeopleSelected}`);
+        if (numberOfPeopleSelected <= 1) {
+          $("#assignment_mode_fieldset").hide();
+          assignmentForm.elements.assignment_mode.value = "all";
+        } else {
+          $("#assignment_mode_fieldset").show();
+
+          const selectedMode = assignmentForm.elements.assignment_mode.value;
+          const details = modeDetails[selectedMode];
+
+          if (details) {
+            modeExplanation.hidden = false;
+            modeTitle.textContent = details.title;
+            modeText.textContent = details.text;
+          }
+        }
+      };
+      assignmentForm.addEventListener("change", updateAssignmentMode);
+      updateAssignmentMode();
     </script>
   </body>
 </html>
