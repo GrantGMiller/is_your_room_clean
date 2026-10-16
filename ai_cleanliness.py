@@ -103,7 +103,7 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
         d = response.json()
         if d and d.get('error', {}).get('message', None):
             return {
-                'cleanliness': -1,
+                'cleanliness': 50,
                 'summary': d['error']['message'].replace(MODEL, 'AI Model'),
             }
         return None
