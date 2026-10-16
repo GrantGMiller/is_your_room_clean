@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Link Nintendo Account | {{ app_name }}</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <div class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-3">Link your Nintendo Account</h1>
+              <p class="mb-4">
+                <a
+                  class="btn btn-primary"
+                  href="{{ auth_url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Click here to link your Nintendo Account
+                </a>
+              </p>
+              <label for="nintendo-account-link" class="form-label">
+                Once you login to your Nintendo Account, right-click on the
+                "SELECT THIS ACCOUNT" button and copy the link. Paste the link
+                below
+              </label>
+              <input
+                id="nintendo-account-link"
+                name="nintendo-account-link"
+                type="text"
+                class="form-control"
+                autocomplete="off"
+                onkeyup="$('#submit-nintendo-account-link').prop('hidden', !this.value.trim()  )"
+              />
+              <button
+                type="button"
+                class="btn btn-primary mt-3"
+                id="submit-nintendo-account-link"
+                hidden
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script>
+      document
+        .getElementById("submit-nintendo-account-link")
+        .addEventListener("click", async function () {
+          const submitButton = this;
+          const authLink = document
+            .getElementById("nintendo-account-link")
+            .value.trim();
+          submitButton.disabled = true;
+
+          try {
+            await fetch("/nintendo/auth", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ auth_link: authLink }),
+            });
+            window.location.reload();
+          } catch (error) {
+            console.error("Failed to link Nintendo account", error);
+            submitButton.disabled = false;
+          }
+        });
+    </script>
+  </body>
+</html>

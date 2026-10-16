@@ -18,6 +18,7 @@ from feature_chores import setup as setup_chores
 from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
 from feature_email import setup as setup_email
+from feature_nintendo import setup as setup_nintendo
 from ring import token_endpoints, webhook
 from ring.token_endpoints import mask_email
 from ring.user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
@@ -44,6 +45,8 @@ api.setup(app)
 repeat_jobs.setup(app)
 ui.setup(app)
 setup_chores(app)
+if getattr(config, 'ENABLE_NINTENDO', False):
+    setup_nintendo(app)
 
 if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
     setup_email(app)
@@ -382,7 +385,7 @@ def my_account():
     masked_email = f"{local[:4]}*****@{domain[-9:]}"
 
     if request.method == "POST":
-        for key in ['chores', 'email_notifications']:
+        for key in ['chores', 'email_notifications', 'nintendo']:
             if key in request.form and request.form.get(key, type=bool):
                 new_state = True
             else:
@@ -397,6 +400,10 @@ def my_account():
 
     if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
         advanced_features['email_notifications'] = ring_user.GetItem('enabled_features', 'email_notifications')
+
+    if getattr(config, 'ENABLE_NINTENDO', False):
+        advanced_features['nintendo'] = ring_user.GetItem('enabled_features', 'nintendo')
+
 
     return render_template(
         "my_account.html",
@@ -555,6 +562,7 @@ def inject_app_values():
             'chores': getattr(config, 'ENABLE_CHORES', False),
             'admins': getattr(config, 'ADMINS', []),
             'email_notifications': getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False),
+            'nintendo': getattr(config, 'ENABLE_NINTENDO', False),
         },
         'app_name': getattr(config, 'APP_NAME', '{{ app_name }}'),
         'app_url': getattr(config, 'APP_URL', '/'),

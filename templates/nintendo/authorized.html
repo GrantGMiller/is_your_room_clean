@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nintendo Devices | {{ app_name }}</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div
+        class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4"
+      >
+        <h1 class="h2 mb-0">Nintendo Devices</h1>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-danger">LOCK ALL</button>
+          <button type="button" class="btn btn-success">UNLOCK ALL</button>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        {% for device_name in device_names %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <section
+              class="card shadow-sm h-100 nintendo-device-card"
+              data-device-name="{{ device_name }}"
+            >
+              <div class="card-body">
+                <h2 class="h5 card-title mb-3">{{ device_name }}</h2>
+                <p class="mb-2 playtime-label" role="status">
+                  Loading today's playtime...
+                </p>
+                <div
+                  class="progress mb-4"
+                  role="progressbar"
+                  aria-label="{{ device_name }} playtime used today"
+                  aria-valuenow="0"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  <div class="progress-bar" style="width: 0%"></div>
+                </div>
+                <p class="playtime-error text-danger mb-3" role="alert" hidden>
+                  Unable to load playtime.
+                </p>
+                <p class="device-action-status mb-3" role="status" hidden></p>
+                <div class="d-flex gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-success flex-fill"
+                    data-device-action="unlock"
+                  >
+                    UNLOCK
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger flex-fill"
+                    data-device-action="lock"
+                  >
+                    LOCK
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        {% else %}
+          <div class="col-12">
+            <div class="alert alert-light border mb-0" role="status">
+              No Nintendo devices found.
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </main>
+    <script>
+      async function fetchPlaytime(deviceName, endpoint, property) {
+        const response = await fetch(
+          `/nintendo/${endpoint}/${encodeURIComponent(deviceName)}`,
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${endpoint}: ${response.status}`);
+        }
+        const data = await response.json();
+        const value = data[property];
+        if (!Number.isFinite(value)) {
+          throw new Error(`Invalid ${property} for device ${deviceName}`);
+        }
+        return value;
+      }
+
+      async function updateDevicePlaytime(card) {
+        const deviceName = card.dataset.deviceName;
+        const label = card.querySelector(".playtime-label");
+        const progress = card.querySelector(".progress");
+        const progressBar = card.querySelector(".progress-bar");
+        const error = card.querySelector(".playtime-error");
+
+        try {
+          const [played, allowed] = await Promise.all([
+            fetchPlaytime(
+              deviceName,
+              "get_today_playtime_minutes",
+              "today_playtime_minutes",
+            ),
+            fetchPlaytime(
+              deviceName,
+              "get_allowed_playtime_today",
+              "allowed_playtime_today",
+            ),
+          ]);
+
+          const percent =
+            allowed > 0
+              ? Math.min(100, Math.max(0, (played / allowed) * 100))
+              : played > 0
+                ? 100
+                : 0;
+          const color =
+            percent >= 90
+              ? "bg-danger"
+              : percent >= 70
+                ? "bg-warning"
+                : "bg-success";
+
+          label.textContent = `${played}/${allowed} minutes played today`;
+          progress.setAttribute("aria-valuenow", String(Math.round(percent)));
+          progressBar.style.width = `${percent}%`;
+          progressBar.classList.add(color);
+        } catch (fetchError) {
+          console.error("Failed to load Nintendo device playtime", fetchError);
+          label.hidden = true;
+          progress.hidden = true;
+          error.hidden = false;
+        }
+      }
+
+      document
+        .querySelectorAll(".nintendo-device-card")
+        .forEach(updateDevicePlaytime);
+
+      document
+        .querySelectorAll("[data-device-action]")
+        .forEach(function (button) {
+          button.addEventListener("click", async function () {
+            const card = button.closest(".nintendo-device-card");
+            const deviceName = card.dataset.deviceName;
+            const action = button.dataset.deviceAction;
+            const status = card.querySelector(".device-action-status");
+            const deviceButtons = card.querySelectorAll(
+              "[data-device-action]",
+            );
+
+            deviceButtons.forEach(function (deviceButton) {
+              deviceButton.disabled = true;
+            });
+            status.hidden = true;
+
+            try {
+              const response = await fetch(
+                `/nintendo/${action}_device/${encodeURIComponent(deviceName)}`,
+                { method: "POST" },
+              );
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to ${action} device: ${response.status}`,
+                );
+              }
+              status.textContent = `Device ${action} request completed.`;
+              status.classList.remove("text-danger");
+              status.classList.add("text-success");
+            } catch (error) {
+              console.error(`Failed to ${action} Nintendo device`, error);
+              status.textContent = `Unable to ${action} device. Please try again.`;
+              status.classList.remove("text-success");
+              status.classList.add("text-danger");
+            } finally {
+              status.hidden = false;
+              deviceButtons.forEach(function (deviceButton) {
+                deviceButton.disabled = false;
+              });
+            }
+          });
+        });
+    </script>
+  </body>
+</html>

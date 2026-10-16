@@ -70,6 +70,15 @@
           </a>
         {% endif %}
 
+        {% if enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo') %}
+          <a
+            class="nav-item nav-link {% if request.path == '/nintendo' %}active{% endif %}"
+            href="/nintendo"
+          >
+            Nintendo
+          </a>
+        {% endif %}
+
         {% if current_user and current_user.is_authenticated %}
           <a
             class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"
