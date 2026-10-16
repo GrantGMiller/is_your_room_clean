@@ -94,7 +94,17 @@ def setup(a:Flask):
         ns = get_ns_manager(user['id'])
         minutes = request.json.get('minutes', 0)
         ns.add_playtime_minutes_for_today(device_name, minutes)
-        return jsonify({'status': 'success'})   
+        return jsonify({'status': 'success'})
+
+    @app.route('/nintendo/set_time/<device_name>/<int:minutes>', methods=['POST'])
+    def set_time(device_name, minutes):
+        user = get_current_user()
+        if not user:
+            return "User not authenticated", 401
+
+        ns = get_ns_manager(user['id'])
+        ns.set_playtime_minutes_for_today(device_name, minutes)
+        return jsonify({'status': 'success'})
 
 def save_state(**kwargs):
     print('save_state kwargs:', kwargs)

@@ -75,6 +75,14 @@
                 >
                   Add time
                 </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger w-100 mt-2"
+                  data-remove-all-time
+                  hidden
+                >
+                  Remove all time
+                </button>
               </div>
             </section>
           </div>
@@ -180,6 +188,9 @@
         const progress = card.querySelector(".progress");
         const progressBar = card.querySelector(".progress-bar");
         const error = card.querySelector(".playtime-error");
+        const removeAllTimeButton = card.querySelector(
+          "[data-remove-all-time]",
+        );
 
         try {
           const [played, allowed] = await Promise.all([
@@ -209,9 +220,18 @@
                 : "bg-success";
 
           label.textContent = `${played}/${allowed} minutes played today`;
+          label.hidden = false;
+          removeAllTimeButton.hidden = allowed <= played;
           progress.setAttribute("aria-valuenow", String(Math.round(percent)));
+          progress.hidden = false;
           progressBar.style.width = `${percent}%`;
+          progressBar.classList.remove(
+            "bg-danger",
+            "bg-warning",
+            "bg-success",
+          );
           progressBar.classList.add(color);
+          error.hidden = true;
         } catch (fetchError) {
           console.error("Failed to load Nintendo device playtime", fetchError);
           label.hidden = true;
@@ -262,6 +282,47 @@
               deviceButtons.forEach(function (deviceButton) {
                 deviceButton.disabled = false;
               });
+            }
+          });
+        });
+
+      document
+        .querySelectorAll("[data-remove-all-time]")
+        .forEach(function (button) {
+          button.addEventListener("click", async function () {
+            const card = button.closest(".nintendo-device-card");
+            const deviceName = card.dataset.deviceName;
+            const status = card.querySelector(".device-action-status");
+            button.disabled = true;
+            status.hidden = true;
+
+            try {
+              const response = await fetch(
+                `/nintendo/set_time/${encodeURIComponent(deviceName)}/0`,
+                { method: "POST" },
+              );
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to remove remaining time: ${response.status}`,
+                );
+              }
+
+              await updateDevicePlaytime(card);
+              status.textContent = "All remaining time removed.";
+              status.classList.remove("text-danger");
+              status.classList.add("text-success");
+            } catch (error) {
+              console.error(
+                "Failed to remove remaining Nintendo device time",
+                error,
+              );
+              status.textContent =
+                "Unable to remove remaining time. Please try again.";
+              status.classList.remove("text-success");
+              status.classList.add("text-danger");
+            } finally {
+              status.hidden = false;
+              button.disabled = false;
             }
           });
         });
