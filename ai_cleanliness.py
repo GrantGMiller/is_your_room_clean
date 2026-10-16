@@ -12,6 +12,7 @@ import base64
 import json
 
 import requests
+from flask import flash
 
 import config
 
@@ -98,6 +99,13 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
     print('evaluate_cleanliness response=', response)
 
     if not response.ok:
+        print('not ok response.text=', response.text)
+        d = response.json()
+        if d and d.get('error', {}).get('message', None):
+            return {
+                'cleanliness': -1,
+                'summary': d['error']['message'].replace(MODEL, 'AI Model'),
+            }
         return None
 
     data = response.json()
