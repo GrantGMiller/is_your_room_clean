@@ -32,7 +32,9 @@
               <div class="card-body">
                 <h2 class="h5 card-title mb-3">{{ device_name }}</h2>
                 <p class="mb-2 playtime-label" role="status">
-                  Loading today's playtime...
+                  <i class="bi bi-hourglass-split"
+                    >Loading today's playtime...</i
+                  >
                 </p>
                 <div
                   class="progress mb-4"
@@ -64,6 +66,15 @@
                     LOCK
                   </button>
                 </div>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary w-100 mt-2"
+                  data-bs-toggle="modal"
+                  data-bs-target="#addTimeModal"
+                  data-add-time-device="{{ device_name }}"
+                >
+                  Add time
+                </button>
               </div>
             </section>
           </div>
@@ -76,7 +87,78 @@
         {% endfor %}
       </div>
     </main>
+
+    <div
+      class="modal fade"
+      id="addTimeModal"
+      tabindex="-1"
+      aria-labelledby="addTimeModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form id="add-time-form">
+            <div class="modal-header">
+              <h2 class="modal-title h5" id="addTimeModalLabel">Add time</h2>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <label for="add-time-preset" class="form-label">
+                Minutes to add
+              </label>
+              <select id="add-time-preset" class="form-select">
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15" selected>15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="custom">Custom amount</option>
+              </select>
+              <div class="mt-3" id="custom-time-container" hidden>
+                <label for="custom-time-minutes" class="form-label">
+                  Custom minutes
+                </label>
+                <input
+                  id="custom-time-minutes"
+                  class="form-control"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputmode="numeric"
+                />
+              </div>
+              <p
+                id="add-time-error"
+                class="text-danger mt-3 mb-0"
+                role="alert"
+                hidden
+              ></p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" id="add-time-submit">
+                Add time
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <script>
+      let addTimeDeviceCard;
+
       async function fetchPlaytime(deviceName, endpoint, property) {
         const response = await fetch(
           `/nintendo/${endpoint}/${encodeURIComponent(deviceName)}`,
@@ -150,9 +232,7 @@
             const deviceName = card.dataset.deviceName;
             const action = button.dataset.deviceAction;
             const status = card.querySelector(".device-action-status");
-            const deviceButtons = card.querySelectorAll(
-              "[data-device-action]",
-            );
+            const deviceButtons = card.querySelectorAll("[data-device-action]");
 
             deviceButtons.forEach(function (deviceButton) {
               deviceButton.disabled = true;
@@ -185,6 +265,91 @@
             }
           });
         });
+
+      const addTimeModal = document.getElementById("addTimeModal");
+      const addTimeForm = document.getElementById("add-time-form");
+      const addTimePreset = document.getElementById("add-time-preset");
+      const customTimeContainer = document.getElementById(
+        "custom-time-container",
+      );
+      const customTimeMinutes = document.getElementById("custom-time-minutes");
+      const addTimeError = document.getElementById("add-time-error");
+      const addTimeSubmit = document.getElementById("add-time-submit");
+      const addTimeModalInstance = bootstrap.Modal.getOrCreateInstance(
+        addTimeModal,
+      );
+
+      addTimeModal.addEventListener("show.bs.modal", function (event) {
+        const trigger = event.relatedTarget;
+        addTimeDeviceCard = trigger.closest(".nintendo-device-card");
+        const deviceName = trigger.dataset.addTimeDevice;
+        document.getElementById("addTimeModalLabel").textContent =
+          `Add time to ${deviceName}`;
+        addTimePreset.value = "15";
+        customTimeContainer.hidden = true;
+        customTimeMinutes.required = false;
+        customTimeMinutes.value = "";
+        addTimeError.hidden = true;
+      });
+
+      addTimePreset.addEventListener("change", function () {
+        const isCustom = addTimePreset.value === "custom";
+        customTimeContainer.hidden = !isCustom;
+        customTimeMinutes.required = isCustom;
+        if (isCustom) {
+          customTimeMinutes.focus();
+        }
+      });
+
+      addTimeForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const deviceName = addTimeDeviceCard.dataset.deviceName;
+        const minutes =
+          addTimePreset.value === "custom"
+            ? Number(customTimeMinutes.value)
+            : Number(addTimePreset.value);
+
+        if (!Number.isInteger(minutes) || minutes < 1) {
+          addTimeError.textContent =
+            "Enter a whole number of minutes greater than zero.";
+          addTimeError.hidden = false;
+          return;
+        }
+
+        addTimeSubmit.disabled = true;
+        addTimeError.hidden = true;
+
+        try {
+          const response = await fetch(
+            `/nintendo/add_time/${encodeURIComponent(deviceName)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ minutes: minutes }),
+            },
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to add time: ${response.status}`);
+          }
+
+          await updateDevicePlaytime(addTimeDeviceCard);
+          const status = addTimeDeviceCard.querySelector(
+            ".device-action-status",
+          );
+          status.textContent = `${minutes} minutes added.`;
+          status.classList.remove("text-danger");
+          status.classList.add("text-success");
+          status.hidden = false;
+          addTimeModalInstance.hide();
+        } catch (error) {
+          console.error("Failed to add Nintendo device time", error);
+          addTimeError.textContent =
+            "Unable to add time. Please try again.";
+          addTimeError.hidden = false;
+        } finally {
+          addTimeSubmit.disabled = false;
+        }
+      });
     </script>
   </body>
 </html>

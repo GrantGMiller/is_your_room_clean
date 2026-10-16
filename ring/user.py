@@ -424,7 +424,6 @@ class RingImage(BaseTable):
     error: str
 
     def ui_safe(self):
-        d = dict(self)
         return dict(self)
 
     @property
