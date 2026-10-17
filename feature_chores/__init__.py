@@ -78,5 +78,5 @@ def clear_completed_chores(user_id:int):
                     chore.clear_completed_by()
                     chore.refresh_scheduled_job()
 
-        print('num_chores_complted', num_chores_complted)
+        print('81 num_chores_completed', num_chores_complted)
         give_nintendo_reward(user_id, num_chores_complted)
