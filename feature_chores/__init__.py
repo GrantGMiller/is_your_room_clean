@@ -8,6 +8,7 @@ from flask_jobs import Job, JobScheduler
 from feature_chores.models import Person, get_utc_from_users_time
 from feature_chores.helpers import get_chores
 from feature_chores.wall_display import setup as setup_wall_display
+from feature_nintendo.rewards import give_nintendo_reward
 
 def setup(a:Flask):
     global app
@@ -59,6 +60,13 @@ def clear_completed_chores(user_id:int):
     print('clear_completed_chores called')
     with app.app_context():
         user:RingUser = app.db.FindOne(RingUser, id=user_id)
+
+        # keep track of how many chores each person completed
+        # if they have completed X num of chores give them a reward 
+        num_chores_complted = {
+            #Person()['id']: int(num_chores_completed)
+        }
+        
         if user:
             user = user.get_ring_user()
             for chore in get_chores(user):
@@ -66,5 +74,9 @@ def clear_completed_chores(user_id:int):
                     person = app.db.FindOne(Person, id=person_id, owner_id=user['id'])
                     if person:
                         chore.unassign(person)
+                        num_chores_complted[person['id']] = num_chores_complted.get(person['id'], 0) + 1
                     chore.clear_completed_by()
                     chore.refresh_scheduled_job()
+
+        print('num_chores_complted', num_chores_complted)
+        give_nintendo_reward(user_id, num_chores_complted)

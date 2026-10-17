@@ -10,15 +10,14 @@ global app
 
 def setup(a: Flask):
     global app
+
     app = a
     app.db = cast(Dictabase, app.db)
 
 
 def get_current_user_persons() -> List[Person]:
-    from ring.user import get_current_user
-
     with app.app_context():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return []
 
@@ -31,10 +30,8 @@ def get_current_user_persons() -> List[Person]:
 
 
 def get_current_user_chores() -> List[Chore]:
-    from ring.user import get_current_user
-
     with app.app_context():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return []
 
@@ -49,10 +46,8 @@ def get_current_user_chores() -> List[Chore]:
 
 
 def get_current_user_person(person_id: int) -> Optional[Person]:
-    from ring.user import get_current_user
-
     with app.app_context():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return None
         user = user.get_ring_user()
@@ -60,10 +55,8 @@ def get_current_user_person(person_id: int) -> Optional[Person]:
 
 
 def get_current_user_chore(chore_id: int) -> Optional[Chore]:
-    from ring.user import get_current_user
-
     with app.app_context():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return None
         user = user.get_ring_user()
@@ -83,11 +76,9 @@ def get_chores(user) -> List[Chore]:
 
 
 def refresh_all_current_user_chores():
-    from ring.user import get_current_user
-
     print('Refreshing all current user chores')
     with app.app_context():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return
 

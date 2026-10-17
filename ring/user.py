@@ -466,21 +466,12 @@ def setup(a: Flask):
             return None
 
 
-def get_current_user() -> Optional[RingUser]:
-    with app.app_context():
-        # return user object if logged in, else return None
 
-        user = flask_login.current_user
-        print('392 user=', user)
-        if user and user.is_anonymous:
-            return None
-
-        return user
 
 
 def get_current_wall_user() -> Optional[RingUser]:
     with app.app_context():
-        user = get_current_user()
+        user = app.get_current_user()
         if user:
             return user.get_wall_user()
         return None

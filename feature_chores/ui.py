@@ -20,7 +20,7 @@ from feature_chores.models import (
     assign_chore_to_persons,
     setup as setup_chores_models, get_user_local_dt_from_utc,
 )
-from ring.user import RingUser, get_current_user, get_current_wall_user
+from ring.user import RingUser, get_current_wall_user
 from feature_nintendo import get_device_names
 
 global app
@@ -42,14 +42,15 @@ def setup(a: Flask):
     @app.route('/chores/person/add', methods=["GET"])
     def edit_person():
 
-        user = get_current_user()
+        user = app.get_current_user()
         assigned_chores = app.db.FindAll(Chore, owner_id=user['id'])
         person_id = request.args.get("id", type=int)
+        person = app.db.FindOne(Person, id=person_id,
+                                owner_id=user['id']) if person_id is not None else None
         assigned_chores = [chore for chore in assigned_chores if person_id in chore.get_assigned_to_ids()]
 
         if request.method == 'GET':
-            person = app.db.FindOne(Person, id=person_id,
-                                    owner_id=user['id']) if person_id is not None else None
+
             mode = 'edit' if person is not None else 'add'
             return render_template(
                 "chores/person_edit.html",
@@ -112,7 +113,7 @@ def setup(a: Flask):
     @app.route("/chores/person/delete", methods=["POST"])
     def delete_person():
         person_id = request.args.get("id", type=int)
-        user = get_current_user()
+        user = app.get_current_user()
         person = (
             app.db.FindOne(Person, id=person_id, owner_id=user["id"])
             if person_id is not None and user
@@ -187,7 +188,7 @@ def setup(a: Flask):
     @app.route("/chores/delete", methods=["POST"])
     def delete_chore():
         chore_id = request.args.get("id", type=int)
-        user = get_current_user()
+        user = app.get_current_user()
         chore = (
             app.db.FindOne(Chore, id=chore_id, owner_id=user["id"])
             if chore_id is not None and user
@@ -201,7 +202,7 @@ def setup(a: Flask):
 
     @app.route("/chores/overview")
     def overview():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return redirect('/dashboard')
 
@@ -216,7 +217,7 @@ def setup(a: Flask):
 
     @app.route('/chores/settings', methods=["GET", "POST"])
     def chores_settings():
-        user: RingUser = get_current_user()
+        user: RingUser = app.get_current_user()
 
         if request.method == "POST":
             print('request.form=', request.form)
@@ -270,7 +271,7 @@ def setup(a: Flask):
         person_id = request.args.get("person_id", type=int)
         new_state = bool(request.json.get('is_assigned', None))
 
-        user = get_current_user()
+        user = app.get_current_user()
         print('new_state=', new_state)
         if user and chore_id and person_id and new_state is not None:
             chore = helpers.get_current_user_chore(chore_id)
@@ -370,7 +371,7 @@ def setup(a: Flask):
 
     @app.route('/chores/wall_display', methods=['GET'])
     def chores_wall_display_link():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             flash('You must be logged in to view the wall display.', 'danger')
             return redirect('/')

@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+from typing import Optional
 
 import flask_login
 from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session
@@ -19,9 +20,9 @@ from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
 from feature_email import setup as setup_email
 from feature_nintendo import setup as setup_nintendo
-from ring import token_endpoints, webhook
+from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
-from ring.user import RingUser, RingImage, setup as ring_user_setup, get_current_user, get_snapshots_for_user_id
+from ring.user import RingUser, RingImage, setup as ring_user_setup, get_snapshots_for_user_id
 from slack import send_slack_message, setup as slack_setup, send_slack_error
 
 if not os.path.exists("images"):
@@ -40,6 +41,7 @@ app.jobs = JobScheduler(
 token_endpoints.setup(app)
 webhook.setup(app)
 slack_setup(app)
+ring_setup(app)
 ring_user_setup(app)
 api.setup(app)
 repeat_jobs.setup(app)
@@ -62,7 +64,7 @@ def index():
 
 @app.route("/get_snapshot/<device_id>")
 def get_snapshot(device_id):
-    ring_user: RingUser = get_current_user()
+    ring_user: RingUser = app.get_current_user()
     if ring_user:
         img_id = ring_user.get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
@@ -76,7 +78,7 @@ def get_snapshot(device_id):
 def dashboard():
     # Ring calls this the "App Homepage"
 
-    ring_user = get_current_user()
+    ring_user = app.get_current_user()
     print('77 ring_user=', ring_user)
     if ring_user:
         # if no events have occured since the app was authorized
@@ -124,7 +126,7 @@ def dashboard():
 
 @app.route('/events_exist')
 def events_exist():
-    ring_user = get_current_user()
+    ring_user = app.get_current_user()
     print('125 ring_user=', ring_user)
     if not ring_user:
         return 'no events exist', 404
@@ -301,7 +303,7 @@ def data_flow():
 
 @app.route("/admin")
 def admin():
-    user = get_current_user()
+    user = app.get_current_user()
     if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
         return redirect("/dashboard")
 
@@ -345,7 +347,7 @@ def admin():
 
 @app.route("/admin/unassign_all_chores", methods=["POST"])
 def admin_unassign_all_chores():
-    user = get_current_user()
+    user = app.get_current_user()
     if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
         return jsonify({"error": "forbidden"}), 403
 
@@ -358,7 +360,7 @@ def admin_unassign_all_chores():
 
 @app.route("/admin/delete_all_chores", methods=["POST"])
 def admin_delete_all_chores():
-    user = get_current_user()
+    user = app.get_current_user()
     if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
         return jsonify({"error": "forbidden"}), 403
 
@@ -376,7 +378,7 @@ def admin_delete_all_chores():
 
 @app.route("/my_account", methods=["GET", "POST"])
 def my_account():
-    ring_user = get_current_user()
+    ring_user = app.get_current_user()
     if not ring_user:
         return redirect("/dashboard")
 
@@ -404,7 +406,6 @@ def my_account():
     if getattr(config, 'ENABLE_NINTENDO', False):
         advanced_features['nintendo'] = ring_user.GetItem('enabled_features', 'nintendo')
 
-
     return render_template(
         "my_account.html",
         masked_email=masked_email,
@@ -414,7 +415,7 @@ def my_account():
 
 @app.route("/delete_account", methods=["POST"])
 def delete_account():
-    ring_user = get_current_user()
+    ring_user = app.get_current_user()
     if not ring_user:
         return redirect("/dashboard")
 
@@ -439,7 +440,7 @@ def delete_account():
 
 @app.route("/delete_stored_images", methods=["POST"])
 def delete_stored_images():
-    ring_user = get_current_user()
+    ring_user = app.get_current_user()
     if not ring_user:
         return redirect("/dashboard")
 
@@ -573,6 +574,18 @@ def inject_app_values():
 def favicon():
     return redirect("/static/favicon.ico")
 
+
+def get_current_user() -> Optional[RingUser]:
+    with app.app_context():
+        # return user object if logged in, else return None
+
+        user = flask_login.current_user
+        print('392 user=', user)
+        if user and user.is_anonymous:
+            return None
+
+        return user
+app.get_current_user = get_current_user
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

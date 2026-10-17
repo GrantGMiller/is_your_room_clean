@@ -1,16 +1,15 @@
-import json
+from typing import cast
 
 from flask import Flask, redirect, render_template, request
 from flask_dictabase import Dictabase
-from typing import cast
 
 from feature_chores.helpers import get_current_user_persons
 from feature_chores.models import Chore
-from ring.user import get_current_user
 
 
 def setup(app: Flask):
     app.db = cast(Dictabase, app.db)
+
     @app.route("/chores/wizard/start", methods=["GET", "POST"])
     def start():
         if request.method == "POST":
@@ -34,20 +33,19 @@ def setup(app: Flask):
                         "repeat_units": request.form.get("repeat_units"),
                     }
                 )
-                
 
             chore = app.db.New(
-                Chore, 
+                Chore,
                 owner_id=get_current_user()["id"],
-                  **chore_fields
-                  )
+                **chore_fields
+            )
             if kind == "repeat":
                 chore.Set(
                     "repeat_time_of_day",
                     request.form.getlist("repeat_time_of_day"),
                 )
             chore.Set('repeat_day_of_week', request.form.getlist("repeat_day_of_week"))
-            
+
             chore.refresh_scheduled_job()
             return redirect(f'/chores/wizard/2/{chore["id"]}')
 

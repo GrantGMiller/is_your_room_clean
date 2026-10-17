@@ -1,11 +1,13 @@
 from typing import cast
 
 from flask import Flask, flash, jsonify, render_template, request
-from ring.user import RingUser, get_current_user
+from ring.helpers import get_user
 from ns_parental_controls import ParentalControl
 from flask_dictabase import Dictabase
 from .rewards import setup as setup_rewards
 from .room_clean_settings import setup as setup_room_clean_settings
+
+
 def setup(a:Flask):
     global app
     app = a
@@ -14,7 +16,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo')
     def nintendo():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return "User not authenticated", 401
 
@@ -36,7 +38,7 @@ def setup(a:Flask):
     
     @app.route('/nintendo/auth', methods=['POST'])
     def nintendo_auth():
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return "User not authenticated", 401
 
@@ -54,7 +56,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo/get_allowed_playtime_today/<device_name>')
     def get_allowed_playtime_today(device_name):
-        user = get_current_user()
+        user = app.get_current_user().get_ring_user()
         if not user:
             return "User not authenticated", 401
 
@@ -64,7 +66,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo/get_today_playtime_minutes/<device_name>')
     def get_today_playtime_minutes(device_name):
-        user = get_current_user()
+        user = app.get_current_user().get_ring_user()
         if not user:
             return "User not authenticated", 401
 
@@ -74,7 +76,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo/lock_device/<device_name>', methods=['POST'])
     def lock_device(device_name):
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return "User not authenticated", 401
 
@@ -84,7 +86,7 @@ def setup(a:Flask):
     
     @app.route('/nintendo/unlock_device/<device_name>', methods=['POST'])
     def unlock_device(device_name):
-            user = get_current_user()
+            user = app.get_current_user()
             if not user:
                 return "User not authenticated", 401
     
@@ -94,7 +96,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo/add_time/<device_name>', methods=['POST'])
     def add_time(device_name):
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return "User not authenticated", 401
 
@@ -105,7 +107,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo/set_time/<device_name>/<int:minutes>', methods=['POST'])
     def set_time(device_name, minutes):
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return "User not authenticated", 401
 
@@ -117,7 +119,7 @@ def save_state(**kwargs):
     print('save_state kwargs:', kwargs)
     app.db = cast(Dictabase, app.db)
     with app.app_context():
-        user = app.db.FindOne(RingUser, id=kwargs['user_id'])
+        user = get_user(kwargs['user_id'])
         for key, value in kwargs.items():
             user.SetItem(f'nintendo', key, value)
         
@@ -125,7 +127,7 @@ def save_state(**kwargs):
 def load_state(**kwargs):
     print('load_state kwargs:', kwargs)
     with app.app_context():
-        user = app.db.FindOne(RingUser, id=kwargs['user_id'])
+        user = get_user(kwargs['user_id'])
         if 'user_id' in kwargs:
             user.SetItem(f'nintendo', 'user_id', kwargs['user_id'])
     return user.Get('nintendo', {})
@@ -145,7 +147,7 @@ def get_ns_manager(user_id):
 
 def get_device_names(user_id:int):
     with app.app_context():
-        user = app.db.FindOne(RingUser, id=user_id)
+        user = get_user(user_id)
         if not user:
             return []
         device_names= (user.GetItem('nintendo', 'device_map', {}) or {}).keys()

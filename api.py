@@ -7,7 +7,7 @@ from flask import request, jsonify, send_file, flash, redirect, render_template
 from flask_dictabase import Dictabase
 
 import config
-from ring.user import RingUser, RingImage, get_current_user
+from ring.user import RingUser, RingImage
 
 app = None
 
@@ -60,7 +60,7 @@ NUM_MASKED_CHARS = 5
 def setup_ui_endpoints(app):
     @app.route('/api')
     def api():
-        ring_user: RingUser = get_current_user()
+        ring_user: RingUser = app.get_current_user()
         print('ring_user=', ring_user)
 
         current_api_key = ring_user and ring_user.get('api_key', '') or ''

@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, render_template, request
 
-from ring.user import get_current_user
 
 
 def setup(a:Flask):
@@ -9,7 +8,7 @@ def setup(a:Flask):
 
     @app.route('/nintendo/settings/<device_name>', methods=['GET', 'POST'])
     def nintendo_settings(device_name):
-        user = get_current_user()
+        user = app.get_current_user()
         if not user:
             return "Unauthorized", 401
 

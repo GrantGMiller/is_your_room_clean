@@ -20,13 +20,46 @@
             Wall Display
           </p>
           <h1 class="h2 mb-1">{{ person.name }}'s settings</h1>
-          <p class="text-muted mb-0">Choose the color for your name and chores.</p>
+          <p class="text-muted mb-0">
+            Choose the color for your name and chores.
+          </p>
         </div>
         <a class="btn btn-outline-secondary" href="/wall_display">
           Back to wall display
         </a>
       </div>
-
+      {% set device_name = person.get('nintendo_device_name') %}
+      {% if device_name %}
+        <section
+          class="card shadow-sm mt-4"
+          id="person-nintendo-playtime"
+          data-device-name="{{ device_name }}"
+          aria-labelledby="nintendo-playtime-heading"
+        >
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="nintendo-playtime-heading">
+              Nintendo time · {{ device_name }}
+            </h2>
+            <p class="mb-2 playtime-label" role="status">
+              Loading today's playtime...
+            </p>
+            <div
+              class="progress"
+              role="progressbar"
+              aria-label="{{ device_name }} playtime used today"
+              aria-valuenow="0"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div class="progress-bar" style="width: 0%"></div>
+            </div>
+            <p class="text-danger mt-3 mb-0" role="alert" hidden>
+              Unable to load Nintendo playtime.
+            </p>
+          </div>
+        </section>
+        <hr />
+      {% endif %}
       <section class="card shadow-sm" aria-labelledby="person-color-heading">
         <div class="card-body p-4">
           <h2 class="h5 mb-3" id="person-color-heading">Person color</h2>
@@ -63,6 +96,73 @@
       const colorPreviewList = document.getElementById("color-preview-list");
       const colorSaveStatus = document.getElementById("color-save-status");
 
+      async function fetchPlaytime(deviceName, endpoint, property) {
+        const response = await fetch(
+          `/nintendo/${endpoint}/${encodeURIComponent(deviceName)}`,
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${endpoint}: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!Number.isFinite(data[property])) {
+          throw new Error(`Invalid ${property} for device ${deviceName}`);
+        }
+        return data[property];
+      }
+
+      async function loadNintendoPlaytime() {
+        const card = document.getElementById("person-nintendo-playtime");
+        if (!card) {
+          return;
+        }
+
+        const deviceName = card.dataset.deviceName;
+        const label = card.querySelector(".playtime-label");
+        const progress = card.querySelector(".progress");
+        const progressBar = card.querySelector(".progress-bar");
+        const errorMessage = card.querySelector('[role="alert"]');
+
+        try {
+          const [played, allowed] = await Promise.all([
+            fetchPlaytime(
+              deviceName,
+              "get_today_playtime_minutes",
+              "today_playtime_minutes",
+            ),
+            fetchPlaytime(
+              deviceName,
+              "get_allowed_playtime_today",
+              "allowed_playtime_today",
+            ),
+          ]);
+          const percentage =
+            allowed > 0
+              ? Math.min(100, Math.max(0, (played / allowed) * 100))
+              : played > 0
+                ? 100
+                : 0;
+          const progressColor =
+            percentage >= 90
+              ? "bg-danger"
+              : percentage >= 70
+                ? "bg-warning"
+                : "bg-success";
+
+          label.textContent = `${played}/${allowed} minutes played today`;
+          progress.setAttribute(
+            "aria-valuenow",
+            String(Math.round(percentage)),
+          );
+          progressBar.style.width = `${percentage}%`;
+          progressBar.classList.add(progressColor);
+        } catch (fetchError) {
+          console.error("Failed to load Nintendo playtime", fetchError);
+          label.hidden = true;
+          progress.hidden = true;
+          errorMessage.hidden = false;
+        }
+      }
+
       function updateColorPreview(color) {
         [
           "primary",
@@ -81,13 +181,16 @@
         });
         colorPreview.classList.add(`bg-${color}-subtle`, `border-${color}`);
 
-        colorPreviewList.querySelectorAll("[data-color]").forEach(function (button) {
-          const isSelected = button.dataset.color === color;
-          button.setAttribute("aria-pressed", String(isSelected));
-          button.classList.toggle("border-3", isSelected);
-        });
+        colorPreviewList
+          .querySelectorAll("[data-color]")
+          .forEach(function (button) {
+            const isSelected = button.dataset.color === color;
+            button.setAttribute("aria-pressed", String(isSelected));
+            button.classList.toggle("border-3", isSelected);
+          });
       }
 
+      loadNintendoPlaytime();
       updateColorPreview("{{ person.get('color', 'primary') }}");
       colorPreviewList.addEventListener("click", async function (event) {
         const button = event.target.closest("[data-color]");
@@ -103,14 +206,11 @@
         colorSaveStatus.hidden = true;
 
         try {
-          const response = await fetch(
-            `/wall_display/person/{{ person.id }}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ color: color }),
-            },
-          );
+          const response = await fetch(`/wall_display/person/{{ person.id }}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ color: color }),
+          });
           if (!response.ok) {
             throw new Error(`Failed to save color: ${response.status}`);
           }
