@@ -17,7 +17,7 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        {% if current_user and current_user.get and current_user.get('access_token', None) %}
+        {% if current_user and current_user.get and current_user.get('access_token', None) and not current_user.is_wall_user %}
           <a
             class="btn btn-info m-1"
             href="ring://"
@@ -52,7 +52,7 @@
           {% endif %}
         {% endif %}
 
-        {% if enabled_features.chores and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'chores') %}
+        {% if enabled_features.chores and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'chores') and not current_user.is_wall_user%}
           <a
             class="nav-item nav-link {% if request.path == '/chores/overview' %}active{% endif %}"
             href="/chores/overview"
@@ -61,7 +61,7 @@
           </a>
         {% endif %}
 
-        {% if enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') %}
+        {% if enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user%}
           <a
             class="nav-item nav-link {% if request.path == '/email_notifications' %}active{% endif %}"
             href="/email"
@@ -87,7 +87,7 @@
             My Account
           </a>
         {% endif %}
-        {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins %}
+        {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user%}
           <a
             class="nav-item nav-link {% if request.path == '/admin' %}active{% endif %}"
             href="/admin"
