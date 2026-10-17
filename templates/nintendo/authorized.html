@@ -108,17 +108,20 @@
         {% endfor %}
       </div>
 
-      <section class="card shadow-sm mt-5" aria-labelledby="chore-reward-heading">
+      <section
+        class="card shadow-sm mt-5"
+        aria-labelledby="chore-reward-heading"
+        id="chore-reward-settings"
+      >
         <div class="card-body p-4">
-          <h2 class="h4 mb-3" id="chore-reward-heading">
-            Chore rewards
-          </h2>
+          <h2 class="h4 mb-3" id="chore-reward-heading">Chore rewards</h2>
           <div class="form-check mb-3">
             <input
               class="form-check-input"
               type="checkbox"
               id="reward-with-nintendo-time"
-              name="reward_with_nintendo_time"
+              name="reward-with-nintendo-time"
+              {% if nintendo_rewards.get('reward-with-nintendo-time') %}checked{% endif %}
             />
             <label class="form-check-label" for="reward-with-nintendo-time">
               Reward with Nintendo time
@@ -128,11 +131,12 @@
             <label for="nintendo-reward-minutes">Reward</label>
             <input
               class="form-control"
-              type="text"
+              type="number"
               id="nintendo-reward-minutes"
               name="nintendo_reward_minutes"
               aria-label="Nintendo reward minutes"
               style="width: 6rem"
+              value="{{ nintendo_rewards.get('nintendo_reward_minutes') }}"
             />
             <span>minutes for every</span>
             <input
@@ -144,9 +148,16 @@
               step="1"
               aria-label="Number of chores completed"
               style="width: 6rem"
+              value="{{ nintendo_rewards.get('nintendo_reward_chores') }}"
             />
             <span>chores completed</span>
           </div>
+          <p
+            id="nintendo-rewards-status"
+            class="mt-3 mb-0"
+            role="status"
+            hidden
+          ></p>
         </div>
       </section>
     </main>
@@ -210,7 +221,11 @@
               >
                 Cancel
               </button>
-              <button type="submit" class="btn btn-primary" id="add-time-submit">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                id="add-time-submit"
+              >
                 Add time
               </button>
             </div>
@@ -221,6 +236,48 @@
 
     <script>
       let addTimeDeviceCard;
+
+      const rewardSettings = document.getElementById("chore-reward-settings");
+      const rewardStatus = document.getElementById("nintendo-rewards-status");
+
+      rewardSettings.addEventListener("change", async function () {
+        const payload = {
+          "reward-with-nintendo-time": document.getElementById(
+            "reward-with-nintendo-time",
+          ).checked,
+          nintendo_reward_minutes: document.getElementById(
+            "nintendo-reward-minutes",
+          ).value,
+          nintendo_reward_chores: document.getElementById(
+            "nintendo-reward-chores",
+          ).value,
+        };
+
+        rewardStatus.hidden = true;
+        try {
+          const response = await fetch("/nintendo/rewards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            throw new Error(
+              `Failed to save reward settings: ${response.status}`,
+            );
+          }
+          rewardStatus.textContent = "Reward settings saved.";
+          rewardStatus.classList.remove("text-danger");
+          rewardStatus.classList.add("text-success");
+        } catch (error) {
+          console.error("Failed to save Nintendo reward settings", error);
+          rewardStatus.textContent =
+            "Unable to save reward settings. Please try again.";
+          rewardStatus.classList.remove("text-success");
+          rewardStatus.classList.add("text-danger");
+        } finally {
+          rewardStatus.hidden = false;
+        }
+      });
 
       async function fetchPlaytime(deviceName, endpoint, property) {
         const response = await fetch(
@@ -280,11 +337,7 @@
           progress.setAttribute("aria-valuenow", String(Math.round(percent)));
           progress.hidden = false;
           progressBar.style.width = `${percent}%`;
-          progressBar.classList.remove(
-            "bg-danger",
-            "bg-warning",
-            "bg-success",
-          );
+          progressBar.classList.remove("bg-danger", "bg-warning", "bg-success");
           progressBar.classList.add(color);
           error.hidden = true;
         } catch (fetchError) {
@@ -474,9 +527,8 @@
       const customTimeMinutes = document.getElementById("custom-time-minutes");
       const addTimeError = document.getElementById("add-time-error");
       const addTimeSubmit = document.getElementById("add-time-submit");
-      const addTimeModalInstance = bootstrap.Modal.getOrCreateInstance(
-        addTimeModal,
-      );
+      const addTimeModalInstance =
+        bootstrap.Modal.getOrCreateInstance(addTimeModal);
 
       addTimeModal.addEventListener("show.bs.modal", function (event) {
         const trigger = event.relatedTarget;
@@ -542,8 +594,7 @@
           addTimeModalInstance.hide();
         } catch (error) {
           console.error("Failed to add Nintendo device time", error);
-          addTimeError.textContent =
-            "Unable to add time. Please try again.";
+          addTimeError.textContent = "Unable to add time. Please try again.";
           addTimeError.hidden = false;
         } finally {
           addTimeSubmit.disabled = false;

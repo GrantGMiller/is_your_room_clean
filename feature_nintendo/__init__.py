@@ -4,10 +4,11 @@ from flask import Flask, flash, jsonify, render_template, request
 from ring.user import RingUser, get_current_user
 from ns_parental_controls import ParentalControl
 from flask_dictabase import Dictabase
-
+from .rewards import setup as setup_rewards
 def setup(a:Flask):
     global app
     app = a
+    setup_rewards(app)
 
     @app.route('/nintendo')
     def nintendo():
@@ -25,7 +26,11 @@ def setup(a:Flask):
         device_names= (user.GetItem('nintendo', 'device_map', {}) or {}).keys()
         
         
-        return render_template('nintendo/authorized.html', device_names=device_names)
+        return render_template(
+            'nintendo/authorized.html', 
+            device_names=device_names,
+            nintendo_rewards=user.Get('nintendo_rewards', {}) or {}
+        )
     
     @app.route('/nintendo/auth', methods=['POST'])
     def nintendo_auth():
