@@ -97,6 +97,21 @@
             Associate this person with a Nintendo device.
           </div>
         </div>
+        <div class="mt-3">
+          <label class="form-label fw-semibold" for="nintendo-time">
+            Available Nintendo time (minutes)
+          </label>
+          <input
+            class="form-control"
+            type="number"
+            name="nintendo_time"
+            id="nintendo-time"
+            min="0"
+            step="1"
+            value="{{ person.get('nintendo_time', 0) or 0 if person else 0 }}"
+            required
+          />
+        </div>
         <hr>
         
         <label
@@ -202,6 +217,7 @@
       const personForm = document.querySelector("form");
       const personName = document.getElementById("person-name");
       const nintendoDevice = document.getElementById("nintendo-device");
+      const nintendoTime = document.getElementById("nintendo-time");
       const personColor = document.getElementById("person-color");
       const personColorLabel = document.getElementById("person-color-label");
       const colorPreviewList = document.getElementById("color-preview-list");
@@ -258,6 +274,7 @@
       {% if mode == 'edit' %}
         personName.addEventListener("change", savePerson);
         nintendoDevice.addEventListener("change", savePerson);
+        nintendoTime.addEventListener("change", savePerson);
         personColor.addEventListener("change", savePerson);
       {% endif %}
       personColor.addEventListener("change", updateColorLabel);

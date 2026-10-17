@@ -52,6 +52,7 @@ class Person(BaseTable):
             "color": self.get("color", None),
             "owner_id": self.get("owner_id", None),
             "nintendo_device_name": self.get("nintendo_device_name", None),
+            "nintendo_time": self.get('nintendo_time', 0)
         }
         return ret
 

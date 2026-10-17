@@ -29,7 +29,7 @@ def reward_user_with_nintendo_time(user_id:int,person_id:int, minutes:int):
         if not person:
             return None
         old_minutes = person.get('nintendo_time', 0) or 0
-        person.Set('nintendo_time', old_minutes + minutes)
+        person['nintendo_time'] = old_minutes + minutes
         return person
 
 def give_nintendo_reward(user_id, num_chores_complted:dict):

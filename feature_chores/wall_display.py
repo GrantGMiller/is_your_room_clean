@@ -45,8 +45,13 @@ def setup(a: Flask):
         key = f'nintendo_settings_{device_name}'
         data = app.get_current_user().get_ring_user().Get(key, {})
         rooms_to_clean = data.get('room_names_to_clean', []) or []
-        current_cleanliness = app.get_current_user().get_ring_user().Get('last_clean_score', {}) or {}
-        minimum_cleanliness=data.get('minimum_cleanliness', {}) or {}
+        current_cleanliness = (
+            app.get_current_user()
+            .get_ring_user()
+            .Get('last_clean_score', {})
+            or {}
+        )
+        minimum_cleanliness = data.get('minimum_cleanliness', 50)
 
         return render_template(
             'chores/wall_display/person_page.html',
@@ -55,6 +60,61 @@ def setup(a: Flask):
             current_cleanliness=current_cleanliness,
             minimum_cleanliness=minimum_cleanliness,
         )
+
+    @app.route('/wall_display/add_nintendo_time/<int:person_id>', methods=['POST'])
+    def wall_display_add_nintendo_time(person_id):
+        person = get_current_user_person(person_id)
+        if not person:
+            return jsonify({"error": "Person not found"}), 404
+        if session.get('person_id') != person_id:
+            return jsonify({"error": "PIN required"}), 403
+
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"error": "Expected a JSON object"}), 400
+        minutes = payload.get('minutes')
+        if (
+            isinstance(minutes, bool)
+            or not isinstance(minutes, int)
+            or minutes <= 0
+        ):
+            return jsonify({"error": "Minutes must be a positive whole number"}), 400
+
+        device_name = person.get('nintendo_device_name')
+        if not device_name:
+            return jsonify({"error": "No Nintendo device is associated with this person"}), 400
+
+        user = app.get_current_user().get_ring_user()
+        settings = user.Get(f'nintendo_settings_{device_name}', {}) or {}
+        rooms_to_clean = settings.get('room_names_to_clean', []) or []
+        minimum_cleanliness = int(settings.get('minimum_cleanliness', 50))
+        current_cleanliness = user.Get('last_clean_score', {}) or {}
+        if any(
+            int(current_cleanliness.get(room_name, 0)) < minimum_cleanliness
+            for room_name in rooms_to_clean
+        ):
+            return jsonify({
+                "error": (
+                    "Required rooms have not reached the cleanliness threshold"
+                )
+            }), 403
+
+        available_minutes = person.get('nintendo_time', 0) or 0
+        if minutes > available_minutes:
+            return jsonify({
+                "error": "Requested time exceeds the available balance"
+            }), 400
+
+        from feature_nintendo import get_ns_manager
+
+        ns = get_ns_manager(person['owner_id'])
+        ns.add_playtime_minutes_for_today(device_name, minutes)
+        remaining_minutes = available_minutes - minutes
+        person['nintendo_time'] = remaining_minutes
+        return jsonify({
+            "device_name": device_name,
+            "remaining_minutes": remaining_minutes,
+        })
 
     @app.route('/wall_display/pin/<int:person_id>')
     def wall_display_pin(person_id):

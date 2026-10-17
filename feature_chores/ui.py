@@ -65,6 +65,12 @@ def setup(a: Flask):
             name = request.form.get("name", "").strip()
             color = request.form.get("color", "primary")
             nintendo_device_name = request.form.get("nintendo_device_name", "")
+            try:
+                nintendo_time = int(request.form.get("nintendo_time", "0"))
+            except ValueError:
+                return "Nintendo time must be a whole number", 400
+            if nintendo_time < 0:
+                return "Nintendo time cannot be negative", 400
             if nintendo_device_name and nintendo_device_name not in get_device_names(
                 user['id']
             ):
@@ -87,11 +93,13 @@ def setup(a: Flask):
                         name=name,
                         color=color if color in allowed_colors else "primary",
                         nintendo_device_name=nintendo_device_name,
-                        owner_id=get_current_user()['id'],
+                        nintendo_time=nintendo_time,
+                        owner_id=app.get_current_user()['id'],
                     )
                 else:
                     person['name'] = name
                     person['nintendo_device_name'] = nintendo_device_name
+                    person['nintendo_time'] = nintendo_time
                     if color in allowed_colors:
                         person['color'] = color
 

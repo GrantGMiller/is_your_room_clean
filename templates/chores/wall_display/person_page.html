@@ -30,6 +30,13 @@
       </div>
       {% set device_name = person.get('nintendo_device_name') %}
       {% if device_name %}
+        {% set nintendo_time = person.get('nintendo_time', 0) | float %}
+        {% set rooms_clean = namespace(value=true) %}
+        {% for room_name in rooms_to_clean %}
+          {% if (current_cleanliness.get(room_name, 0) | int) < (minimum_cleanliness | int) %}
+            {% set rooms_clean.value = false %}
+          {% endif %}
+        {% endfor %}
         <section
           class="card shadow-sm mt-4"
           id="person-nintendo-playtime"
@@ -63,15 +70,21 @@
             </p>
           </div>
           <div class="card-body pt-0">
-            <h3 class="h6 mb-2">Room cleanliness requirements</h3>
-            <p class="text-muted mb-3">
-              These rooms must be at least {{ minimum_cleanliness }}% clean
-              before you can add Nintendo time.
+            <p class="mb-3">
+              Available Nintendo time:
+              <strong id="nintendo-time-balance">{{ nintendo_time }}</strong>
+              minutes
             </p>
+            <p class="text-muted mb-3">
+              These rooms must be at least
+              <b>{{ minimum_cleanliness }}%</b> clean before you can add
+              Nintendo time.
+            </p>
+
             {% if rooms_to_clean %}
               <div class="list-group">
                 {% for room_name in rooms_to_clean %}
-                  {% set cleanliness = current_cleanliness[room_name] | int %}
+                  {% set cleanliness = current_cleanliness.get(room_name, 0) | int %}
                   {% if cleanliness < minimum_cleanliness | int %}
                     {% set room_status = "danger" %}
                   {% else %}
@@ -88,12 +101,94 @@
                 {% endfor %}
               </div>
             {% else %}
-              <p class="text-muted mb-0">
-                No rooms are required to be clean.
-              </p>
+              <p class="text-muted mb-0">No rooms are required to be clean.</p>
             {% endif %}
+            {% if rooms_clean.value and person.get('nintendo_time', 0) > 0 %}
+              <button
+                type="button"
+                class="btn btn-primary mt-3"
+                data-bs-toggle="modal"
+                data-bs-target="#personAddTimeModal"
+                {% if nintendo_time < 1 %}disabled{% endif %}
+              >
+                Send Time to Nintendo
+              </button>
+            {% endif %}
+            <p
+              id="add-person-time-status"
+              class="mt-3 mb-0"
+              role="status"
+              hidden
+            ></p>
           </div>
         </section>
+        {% if rooms_clean.value %}
+          <div
+            class="modal fade"
+            id="personAddTimeModal"
+            tabindex="-1"
+            aria-labelledby="personAddTimeModalLabel"
+            aria-hidden="true"
+          >
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <form id="person-add-time-form">
+                  <div class="modal-header">
+                    <h2 class="modal-title h5" id="personAddTimeModalLabel">
+                      Add Nintendo time
+                    </h2>
+                    <button
+                      type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <div class="modal-body">
+                    <label for="person-add-time-minutes" class="form-label">
+                      Minutes to add
+                    </label>
+                    <input
+                      class="form-control"
+                      type="number"
+                      id="person-add-time-minutes"
+                      min="1"
+                      max="{{ nintendo_time | int }}"
+                      step="1"
+                      inputmode="numeric"
+                      required
+                    />
+                    <div class="form-text">
+                      You can add up to {{ nintendo_time }} available minutes.
+                    </div>
+                    <p
+                      id="person-add-time-error"
+                      class="text-danger mt-3 mb-0"
+                      role="alert"
+                      hidden
+                    ></p>
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      data-bs-dismiss="modal"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      id="person-add-time-submit"
+                    >
+                      Add time
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endif %}
         <hr />
       {% endif %}
       <section class="card shadow-sm" aria-labelledby="person-color-heading">
@@ -131,6 +226,71 @@
       const colorPreview = document.getElementById("person-color-preview");
       const colorPreviewList = document.getElementById("color-preview-list");
       const colorSaveStatus = document.getElementById("color-save-status");
+      const personAddTimeForm = document.getElementById("person-add-time-form");
+
+      if (personAddTimeForm) {
+        const addTimeInput = document.getElementById("person-add-time-minutes");
+        const addTimeError = document.getElementById("person-add-time-error");
+        const addTimeSubmit = document.getElementById("person-add-time-submit");
+        const addTimeStatus = document.getElementById("add-person-time-status");
+        const addTimeModal = bootstrap.Modal.getOrCreateInstance(
+          document.getElementById("personAddTimeModal"),
+        );
+
+        personAddTimeForm.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const minutes = Number(addTimeInput.value);
+          const maxMinutes = Number(addTimeInput.max);
+          if (
+            !Number.isInteger(minutes) ||
+            minutes < 1 ||
+            minutes > maxMinutes
+          ) {
+            addTimeError.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
+            addTimeError.hidden = false;
+            return;
+          }
+
+          addTimeSubmit.disabled = true;
+          addTimeError.hidden = true;
+          try {
+            const response = await fetch(
+              `/wall_display/add_nintendo_time/{{ person.id }}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ minutes: minutes }),
+              },
+            );
+            const result = await response.json();
+            if (!response.ok) {
+              throw new Error(result.error || "Unable to add Nintendo time.");
+            }
+
+            document.getElementById("nintendo-time-balance").textContent =
+              result.remaining_minutes;
+            addTimeInput.max = String(result.remaining_minutes);
+            addTimeInput.value = "";
+            addTimeStatus.textContent = `${minutes} minutes added to ${result.device_name}.`;
+            addTimeStatus.classList.remove("text-danger");
+            addTimeStatus.classList.add("text-success");
+            addTimeStatus.hidden = false;
+            addTimeModal.hide();
+            if (result.remaining_minutes <= 0) {
+              document.querySelector(
+                '[data-bs-target="#personAddTimeModal"]',
+              ).disabled = true;
+            }
+            await loadNintendoPlaytime();
+          } catch (error) {
+            console.error("Failed to add Nintendo time", error);
+            addTimeError.textContent = error.message;
+            addTimeError.hidden = false;
+          } finally {
+            addTimeSubmit.disabled = false;
+          }
+        });
+      }
 
       async function fetchPlaytime(deviceName, endpoint, property) {
         const response = await fetch(
