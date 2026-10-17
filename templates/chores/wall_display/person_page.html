@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ person.name }} | {{ app_name }}</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
+      >
+        <div>
+          <p class="text-uppercase text-muted small fw-semibold mb-2">
+            Wall Display
+          </p>
+          <h1 class="h2 mb-1">{{ person.name }}'s settings</h1>
+          <p class="text-muted mb-0">Choose the color for your name and chores.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="/wall_display">
+          Back to wall display
+        </a>
+      </div>
+
+      <section class="card shadow-sm" aria-labelledby="person-color-heading">
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3" id="person-color-heading">Person color</h2>
+          <p
+            class="d-inline-block px-3 py-2 rounded border mb-4"
+            id="person-color-preview"
+          >
+            {{ person.name }}'s Color
+          </p>
+          <div class="row row-cols-2 row-cols-sm-4 g-2" id="color-preview-list">
+            {% for color in ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"] %}
+              <div class="col">
+                <button
+                  class="card color-preview-button h-100 w-100 text-start border-{{ color }} bg-{{ color }}-subtle"
+                  type="button"
+                  data-color="{{ color }}"
+                  aria-label="Select {{ color }} color"
+                  aria-pressed="{{ 'true' if person.get('color', 'primary') == color else 'false' }}"
+                >
+                  <div class="card-body py-2 px-3">
+                    <span class="fw-semibold">{{ color | capitalize }}</span>
+                  </div>
+                </button>
+              </div>
+            {% endfor %}
+          </div>
+          <p id="color-save-status" class="mt-3 mb-0" role="status" hidden></p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const colorPreview = document.getElementById("person-color-preview");
+      const colorPreviewList = document.getElementById("color-preview-list");
+      const colorSaveStatus = document.getElementById("color-save-status");
+
+      function updateColorPreview(color) {
+        [
+          "primary",
+          "secondary",
+          "success",
+          "danger",
+          "warning",
+          "info",
+          "light",
+          "dark",
+        ].forEach(function (availableColor) {
+          colorPreview.classList.remove(
+            `bg-${availableColor}-subtle`,
+            `border-${availableColor}`,
+          );
+        });
+        colorPreview.classList.add(`bg-${color}-subtle`, `border-${color}`);
+
+        colorPreviewList.querySelectorAll("[data-color]").forEach(function (button) {
+          const isSelected = button.dataset.color === color;
+          button.setAttribute("aria-pressed", String(isSelected));
+          button.classList.toggle("border-3", isSelected);
+        });
+      }
+
+      updateColorPreview("{{ person.get('color', 'primary') }}");
+      colorPreviewList.addEventListener("click", async function (event) {
+        const button = event.target.closest("[data-color]");
+        if (!button) {
+          return;
+        }
+
+        const color = button.dataset.color;
+        updateColorPreview(color);
+        colorPreviewList
+          .querySelectorAll("button")
+          .forEach((colorButton) => (colorButton.disabled = true));
+        colorSaveStatus.hidden = true;
+
+        try {
+          const response = await fetch(
+            `/wall_display/person/{{ person.id }}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ color: color }),
+            },
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to save color: ${response.status}`);
+          }
+          colorSaveStatus.textContent = "Color saved.";
+          colorSaveStatus.classList.remove("text-danger");
+          colorSaveStatus.classList.add("text-success");
+        } catch (error) {
+          console.error("Failed to save person color", error);
+          colorSaveStatus.textContent =
+            "Unable to save color. Please try again.";
+          colorSaveStatus.classList.remove("text-success");
+          colorSaveStatus.classList.add("text-danger");
+        } finally {
+          colorSaveStatus.hidden = false;
+          colorPreviewList
+            .querySelectorAll("button")
+            .forEach((colorButton) => (colorButton.disabled = false));
+        }
+      });
+    </script>
+  </body>
+</html>

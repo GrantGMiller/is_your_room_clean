@@ -21,6 +21,7 @@ from feature_chores.models import (
     setup as setup_chores_models, get_user_local_dt_from_utc,
 )
 from ring.user import RingUser, get_current_user, get_current_wall_user
+from feature_nintendo import get_device_names
 
 global app
 
@@ -54,13 +55,19 @@ def setup(a: Flask):
                 "chores/person_edit.html",
                 person=person,
                 mode=mode,
-                assigned_chores=assigned_chores
+                assigned_chores=assigned_chores,
+                device_names=get_device_names(user['id'])
             )
 
         elif request.method == "POST":
             person_id = request.args.get("id", type=int)
             name = request.form.get("name", "").strip()
             color = request.form.get("color", "primary")
+            nintendo_device_name = request.form.get("nintendo_device_name", "")
+            if nintendo_device_name and nintendo_device_name not in get_device_names(
+                user['id']
+            ):
+                return "Invalid Nintendo device", 400
             allowed_colors = {
                 "primary",
                 "secondary",
@@ -78,10 +85,12 @@ def setup(a: Flask):
                         Person,
                         name=name,
                         color=color if color in allowed_colors else "primary",
+                        nintendo_device_name=nintendo_device_name,
                         owner_id=get_current_user()['id'],
                     )
                 else:
                     person['name'] = name
+                    person['nintendo_device_name'] = nintendo_device_name
                     if color in allowed_colors:
                         person['color'] = color
 
@@ -94,7 +103,10 @@ def setup(a: Flask):
             "chores/person_edit.html",
             person=person,
             mode='edit',
-            assigned_chores=assigned_chores
+            assigned_chores=assigned_chores,
+            device_names=get_device_names(user['id'])
+               
+                                  
         )
 
     @app.route("/chores/person/delete", methods=["POST"])

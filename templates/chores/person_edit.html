@@ -72,6 +72,30 @@
           required
         />
         <hr>
+        <div class="mt-3">
+          <label class="form-label fw-semibold" for="nintendo-device">
+            Nintendo device
+          </label>
+          <select
+            class="form-select"
+            id="nintendo-device"
+            name="nintendo_device_name"
+          >
+            <option value="">No Nintendo device</option>
+            {% for device_name in device_names %}
+              <option
+                value="{{ device_name }}"
+                {% if person and person.get('nintendo_device_name', '') == device_name %}selected{% endif %}
+              >
+                {{ device_name }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">
+            Associate this person with a Nintendo device.
+          </div>
+        </div>
+        <hr>
         
         <label
           class="form-label fw-semibold mt-3 d-inline-block px-2 py-1 rounded border"
@@ -175,6 +199,7 @@
     <script>
       const personForm = document.querySelector("form");
       const personName = document.getElementById("person-name");
+      const nintendoDevice = document.getElementById("nintendo-device");
       const personColor = document.getElementById("person-color");
       const personColorLabel = document.getElementById("person-color-label");
       const colorPreviewList = document.getElementById("color-preview-list");
@@ -230,6 +255,7 @@
 
       {% if mode == 'edit' %}
         personName.addEventListener("change", savePerson);
+        nintendoDevice.addEventListener("change", savePerson);
         personColor.addEventListener("change", savePerson);
       {% endif %}
       personColor.addEventListener("change", updateColorLabel);

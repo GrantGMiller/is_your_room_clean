@@ -142,3 +142,11 @@ def get_ns_manager(user_id):
         print('ns=', ns)
         print('ns.callback_kwargs=', ns.callback_kwargs)
         return ns
+
+def get_device_names(user_id:int):
+    with app.app_context():
+        user = app.db.FindOne(RingUser, id=user_id)
+        if not user:
+            return []
+        device_names= (user.GetItem('nintendo', 'device_map', {}) or {}).keys()
+        return list(device_names)
