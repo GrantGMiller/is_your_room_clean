@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Enter PIN | {{ app_name }}</title>
+    {% include "js_css.html" %}
+    <style>
+      .pin-key {
+        min-height: 3.5rem;
+        font-size: 1.25rem;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+          <section class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-2 text-center">Enter your PIN</h1>
+              <p class="text-muted text-center mb-4">
+                Enter your PIN to open your settings.
+              </p>
+
+              <form
+                method="post"
+                action="/wall_display/check_pin/{{ person_id }}"
+                id="person-pin-form"
+              >
+                <label for="person-pin" class="form-label">PIN</label>
+                <input
+                  class="form-control form-control-lg text-center mb-3"
+                  id="person-pin"
+                  name="pin"
+                  type="password"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  autocomplete="off"
+                  aria-label="PIN"
+                  required
+                  autofocus
+                />
+
+                <div
+                  class="row row-cols-3 g-2"
+                  id="pin-keypad"
+                  aria-label="PIN keypad"
+                >
+                  {% for digit in range(1, 10) %}
+                    <div class="col">
+                      <button
+                        class="btn btn-outline-secondary w-100 pin-key"
+                        type="button"
+                        data-pin-digit="{{ digit }}"
+                        aria-label="{{ digit }}"
+                      >
+                        {{ digit }}
+                      </button>
+                    </div>
+                  {% endfor %}
+                  <div class="col">
+                    <button
+                      class="btn btn-outline-secondary w-100 pin-key"
+                      type="button"
+                      data-pin-action="clear"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div class="col">
+                    <button
+                      class="btn btn-outline-secondary w-100 pin-key"
+                      type="button"
+                      data-pin-digit="0"
+                      aria-label="0"
+                    >
+                      0
+                    </button>
+                  </div>
+                  <div class="col">
+                    <button
+                      class="btn btn-outline-secondary w-100 pin-key"
+                      type="button"
+                      data-pin-action="delete"
+                      aria-label="Delete last digit"
+                    >
+                      &larr;
+                    </button>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg w-100 mt-3" type="submit">
+                  Submit
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const pinInput = document.getElementById("person-pin");
+
+      document
+        .getElementById("pin-keypad")
+        .addEventListener("click", function (event) {
+          const button = event.target.closest("button");
+          if (!button) {
+            return;
+          }
+
+          if (button.hasAttribute("data-pin-digit")) {
+            pinInput.value += button.dataset.pinDigit;
+          } else if (button.dataset.pinAction === "clear") {
+            pinInput.value = "";
+          } else if (button.dataset.pinAction === "delete") {
+            pinInput.value = pinInput.value.slice(0, -1);
+          }
+          pinInput.focus();
+        });
+    </script>
+  </body>
+</html>

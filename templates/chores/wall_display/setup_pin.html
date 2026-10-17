@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Set Up PIN | {{ app_name }}</title>
+    {% include "js_css.html" %}
+    <style>
+      .pin-key {
+        min-height: 3.5rem;
+        font-size: 1.25rem;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+          <section class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-2 text-center">Set up your PIN</h1>
+              <p class="text-muted text-center mb-4">
+                Create a PIN to protect {{ person_name }}'s settings.
+              </p>
+
+              <form
+                method="post"
+                action="/wall_display/save_pin/{{ person_id }}"
+                id="setup-pin-form"
+              >
+                <div class="mb-3">
+                  <label for="person-pin" class="form-label">PIN</label>
+                  <input
+                    class="form-control form-control-lg text-center"
+                    id="person-pin"
+                    name="pin"
+                    type="password"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    autocomplete="new-password"
+                    aria-label="PIN"
+                    required
+                    autofocus
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="person-pin-confirm" class="form-label">
+                    Confirm PIN
+                  </label>
+                  <input
+                    class="form-control form-control-lg text-center"
+                    id="person-pin-confirm"
+                    name="pin_confirm"
+                    type="password"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    autocomplete="new-password"
+                    aria-label="Confirm PIN"
+                    required
+                  />
+                </div>
+
+                <div
+                  class="row row-cols-3 g-2"
+                  id="pin-keypad"
+                  aria-label="PIN keypad"
+                >
+                  {% for digit in range(1, 10) %}
+                    <div class="col">
+                      <button
+                        class="btn btn-outline-secondary w-100 pin-key"
+                        type="button"
+                        data-pin-digit="{{ digit }}"
+                        aria-label="{{ digit }}"
+                      >
+                        {{ digit }}
+                      </button>
+                    </div>
+                  {% endfor %}
+                  <div class="col">
+                    <button
+                      class="btn btn-outline-secondary w-100 pin-key"
+                      type="button"
+                      data-pin-action="clear"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div class="col">
+                    <button
+                      class="btn btn-outline-secondary w-100 pin-key"
+                      type="button"
+                      data-pin-digit="0"
+                      aria-label="0"
+                    >
+                      0
+                    </button>
+                  </div>
+                  <div class="col">
+                    <button
+                      class="btn btn-outline-secondary w-100 pin-key"
+                      type="button"
+                      data-pin-action="delete"
+                      aria-label="Delete last digit"
+                    >
+                      &larr;
+                    </button>
+                  </div>
+                </div>
+
+                <p
+                  id="pin-form-error"
+                  class="text-danger mt-3 mb-0"
+                  role="alert"
+                  hidden
+                ></p>
+                <button
+                  class="btn btn-primary btn-lg w-100 mt-3"
+                  id="save-pin-button"
+                  type="submit"
+                >
+                  Save PIN
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const pinInput = document.getElementById("person-pin");
+      const pinConfirmInput = document.getElementById("person-pin-confirm");
+      const pinFormError = document.getElementById("pin-form-error");
+      const savePinButton = document.getElementById("save-pin-button");
+      let activePinInput = pinInput;
+
+      [pinInput, pinConfirmInput].forEach(function (input) {
+        input.addEventListener("focus", function () {
+          activePinInput = input;
+        });
+      });
+
+      document
+        .getElementById("pin-keypad")
+        .addEventListener("click", function (event) {
+          const button = event.target.closest("button");
+          if (!button) {
+            return;
+          }
+
+          if (button.hasAttribute("data-pin-digit")) {
+            activePinInput.value += button.dataset.pinDigit;
+          } else if (button.dataset.pinAction === "clear") {
+            activePinInput.value = "";
+          } else if (button.dataset.pinAction === "delete") {
+            activePinInput.value = activePinInput.value.slice(0, -1);
+          }
+          activePinInput.focus();
+        });
+
+      document
+        .getElementById("setup-pin-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+          pinFormError.hidden = true;
+          savePinButton.disabled = true;
+
+          try {
+            const response = await fetch(this.action, {
+              method: "POST",
+              body: new FormData(this),
+            });
+            if (!response.ok) {
+              const result = await response.json();
+              throw new Error(result.error || "Unable to save PIN.");
+            }
+            window.location.assign(response.url);
+          } catch (error) {
+            console.error("Failed to set up person PIN", error);
+            pinFormError.textContent = error.message;
+            pinFormError.hidden = false;
+            savePinButton.disabled = false;
+          }
+        });
+    </script>
+  </body>
+</html>
