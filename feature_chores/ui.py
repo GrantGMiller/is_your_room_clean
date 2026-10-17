@@ -7,7 +7,7 @@ from typing import cast
 import flask_login
 import pyqrcode
 import pytz
-from flask import Flask, flash, redirect, render_template, request, jsonify
+from flask import Flask, session,flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
 
 import config
@@ -212,7 +212,7 @@ def setup(a: Flask):
             chores=helpers.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
             get_user_local_dt_from_utc=get_user_local_dt_from_utc,
-            user=get_current_user(),
+            user=app.get_current_user(),
         )
 
     @app.route('/chores/settings', methods=["GET", "POST"])
@@ -421,6 +421,7 @@ def setup(a: Flask):
             )
 
         ring_user = wall_user.get_ring_user()
+        session.pop('person_id', None)
         return render_template(
             'chores/wall_display.html',
             ring_user=ring_user,

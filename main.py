@@ -13,6 +13,7 @@ from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
 import config
+from feature_chores.models import Person
 import migrate_helper
 import repeat_jobs
 from feature_chores import setup as setup_chores
@@ -79,7 +80,7 @@ def dashboard():
     # Ring calls this the "App Homepage"
 
     ring_user = app.get_current_user()
-    print('77 ring_user=', ring_user)
+    #print('77 ring_user=', ring_user)
     if ring_user:
         # if no events have occured since the app was authorized
         # then no snapshots can be grabbed and this app is useless
@@ -89,7 +90,7 @@ def dashboard():
         if len(devs) == 0:
             # all devices were unauthorized, clear the stored latest events
             ring_user.Set('latest_events', {})
-        print('devs=', devs)
+        #print('devs=', devs)
 
         for dev in devs:
             if not ring_user.GetItem('latest_events', dev['id'], None):
@@ -132,7 +133,7 @@ def events_exist():
         return 'no events exist', 404
 
     devs = ring_user.get_devices()
-    print('130 devs=', devs)
+    #print('130 devs=', devs)
     devices_without_events = []
 
     for dev in devs:
@@ -332,7 +333,7 @@ def admin():
 
         if masked_email not in user_rows and created_age != "Unknown":
             devs = user.Get('last_devices', []) or []
-            print('devs=', [dev['attributes']['name'] for dev in devs])
+            #print('devs=', [dev['attributes']['name'] for dev in devs])
             num_devices += len(devs)
 
         user_rows[masked_email] = created_age
@@ -580,12 +581,19 @@ def get_current_user() -> Optional[RingUser]:
         # return user object if logged in, else return None
 
         user = flask_login.current_user
-        print('392 user=', user)
+        #print('392 user=', user)
         if user and user.is_anonymous:
             return None
 
         return user
 app.get_current_user = get_current_user
+
+def get_person(person_id) -> Optional[Person]:
+    with app.app_context():
+        user = get_current_user().get_ring_user()
+        person = app.db.FindOne(Person, id=person_id, owner_id=user['id'])
+        return person
+app.get_person = get_person
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)
