@@ -41,7 +41,12 @@
               Nintendo time · {{ device_name }}
             </h2>
             <p class="mb-2 playtime-label" role="status">
-              Loading today's playtime...
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span
+              >Loading today's playtime...
             </p>
             <div
               class="progress"
@@ -56,6 +61,37 @@
             <p class="text-danger mt-3 mb-0" role="alert" hidden>
               Unable to load Nintendo playtime.
             </p>
+          </div>
+          <div class="card-body pt-0">
+            <h3 class="h6 mb-2">Room cleanliness requirements</h3>
+            <p class="text-muted mb-3">
+              These rooms must be at least {{ minimum_cleanliness }}% clean
+              before you can add Nintendo time.
+            </p>
+            {% if rooms_to_clean %}
+              <div class="list-group">
+                {% for room_name in rooms_to_clean %}
+                  {% set cleanliness = current_cleanliness[room_name] | int %}
+                  {% if cleanliness < minimum_cleanliness | int %}
+                    {% set room_status = "danger" %}
+                  {% else %}
+                    {% set room_status = "success" %}
+                  {% endif %}
+                  <div
+                    class="list-group-item list-group-item-{{ room_status }} d-flex justify-content-between align-items-center gap-3"
+                  >
+                    <span class="fw-semibold">{{ room_name }}</span>
+                    <span class="badge text-bg-{{ room_status }} rounded-pill">
+                      {{ cleanliness }}%
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted mb-0">
+                No rooms are required to be clean.
+              </p>
+            {% endif %}
           </div>
         </section>
         <hr />

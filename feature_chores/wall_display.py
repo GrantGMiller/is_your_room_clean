@@ -41,9 +41,19 @@ def setup(a: Flask):
             person['color'] = color
             return jsonify({"color": color})
 
+        device_name = person.get('nintendo_device_name', None)
+        key = f'nintendo_settings_{device_name}'
+        data = app.get_current_user().get_ring_user().Get(key, {})
+        rooms_to_clean = data.get('room_names_to_clean', []) or []
+        current_cleanliness = app.get_current_user().get_ring_user().Get('last_clean_score', {}) or {}
+        minimum_cleanliness=data.get('minimum_cleanliness', {}) or {}
+
         return render_template(
             'chores/wall_display/person_page.html',
-            person=person
+            person=person,
+            rooms_to_clean=rooms_to_clean,
+            current_cleanliness=current_cleanliness,
+            minimum_cleanliness=minimum_cleanliness,
         )
 
     @app.route('/wall_display/pin/<int:person_id>')
@@ -93,10 +103,13 @@ def setup(a: Flask):
         session['person_id'] = person['id']
         return redirect(f'/wall_display/person/{person_id}')
 
-    @app.route('/wall_display/clear_pin/<int:person_id>', methods=['POST'])
+    @app.route('/wall_display/clear_pin/<int:person_id>', methods=['GET'])
     def wall_display_clear_pin(person_id):
+        print('clear_pin', person_id)
         person = app.get_person(person_id)
+        print('99 person=', person)
         if not person:
             return "Person not found", 404
         person['pin'] = None
-        return jsonify({"message": "PIN cleared"})
+        print('cleared pin for', person['name'])
+        return redirect(f'/chores/person/edit?id={person_id}')

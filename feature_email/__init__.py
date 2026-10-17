@@ -20,7 +20,7 @@ def setup(app: Flask):
 
     @app.route('/email', methods=['GET', 'POST'])
     def email():
-        user = ring_user.get_current_user()
+        user = app.get_current_user()
         if not user:
             return redirect('/dashboard')
 
@@ -74,7 +74,7 @@ def setup(app: Flask):
 
     @app.route('/email/preview_daily_summary')
     def preview_daily_summary():
-        user = ring_user.get_current_user()
+        user = app.get_current_user()
         if not user or user.get('email') not in getattr(config, 'ADMINS', []):
             abort(403)
 
@@ -83,7 +83,7 @@ def setup(app: Flask):
 
     @app.route('/email/preview_room_clean')
     def preview_room_clean():
-        current_user = ring_user.get_current_user()
+        current_user = app.get_current_user()
         if not current_user or current_user.get('email') not in getattr(config, 'ADMINS', []):
             abort(403)
 
