@@ -17,10 +17,23 @@
       >
         <h1 class="h2 mb-0">Nintendo Devices</h1>
         <div class="d-flex gap-2">
-          <button type="button" class="btn btn-danger">LOCK ALL</button>
-          <button type="button" class="btn btn-success">UNLOCK ALL</button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-all-device-action="lock"
+          >
+            LOCK ALL
+          </button>
+          <button
+            type="button"
+            class="btn btn-success"
+            data-all-device-action="unlock"
+          >
+            UNLOCK ALL
+          </button>
         </div>
       </div>
+      <p id="all-device-action-status" class="mb-3" role="status" hidden></p>
 
       <div class="row g-4">
         {% for device_name in device_names %}
@@ -94,6 +107,48 @@
           </div>
         {% endfor %}
       </div>
+
+      <section class="card shadow-sm mt-5" aria-labelledby="chore-reward-heading">
+        <div class="card-body p-4">
+          <h2 class="h4 mb-3" id="chore-reward-heading">
+            Chore rewards
+          </h2>
+          <div class="form-check mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="reward-with-nintendo-time"
+              name="reward_with_nintendo_time"
+            />
+            <label class="form-check-label" for="reward-with-nintendo-time">
+              Reward with Nintendo time
+            </label>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <label for="nintendo-reward-minutes">Reward</label>
+            <input
+              class="form-control"
+              type="text"
+              id="nintendo-reward-minutes"
+              name="nintendo_reward_minutes"
+              aria-label="Nintendo reward minutes"
+              style="width: 6rem"
+            />
+            <span>minutes for every</span>
+            <input
+              class="form-control"
+              type="number"
+              id="nintendo-reward-chores"
+              name="nintendo_reward_chores"
+              min="1"
+              step="1"
+              aria-label="Number of chores completed"
+              style="width: 6rem"
+            />
+            <span>chores completed</span>
+          </div>
+        </div>
+      </section>
     </main>
 
     <div
@@ -283,6 +338,89 @@
                 deviceButton.disabled = false;
               });
             }
+          });
+        });
+
+      document
+        .querySelectorAll("[data-all-device-action]")
+        .forEach(function (button) {
+          button.addEventListener("click", async function () {
+            const action = button.dataset.allDeviceAction;
+            const allActionButtons = document.querySelectorAll(
+              "[data-all-device-action]",
+            );
+            const cards = Array.from(
+              document.querySelectorAll(".nintendo-device-card"),
+            );
+            const globalStatus = document.getElementById(
+              "all-device-action-status",
+            );
+
+            allActionButtons.forEach(function (actionButton) {
+              actionButton.disabled = true;
+            });
+            globalStatus.hidden = true;
+            cards.forEach(function (card) {
+              card
+                .querySelectorAll("[data-device-action]")
+                .forEach(function (deviceButton) {
+                  deviceButton.disabled = true;
+                });
+              card.querySelector(".device-action-status").hidden = true;
+            });
+
+            const results = await Promise.allSettled(
+              cards.map(async function (card) {
+                const deviceName = card.dataset.deviceName;
+                const response = await fetch(
+                  `/nintendo/${action}_device/${encodeURIComponent(deviceName)}`,
+                  { method: "POST" },
+                );
+                if (!response.ok) {
+                  throw new Error(
+                    `Failed to ${action} ${deviceName}: ${response.status}`,
+                  );
+                }
+                return card;
+              }),
+            );
+
+            let failedCount = 0;
+            results.forEach(function (result, index) {
+              const card = cards[index];
+              const status = card.querySelector(".device-action-status");
+              if (result.status === "fulfilled") {
+                status.textContent = `Device ${action} request completed.`;
+                status.classList.remove("text-danger");
+                status.classList.add("text-success");
+              } else {
+                failedCount += 1;
+                console.error(
+                  `Failed to ${action} Nintendo device`,
+                  result.reason,
+                );
+                status.textContent = `Unable to ${action} device. Please try again.`;
+                status.classList.remove("text-success");
+                status.classList.add("text-danger");
+              }
+              status.hidden = false;
+              card
+                .querySelectorAll("[data-device-action]")
+                .forEach(function (deviceButton) {
+                  deviceButton.disabled = false;
+                });
+            });
+
+            globalStatus.textContent =
+              failedCount === 0
+                ? `All devices ${action === "lock" ? "locked" : "unlocked"}.`
+                : `${failedCount} of ${cards.length} devices could not be ${action === "lock" ? "locked" : "unlocked"}.`;
+            globalStatus.classList.toggle("text-danger", failedCount > 0);
+            globalStatus.classList.toggle("text-success", failedCount === 0);
+            globalStatus.hidden = false;
+            allActionButtons.forEach(function (actionButton) {
+              actionButton.disabled = false;
+            });
           });
         });
 
