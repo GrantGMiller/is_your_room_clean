@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chores | {{ app_name }}</title>
+    {% include "js_css.html" %}
+    <style>
+      #device-cards {
+        margin-bottom: 50vh;
+      }
+
+      .assignee-accordion {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        left: 1rem;
+        z-index: 1030;
+      }
+
+      .chore-list-item:nth-child(even) {
+        background-color: rgba(0, 0, 0, 0.01);
+      }
+
+      .chore-list-item:nth-child(odd) {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">{{ app_name }}</a>
+
+        <ul class="navbar-nav ms-auto">
+          {# <a
+            class="nav-item nav-link{% if request.path == '/dashboard' %}active{% endif %}"
+            href="/chores/overview"
+          >
+            Admin Page
+          </a> #}
+        </ul>
+      </div>
+    </nav>
+    {% include "flash_messages.html" %}
+
+    <main class="container py-5">
+      <div class="mb-4">
+        <h1 class="h2 mb-1">Chores</h1>
+        <p class="text-muted mb-0">Choose your name to see your chores.</p>
+      </div>
+
+      {% if ring_user.access_token %}
+        <button
+          id="toggle-device-cards"
+          class="btn btn-outline-primary mb-3"
+          type="button"
+          aria-controls="device-cards"
+          aria-expanded="{true}"
+        >
+          Hide Camera Devices
+        </button>
+
+        {% include "device_cards.html" %}
+      {% endif %}
+
+      <div class="accordion assignee-accordion" id="person-chores">
+        {% for person in persons %}
+          {% set undone_count = namespace(value=0) %}
+          {% for chore in chores %}
+            {% if person['id'] in chore.get_assigned_to_ids() and person['id'] not in chore.Get('completed_by', []) %}
+              {% set undone_count.value = undone_count.value + 1 %}
+            {% endif %}
+          {% endfor %}
+          <div
+            class="accordion-item border-{{ person.get('color', 'primary') }}"
+          >
+            <div
+              class="accordion-header d-flex"
+              id="person-heading-{{ person['id'] }}"
+            >
+              <button
+                class="btn"
+                onclick="window.location = '/wall_display/person/{{ person['id'] }}'"
+              >
+                👤
+              </button>
+              <button
+                class="accordion-button collapsed bg-{{ person.get('color', 'primary') }}-subtle fw-bold fs-5 flex-grow-1"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#person-chores-{{ person['id'] }}"
+                aria-expanded="false"
+                aria-controls="person-chores-{{ person['id'] }}"
+              >
+                {{ person.name }}
+                {% if undone_count.value == 0 %}
+                  <span
+                    class="badge text-bg-success ms-2 undone-count-badge"
+                    data-undone-count="0"
+                    >ALL DONE</span
+                  >
+                {% else %}
+                  <span
+                    class="badge text-bg-secondary ms-2 undone-count-badge"
+                    data-undone-count="{{ undone_count.value }}"
+                  >
+                    {{ undone_count.value }} undone
+                  </span>
+                {% endif %}
+              </button>
+            </div>
+            <div
+              id="person-chores-{{ person['id'] }}"
+              class="accordion-collapse collapse"
+              aria-labelledby="person-heading-{{ person['id'] }}"
+              data-bs-parent="#person-chores"
+            >
+              <div
+                class="accordion-body bg-{{ person.get('color', 'primary') }}-subtle"
+              >
+                {% set person_chores = [] %}
+                {% for chore in chores %}
+                  {% if person['id'] in chore.get_assigned_to_ids() %}
+                    {% set person_chores = person_chores.append(chore) %}
+                  {% endif %}
+                {% endfor %}
+
+                {% if person_chores %}
+                  <div class="list-group">
+                    {% for chore in person_chores %}
+                      <div
+                        class="list-group-item chore-list-item d-flex justify-content-between align-items-center gap-3"
+                      >
+                        <span>{{ chore.get('name', 'Unnamed chore') }}</span>
+
+                        {% set is_completed = person['id'] in chore.Get('completed_by', []) %}
+                        <div>
+                          <input
+                            type="hidden"
+                            name="chore_id"
+                            value="{{ chore.id }}"
+                          />
+                          <input
+                            type="hidden"
+                            name="person_id"
+                            value="{{ person['id'] }}"
+                          />
+                          <input
+                            type="hidden"
+                            name="is_completed"
+                            value="{{ 'true' if is_completed else 'false' }}"
+                          />
+
+                          <button
+                            class="btn {{ 'btn-success' if is_completed else 'btn-primary' }} btn-sm"
+                            type="button"
+                            onclick="completeChore(this)"
+                          >
+                            {% if chore.get('assignment_mode', None) == 'first-done' %}
+                              🏁
+                            {% endif %}
+                            {{ 'Done ✔️' if is_completed else 'Done' }}
+                          </button>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p class="text-muted mb-0">No chores assigned.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-light border mb-0">
+            No people have been added yet.
+          </div>
+        {% endfor %}
+      </div>
+    </main>
+
+    <script>
+      const toggleDeviceCardsButton = document.getElementById(
+        "toggle-device-cards",
+      );
+      const deviceCards = document.getElementById("device-cards");
+
+      toggleDeviceCardsButton.addEventListener("click", function () {
+        const isHidden = deviceCards.hasAttribute("hidden");
+        deviceCards.hidden = !isHidden;
+        toggleDeviceCardsButton.setAttribute("aria-expanded", String(isHidden));
+        toggleDeviceCardsButton.textContent = isHidden
+          ? "Hide Camera Devices"
+          : "Show Camera Devices";
+      });
+
+      function completeChore(button) {
+        const choreContainer = button.parentElement;
+        const formData = new FormData();
+
+        choreContainer.querySelectorAll("input").forEach(function (input) {
+          formData.append(input.name, input.value);
+        });
+
+        button.disabled = true;
+
+        fetch("/chores/complete", {
+          method: "POST",
+          body: formData,
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Unable to mark chore as done");
+            }
+            return response.json();
+          })
+          .then(function (chore) {
+            const isCompleted = chore.is_completed;
+            const completedInput = choreContainer.querySelector(
+              'input[name="is_completed"]',
+            );
+            const wasCompleted = completedInput.value === "true";
+            const badge = button
+              .closest(".accordion-item")
+              .querySelector(".undone-count-badge");
+            let undoneCount = Number(badge.dataset.undoneCount);
+
+            if (wasCompleted !== isCompleted) {
+              undoneCount += isCompleted ? -1 : 1;
+            }
+
+            badge.dataset.undoneCount = String(undoneCount);
+            badge.classList.toggle("text-bg-success", undoneCount === 0);
+            badge.classList.toggle("text-bg-secondary", undoneCount !== 0);
+            badge.textContent =
+              undoneCount === 0 ? "ALL DONE" : undoneCount + " undone";
+
+            completedInput.value = String(isCompleted);
+            button.classList.toggle("btn-success", isCompleted);
+            button.classList.toggle("btn-primary", !isCompleted);
+            button.textContent = isCompleted ? "Done ✔️" : "Done";
+            button.disabled = false;
+          })
+          .catch(function () {
+            button.disabled = false;
+          });
+      }
+    </script>
+  </body>
+</html>

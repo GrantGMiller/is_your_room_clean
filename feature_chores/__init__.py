@@ -7,10 +7,12 @@ from flask_jobs import Job, JobScheduler
 
 from feature_chores.models import Person, get_utc_from_users_time
 from feature_chores.helpers import get_chores
+from feature_chores.wall_display import setup as setup_wall_display
 
 def setup(a:Flask):
     global app
     app = a
+    setup_wall_display(app)
 
 def update_job_clear_completed_chores(user):
     '''
