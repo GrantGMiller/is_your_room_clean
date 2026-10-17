@@ -43,7 +43,29 @@
               data-device-name="{{ device_name }}"
             >
               <div class="card-body">
-                <h2 class="h5 card-title mb-3">{{ device_name }}</h2>
+                <div class="d-flex justify-content-between align-items-start">
+                  <h2 class="h5 card-title mb-3">{{ device_name }}</h2>
+                  <a
+                    class="btn btn-outline-secondary btn-sm"
+                    href="/nintendo/settings/{{ device_name | urlencode | replace('+', '%20') }}"
+                    aria-label="Settings for {{ device_name }}"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      viewBox="0 0 16 16"
+                      role="img"
+                      aria-label="Settings"
+                    >
+                      <title>Settings</title>
+                      <path
+                        d="M9.405 1.05a1 1 0 0 0-1.81 0l-.23.47a1 1 0 0 1-1.12.53l-.51-.12a1 1 0 0 0-1.28 1.28l.12.51a1 1 0 0 1-.53 1.12l-.47.23a1 1 0 0 0 0 1.81l.47.23a1 1 0 0 1 .53 1.12l-.12.51a1 1 0 0 0 1.28 1.28l.51-.12a1 1 0 0 1 1.12.53l.23.47a1 1 0 0 0 1.81 0l.23-.47a1 1 0 0 1 1.12-.53l.51.12a1 1 0 0 0 1.28-1.28l-.12-.51a1 1 0 0 1 .53-1.12l.47-.23a1 1 0 0 0 0-1.81l-.47-.23a1 1 0 0 1-.53-1.12l.12-.51a1 1 0 0 0-1.28-1.28l-.51.12a1 1 0 0 1-1.12-.53l-.23-.47ZM8.5 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"
+                      />
+                    </svg>
+                  </a>
+                </div>
                 <p class="mb-2 playtime-label" role="status">
                   <i class="bi bi-hourglass-split"
                     >Loading today's playtime...</i
@@ -239,8 +261,9 @@
 
       const rewardSettings = document.getElementById("chore-reward-settings");
       const rewardStatus = document.getElementById("nintendo-rewards-status");
+      let rewardSaveTimeout;
 
-      rewardSettings.addEventListener("change", async function () {
+      async function saveRewardSettings() {
         const payload = {
           "reward-with-nintendo-time": document.getElementById(
             "reward-with-nintendo-time",
@@ -277,7 +300,15 @@
         } finally {
           rewardStatus.hidden = false;
         }
-      });
+      }
+
+      function scheduleRewardSettingsSave() {
+        window.clearTimeout(rewardSaveTimeout);
+        rewardSaveTimeout = window.setTimeout(saveRewardSettings, 300);
+      }
+
+      rewardSettings.addEventListener("input", scheduleRewardSettingsSave);
+      rewardSettings.addEventListener("change", scheduleRewardSettingsSave);
 
       async function fetchPlaytime(deviceName, endpoint, property) {
         const response = await fetch(

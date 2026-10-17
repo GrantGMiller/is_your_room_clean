@@ -254,6 +254,10 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         return devices
 
+    def get_devices_names(self):
+        devices = self.get_devices()
+        return [device.get('attributes', {}).get('name') for device in devices]
+
     def get_latest_event(self, device_id: str) -> Optional[dict]:
         """Return the newest event for a device, or None when no events exist."""
         response = self.make_authenticated_request(

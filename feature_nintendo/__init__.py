@@ -5,10 +5,12 @@ from ring.user import RingUser, get_current_user
 from ns_parental_controls import ParentalControl
 from flask_dictabase import Dictabase
 from .rewards import setup as setup_rewards
+from .room_clean_settings import setup as setup_room_clean_settings
 def setup(a:Flask):
     global app
     app = a
     setup_rewards(app)
+    setup_room_clean_settings(app)
 
     @app.route('/nintendo')
     def nintendo():
