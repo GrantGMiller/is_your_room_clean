@@ -86,6 +86,13 @@
               >
                 👤
               </button>
+              {% if person.get('nintendo_time', 0) or 0 > 0 %}
+                <button class="btn ">
+                  🎮<br /><span class="text-muted">
+                    {{ person.get('nintendo_time', 0) }}
+                  </span>
+                </button>
+              {% endif %}
               <button
                 class="accordion-button collapsed bg-{{ person.get('color', 'primary') }}-subtle fw-bold fs-5 flex-grow-1"
                 type="button"
