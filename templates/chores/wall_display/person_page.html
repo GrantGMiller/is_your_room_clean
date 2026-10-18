@@ -42,7 +42,7 @@
             <h2 class="h5 mb-3" id="nintendo-playtime-heading">
               {{ money_name }}
             </h2>
-            <p class="mb-2 playtime-label" role="status">
+            <p class="mb-2 playtime-label" id="person-money-balance" role="status">
               ${{ person.get('money', 0) }}
             </p>
             <button
@@ -137,7 +137,23 @@
               >
                 Send Time to Nintendo
               </button>
+              {% if nintendo_time >= 60 %}
+                <button
+                  type="button"
+                  class="btn btn-primary mt-3"
+                  id="trade-time-button"
+                >
+                  Trade 1 hour for 1$
+                </button>
+              {% endif %}
             {% endif %}
+            <p
+              id="trade-time-status"
+              class="mt-3 mb-0"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
             <p
               id="add-person-time-status"
               class="mt-3 mb-0"
@@ -251,6 +267,45 @@
       const colorPreviewList = document.getElementById("color-preview-list");
       const colorSaveStatus = document.getElementById("color-save-status");
       const personAddTimeForm = document.getElementById("person-add-time-form");
+      const tradeTimeButton = document.getElementById("trade-time-button");
+      const tradeTimeStatus = document.getElementById("trade-time-status");
+
+      if (tradeTimeButton) {
+        tradeTimeButton.addEventListener("click", async function () {
+          tradeTimeButton.disabled = true;
+          tradeTimeStatus.hidden = true;
+
+          try {
+            const response = await fetch("/money/trade_time", {
+              method: "POST",
+              credentials: "same-origin",
+            });
+            const result = await response.json();
+            if (!response.ok) {
+              throw new Error(result.error || "Unable to trade Nintendo time.");
+            }
+
+            document.getElementById("person-money-balance").textContent =
+              `$${result.money}`;
+            document.getElementById("nintendo-time-balance").textContent =
+              result.nintendo_time;
+            tradeTimeStatus.textContent = "Traded 60 minutes for $1.";
+            tradeTimeStatus.classList.remove("text-danger");
+            tradeTimeStatus.classList.add("text-success");
+            if (result.nintendo_time < 60) {
+              tradeTimeButton.remove();
+            }
+          } catch (error) {
+            console.error("Failed to trade Nintendo time", error);
+            tradeTimeStatus.textContent = error.message;
+            tradeTimeStatus.classList.remove("text-success");
+            tradeTimeStatus.classList.add("text-danger");
+            tradeTimeButton.disabled = false;
+          } finally {
+            tradeTimeStatus.hidden = false;
+          }
+        });
+      }
 
       if (personAddTimeForm) {
         const addTimeInput = document.getElementById("person-add-time-minutes");

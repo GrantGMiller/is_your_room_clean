@@ -93,3 +93,19 @@ def setup(a:Flask):
             'from_person': sender.ui_safe(),
             'to_person': recipient.ui_safe(),
         })
+
+    @app.route('/money/trade_time', methods=['POST'])
+    def trade_time():
+        person_id = session.get('person_id')
+        if not person_id:
+            return jsonify({'error': 'person not found'}), 400
+        person = app.get_person(person_id)
+        if not person:
+            return jsonify({'error': 'person not found'}), 400
+        if person.get('nintendo_time', 0) < 60:
+            return jsonify({'error': 'not enough Nintendo time to trade'}), 400
+        person['nintendo_time'] -= 60
+        person['money'] = person.get('money', 0) + 1
+        return jsonify(
+           person.ui_safe()
+        )
