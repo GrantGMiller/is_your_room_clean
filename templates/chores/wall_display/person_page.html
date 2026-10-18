@@ -135,6 +135,7 @@
               <button
                 type="button"
                 class="btn btn-primary mt-3"
+                id="send-time-to-nintendo-button"
                 data-bs-toggle="modal"
                 data-bs-target="#personAddTimeModal"
                 {% if nintendo_time < 1 %}disabled{% endif %}
@@ -297,6 +298,11 @@
             tradeTimeStatus.textContent = "Traded 60 minutes for $1.";
             tradeTimeStatus.classList.remove("text-danger");
             tradeTimeStatus.classList.add("text-success");
+            if (result.nintendo_time <= 0) {
+              document.getElementById(
+                "send-time-to-nintendo-button",
+              )?.remove();
+            }
             if (result.nintendo_time < 60) {
               tradeTimeButton.remove();
             }
@@ -361,9 +367,9 @@
             addTimeStatus.hidden = false;
             addTimeModal.hide();
             if (result.remaining_minutes <= 0) {
-              document.querySelector(
-                '[data-bs-target="#personAddTimeModal"]',
-              ).disabled = true;
+              document
+                .getElementById("send-time-to-nintendo-button")
+                ?.remove();
             }
             await loadNintendoPlaytime();
           } catch (error) {
