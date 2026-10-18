@@ -42,7 +42,11 @@
             <h2 class="h5 mb-3" id="nintendo-playtime-heading">
               {{ money_name }}
             </h2>
-            <p class="mb-2 playtime-label" id="person-money-balance" role="status">
+            <p
+              class="mb-2 playtime-label"
+              id="person-money-balance"
+              role="status"
+            >
               ${{ person.get('money', 0) }}
             </p>
             <button
@@ -281,6 +285,7 @@
               credentials: "same-origin",
             });
             const result = await response.json();
+            tradeTimeButton.disabled = false;
             if (!response.ok) {
               throw new Error(result.error || "Unable to trade Nintendo time.");
             }
