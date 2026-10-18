@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Send money | {{ app_name }}</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
+      >
+        <div>
+          <p class="text-uppercase text-muted small fw-semibold mb-2">Money</p>
+          <h1 class="h2 mb-1">Send {{ money_name }}</h1>
+          <p class="text-muted mb-0">
+            Send {{ money_name }} to another person in your home.
+          </p>
+        </div>
+        <a class="btn btn-outline-secondary" href="/dashboard">
+          Back to dashboard
+        </a>
+      </div>
+
+      <section class="card shadow-sm" aria-labelledby="send-money-heading">
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3" id="send-money-heading">Send money</h2>
+
+          <form
+            id="send-money-form"
+            method="post"
+            action="/money/process_transaction"
+          >
+            <input type="hidden" name="sender_id" value="{{ person.id }}" />
+
+            <div class="row g-3 align-items-end">
+              <div class="col-12 col-md-5">
+                <label class="form-label" for="recipient_id">Send to</label>
+                <select
+                  class="form-select form-select-lg"
+                  id="recipient_id"
+                  name="recipient_id"
+                  required
+                >
+                  <option value="" selected disabled>Select a person</option>
+                  {% for other_person in all_persons if other_person.id != person.id %}
+                    <option value="{{ other_person.id }}">
+                      {{ other_person.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="form-label" for="amount">Amount</label>
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text">$</span>
+                  <input
+                    class="form-control"
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    min="1"
+                    step="1"
+                    inputmode="numeric"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="mt-4">
+                <label class="form-label" for="message">Message</label>
+                <textarea
+                  class="form-control"
+                  id="message"
+                  name="message"
+                  rows="3"
+                  placeholder="Optional note for this transaction"
+                ></textarea>
+              </div>
+              <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                  Send {{ money_name }}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div
+            id="send-money-status"
+            class="mt-3 mb-0"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </div>
+      </section>
+
+      <section class="card shadow-sm mt-4" aria-labelledby="balance-heading">
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3" id="balance-heading">Current balance</h2>
+          <p class="display-6 mb-0">${{ person.get('money', 0) }}</p>
+        </div>
+      </section>
+
+      <section
+        class="card shadow-sm mt-4"
+        aria-labelledby="transactions-heading"
+      >
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3" id="transactions-heading">Recent transactions</h2>
+
+          {% set transactions = recent_transactions if recent_transactions is defined else [] %}
+          {% if transactions %}
+            <div class="list-group list-group-flush">
+              {% for transaction in transactions[:10] %}
+                {% set from_person = transaction.get_from_person() if transaction.get_from_person is defined else none %}
+                {% set to_person = transaction.get_to_person() if transaction.get_to_person is defined else none %}
+                <div class="list-group-item px-0">
+                  <div
+                    class="d-flex justify-content-between align-items-start gap-3"
+                  >
+                    <div>
+                      <div class="fw-semibold">
+                        {% if transaction.to_id == person.id %}
+                          From
+                          {{ from_person.name if from_person else 'someone' }}
+                        {% elif transaction.from_id == person.id %}
+                          To {{ to_person.name if to_person else 'someone' }}
+                        {% else %}
+                          {{ transaction.message }}
+                        {% endif %}
+                      </div>
+                      <div class="text-muted small">
+                        {{ transaction.message }}
+                      </div>
+                    </div>
+                    <div
+                      class="fw-semibold {% if transaction.to_id == person.id %}text-success{% else %}text-danger{% endif %}"
+                    >
+                      {% if transaction.to_id == person.id %}+{% else %}-{% endif %}${{ transaction.amount }}
+                    </div>
+                  </div>
+                  <div class="text-muted small mt-1">
+                    {{ transaction.get_dt_usertz().isoformat() }}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No recent transactions yet.</p>
+          {% endif %}
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const sendMoneyForm = document.getElementById("send-money-form");
+      const sendMoneyStatus = document.getElementById("send-money-status");
+
+      if (sendMoneyForm) {
+        sendMoneyForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const formData = new FormData(sendMoneyForm);
+          sendMoneyStatus.className = "mt-3 mb-0 alert alert-light border";
+          sendMoneyStatus.textContent = "Sending...";
+
+          try {
+            const response = await fetch(sendMoneyForm.action, {
+              method: "POST",
+              body: formData,
+              credentials: "same-origin",
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+              sendMoneyStatus.className = "mt-3 mb-0 alert alert-success";
+              sendMoneyStatus.textContent = "Money sent successfully.";
+              window.location.reload();
+              return;
+            }
+
+            sendMoneyStatus.className = "mt-3 mb-0 alert alert-danger";
+            sendMoneyStatus.textContent =
+              data.error || "Something went wrong while sending money.";
+          } catch (error) {
+            sendMoneyStatus.className = "mt-3 mb-0 alert alert-danger";
+            sendMoneyStatus.textContent =
+              "Something went wrong while sending money.";
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
