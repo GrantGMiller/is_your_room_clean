@@ -37,6 +37,30 @@
             {% set rooms_clean.value = false %}
           {% endif %}
         {% endfor %}
+        <section class="card shadow-sm mt-4">
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="nintendo-playtime-heading">
+              {{ money_name }}
+            </h2>
+            <p class="mb-2 playtime-label" role="status">
+              ${{ person.get('money', 0) }}
+            </p>
+            <button
+              class="btn btn-primary"
+              id="send-money-button"
+              onclick="window.location='/money/send/{{ person.id }}'"
+            >
+              Send Money
+            </button>
+            <button
+              class="btn btn-primary"
+              id="send-money-button"
+              onclick="window.location='/money/send/{{ person.id }}'"
+            >
+              View Transactions
+            </button>
+          </div>
+        </section>
         <section
           class="card shadow-sm mt-4"
           id="person-nintendo-playtime"

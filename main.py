@@ -3,7 +3,7 @@ import json
 import os
 import sys
 import time
-from typing import Optional
+from typing import Optional, List
 
 import flask_login
 from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session
@@ -13,7 +13,7 @@ from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
 import config
-from feature_chores.models import Person
+from feature_chores.models import Person, get_user_local_dt_from_utc
 import migrate_helper
 import repeat_jobs
 from feature_chores import setup as setup_chores
@@ -570,7 +570,8 @@ def inject_app_values():
         },
         'app_name': getattr(config, 'APP_NAME', '{{ app_name }}'),
         'app_url': getattr(config, 'APP_URL', '/'),
-    }
+        'money_name': getattr(config, 'MONEY_NAME', 'ChoreBucks'),
+     }
 
 
 @app.route('/favicon.ico')
@@ -602,6 +603,15 @@ def get_user(user_id) -> Optional[RingUser]:
         user = app.db.FindOne(RingUser, id=user_id)
         return user
 app.get_user = get_user
+
+def get_all_user_persons() -> List[Person]:
+    with app.app_context():
+        user = get_current_user().get_ring_user()
+        persons = app.db.FindAll(Person, owner_id=user['id'])
+        return persons
+app.get_all_user_persons = get_all_user_persons
+
+app.get_user_local_dt_from_utc = get_user_local_dt_from_utc
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

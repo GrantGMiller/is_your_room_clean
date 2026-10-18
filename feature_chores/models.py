@@ -1,13 +1,16 @@
 import calendar
+from curses import flash
 import datetime
 import json
 import random
+import time
 from typing import Dict, List, Literal, Optional, cast
 
 import pytz
 from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
+from feature_money.models import MoneyTransaction
 from slack import send_slack_error
 
 ChoreKind = Literal["one-time", "repeat"]
@@ -79,6 +82,40 @@ class Person(BaseTable):
                 num += 1
         return num
 
+    def add_money(self, amount: int,  message: str,from_person_id: int = None):
+        self['money'] = (self.get('money', 0) or 0) + amount
+        self.app.db.New(
+            MoneyTransaction,
+            from_id=from_person_id,
+            to_id=self['id'],
+            amount=amount,
+            timestamp=time.time(),
+            message=message
+        )
+        if from_person_id is not None:
+            from_person = self.app.get_person(from_person_id)
+            if from_person:
+                from_person['money'] = (from_person.get('money', 0) or 0) - amount
+
+    def send_money(self, amount: int, message: str, to_person_id: int=None):
+        new_money = (self.get('money', 0) or 0) - amount
+        if new_money < 0:
+            flash('You do not have enough money')
+            return
+        
+        self['money'] = new_money
+        self.app.db.New(
+            MoneyTransaction,
+            from_id=self['id'],
+            to_id=to_person_id,
+            amount=amount,
+            timestamp=time.time(),
+            message=message
+        )
+        if to_person_id is not None:
+            other_person = self.app.get_person(to_person_id)
+            if other_person:
+                other_person['money'] = (other_person.get('money', 0) or 0) + amount
 
 Assignees = List[Person]
 
