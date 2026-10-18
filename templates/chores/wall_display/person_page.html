@@ -29,6 +29,39 @@
         </a>
       </div>
       {% set device_name = person.get('nintendo_device_name') %}
+      <section
+        class="card shadow-sm mt-4"
+        aria-labelledby="person-progress-heading"
+      >
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3" id="person-progress-heading">
+            Progress and stickers
+          </h2>
+          <p class="mb-3">
+            Chores completed:
+            <strong>{{ person.get('num_of_completed_chores', 0) or 0 }}</strong>
+          </p>
+          <p class="mb-0">
+            Stickers:
+            <strong>
+              {{ person.get_stickers() | join(' ') or 'No stickers yet' }}
+            </strong>
+          </p>
+          <button
+            class="btn btn-outline-primary mt-3"
+            id="view-sticker-archive-button"
+            type="button"
+          >
+            View sticker archive
+          </button>
+          <p
+            id="sticker-archive-error"
+            class="text-danger mt-3 mb-0"
+            role="alert"
+            hidden
+          ></p>
+        </div>
+      </section>
       {% if device_name %}
         {% set nintendo_time = person.get('nintendo_time', 0) | float %}
         {% set rooms_clean = namespace(value=true) %}
@@ -267,6 +300,33 @@
       </section>
     </main>
 
+    <div
+      class="modal fade"
+      id="stickerArchiveModal"
+      tabindex="-1"
+      aria-labelledby="stickerArchiveModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="stickerArchiveModalLabel">
+              Sticker archive
+            </h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="sticker-archive-content" class="fs-2 mb-0"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       const colorPreview = document.getElementById("person-color-preview");
       const colorPreviewList = document.getElementById("color-preview-list");
@@ -274,6 +334,47 @@
       const personAddTimeForm = document.getElementById("person-add-time-form");
       const tradeTimeButton = document.getElementById("trade-time-button");
       const tradeTimeStatus = document.getElementById("trade-time-status");
+      const stickerArchiveButton = document.getElementById(
+        "view-sticker-archive-button",
+      );
+      const stickerArchiveError = document.getElementById(
+        "sticker-archive-error",
+      );
+      const stickerArchiveContent = document.getElementById(
+        "sticker-archive-content",
+      );
+      const stickerArchiveModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById("stickerArchiveModal"),
+      );
+
+      stickerArchiveButton.addEventListener("click", async function () {
+        stickerArchiveButton.disabled = true;
+        stickerArchiveError.hidden = true;
+        try {
+          const response = await fetch(
+            "/wall_display/person/{{ person.id }}/sticker_archive",
+          );
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || "Unable to load sticker archive.");
+          }
+          if (
+            !Array.isArray(result.stickers) ||
+            result.stickers.some((sticker) => typeof sticker !== "string")
+          ) {
+            throw new Error("The sticker archive response is invalid.");
+          }
+          stickerArchiveContent.textContent =
+            result.stickers.join(" ") || "No archived stickers yet.";
+          stickerArchiveModal.show();
+        } catch (error) {
+          console.error("Failed to load sticker archive", error);
+          stickerArchiveError.textContent = error.message;
+          stickerArchiveError.hidden = false;
+        } finally {
+          stickerArchiveButton.disabled = false;
+        }
+      });
 
       if (tradeTimeButton) {
         tradeTimeButton.addEventListener("click", async function () {

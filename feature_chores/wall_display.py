@@ -61,6 +61,22 @@ def setup(a: Flask):
             minimum_cleanliness=minimum_cleanliness,
         )
 
+    @app.route('/wall_display/person/<int:person_id>/sticker_archive')
+    def wall_display_sticker_archive(person_id):
+        person = get_current_user_person(person_id)
+        if not person:
+            return jsonify({"error": "Person not found"}), 404
+        if session.get('person_id') != person_id:
+            return jsonify({"error": "PIN required"}), 403
+
+        sticker_archive = person.Get('sticker_archive', []) or []
+        if not isinstance(sticker_archive, list) or any(
+            not isinstance(sticker, str) for sticker in sticker_archive
+        ):
+            return jsonify({"error": "Invalid sticker archive"}), 500
+
+        return jsonify({"stickers": sticker_archive})
+
     @app.route('/wall_display/add_nintendo_time/<int:person_id>', methods=['POST'])
     def wall_display_add_nintendo_time(person_id):
         person = get_current_user_person(person_id)

@@ -50,21 +50,16 @@ class Person(BaseTable):
     money: int = 0
     sticker_credits: int = 0
     stickers: List[str] = []
+    sticker_archive: List[str] = []
     num_of_completed_chores: int = 0
 
     def inc_completed_chore_count(self):
         self['num_of_completed_chores'] = (self.get('num_of_completed_chores', 0) or 0) + 1
         if self['num_of_completed_chores'] % 15 == 0:
             self['sticker_credits'] = (self.get('sticker_credits', 0) or 0) + 1
-            
+
     def get_stickers(self) -> List[str]:
-        stickers = self.get("stickers", []) or []
-        if isinstance(stickers, str):
-            stickers = json.loads(stickers)
-        if not isinstance(stickers, list) or any(
-            not isinstance(sticker, str) for sticker in stickers
-        ):
-            raise ValueError("Person stickers must be a list of strings")
+        stickers = self.Get('stickers', []) or []
         return stickers
 
     def ui_safe(self):
