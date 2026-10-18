@@ -597,5 +597,11 @@ def get_person(person_id) -> Optional[Person]:
         return person
 app.get_person = get_person
 
+def get_user(user_id) -> Optional[RingUser]:
+    with app.app_context():
+        user = app.db.FindOne(RingUser, id=user_id)
+        return user
+app.get_user = get_user
+
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

@@ -107,6 +107,13 @@
           </form>
         </div>
       </section>
+      {% if current_user.email in enabled_features.admins %}
+        <button
+          onclick="window.location = '/chores/clear_completed'"
+        >
+          Clear completed chores
+        </button>
+      {% endif %}
     </main>
     <script>
       const settingsForm = document.getElementById("chore-settings-form");

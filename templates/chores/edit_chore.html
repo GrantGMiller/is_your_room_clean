@@ -331,6 +331,18 @@
             </div>
           {% endfor %}
         </fieldset>
+
+        <div class="mt-4">
+        <label class="form-label h5 mb-3" for="chore-reward">Reward for completing this chore</label>
+        <input
+          class="form-control"
+          type='currency'
+          min="0"
+          id="chore-reward"
+          name="reward"
+          value="{{ chore.get('reward', '') or '' }}"
+        />
+        </div>
         <div class="mt-4">
           <label class="form-label h5 mb-3" for="chore-tags">Tags</label>
           <div class="d-flex flex-wrap gap-2 mb-2" id="tag-list">
@@ -360,6 +372,8 @@
             value="{{ (chore.Get('tags', []) or []) | join(', ') }}"
           />
         </div>
+
+
       </form>
 
       <div class="d-flex justify-content-between align-items-center mt-4">

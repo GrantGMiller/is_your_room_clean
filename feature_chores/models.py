@@ -99,6 +99,7 @@ class Chore(BaseTable):
     job_id: Optional[int] = None
     last_completed: LastCompleted
     enabled: bool
+    reward: int = 0 # money reward for completing this chore
 
     def ui_safe(self):
         ret = {
@@ -120,6 +121,7 @@ class Chore(BaseTable):
             "assignment_job_id": self.get('job_id', None),
             "last_completed": self.get('last_completed', {}),
             'enabled': self.get('enabled', False),
+            'reward': self.get('reward', 0),
         }
 
         return ret

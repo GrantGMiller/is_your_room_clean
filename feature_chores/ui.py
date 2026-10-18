@@ -11,7 +11,7 @@ from flask import Flask, session,flash, redirect, render_template, request, json
 from flask_dictabase import Dictabase
 
 import config
-from feature_chores import helpers
+from feature_chores import clear_completed_chores, helpers
 from feature_chores import update_job_clear_completed_chores
 from feature_chores import wizard
 from feature_chores.models import (
@@ -152,9 +152,13 @@ def setup(a: Flask):
                 "repeat_time",
                 "repeat_units",
                 "assignment_mode",
+                "reward"
             ]:
                 if key in request.form:
-                    chore[key] = request.form.get(key)
+                    if key in ['reward']:
+                        chore[key] = int(request.form.get(key, 0))
+                    else:
+                        chore[key] = request.form.get(key)
 
             if "repeat_time_of_day" in request.form:
                 chore.Set(
@@ -437,3 +441,15 @@ def setup(a: Flask):
             chores=helpers.get_chores(ring_user),
 
         )
+
+    @app.route('/chores/clear_completed')
+    def chores_clear_completed():
+        print('chores_clear_completed called')
+        user = app.get_current_user()
+        if not user:
+            flash('You must be logged in to clear completed chores.', 'danger')
+            return redirect('/')
+
+        clear_completed_chores(user['id'])
+        flash('Completed chores have been cleared.', 'success')
+        return redirect('/chores/settings')

@@ -5,7 +5,7 @@ from typing import cast
 from flask import Flask
 from flask_jobs import Job, JobScheduler
 
-from feature_chores.models import Person, get_utc_from_users_time
+from feature_chores.models import Person, get_user_local_dt_from_utc, get_utc_from_users_time
 from feature_chores.helpers import get_chores
 from feature_chores.wall_display import setup as setup_wall_display
 from feature_nintendo.rewards import give_nintendo_reward
@@ -32,34 +32,35 @@ def update_job_clear_completed_chores(user):
         if existing_job:
             existing_job.Delete()
 
-        startDT = datetime.datetime.now(datetime.timezone.utc)
-        startDT = datetime.datetime.combine(startDT, time_obj_usertz)
+        start_dt_utc = datetime.datetime.now(datetime.timezone.utc)
+        start_dt_usertz = get_user_local_dt_from_utc(start_dt_utc, user)
+        start_dt_usertz = datetime.datetime.combine(start_dt_usertz, time_obj_usertz)
         # move this job back a bit so that it doesnt overlap
         #  the assignment job(s)
-        startDT = startDT - datetime.timedelta(minutes=5)
+        start_dt_usertz -=  datetime.timedelta(minutes=5)
+        
+        start_dt_utc = get_utc_from_users_time(start_dt_usertz, user)
 
-        startDT = get_utc_from_users_time(startDT, user)
-        print('startDT utc=', startDT   )
+
+        print('start_dt_utc=', start_dt_utc)
         
         app.jobs = cast(JobScheduler, app.jobs)
         new_job = app.jobs.RepeatJob(
-            startDT=startDT,
+            startDT=start_dt_utc,
             name=job_name,
             func=clear_completed_chores,
             args=(user['id'],),
             days=1
        )
-        print('46 new job created', new_job)
+        print('46 new job created', new_job['name'], new_job['startDT'])
 
 def clear_completed_chores(user_id:int):
     '''
     Unsassign and clear the completed_by for all chores
     '''
-    from ring.user import RingUser
 
     print('clear_completed_chores called')
     with app.app_context():
-        user:RingUser = app.db.FindOne(RingUser, id=user_id)
 
         # keep track of how many chores each person completed
         # if they have completed X num of chores give them a reward 
@@ -67,6 +68,7 @@ def clear_completed_chores(user_id:int):
             #Person()['id']: int(num_chores_completed)
         }
         
+        user = app.get_user(user_id)
         if user:
             user = user.get_ring_user()
             for chore in get_chores(user):
@@ -75,8 +77,12 @@ def clear_completed_chores(user_id:int):
                     if person:
                         chore.unassign(person)
                         num_chores_complted[person['id']] = num_chores_complted.get(person['id'], 0) + 1
-                    chore.clear_completed_by()
-                    chore.refresh_scheduled_job()
+                        print('chore.reward=', chore['reward'])
+                        if chore.get('reward', 0):
+                            person['money'] = (person.get('money', 0) or 0) + int(chore['reward'])
+                            print('new_money=', person['money'])
+                chore.clear_completed_by()
+                chore.refresh_scheduled_job()
 
         print('81 num_chores_completed', num_chores_complted)
         give_nintendo_reward(user_id, num_chores_complted)
