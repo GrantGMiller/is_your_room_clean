@@ -76,6 +76,7 @@ def clear_completed_chores(user_id:int):
                     person = app.db.FindOne(Person, id=person_id, owner_id=user['id'])
                     if person:
                         chore.unassign(person)
+                        person.inc_completed_chore_count()
                         num_chores_complted[person['id']] = num_chores_complted.get(person['id'], 0) + 1
                         print('chore.reward=', chore['reward'])
                         if chore.get('reward', 0):

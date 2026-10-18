@@ -118,6 +118,33 @@ def setup(a: Flask):
                                   
         )
 
+    @app.route("/chores/person/<int:person_id>/sticker-credits", methods=["POST"])
+    def update_person_sticker_credits(person_id):
+        user = app.get_current_user()
+        if not user:
+            return jsonify({"error": "authentication required"}), 401
+
+        payload = request.get_json()
+        sticker_credits = (
+            payload.get("sticker_credits") if isinstance(payload, dict) else None
+        )
+        if (
+            isinstance(sticker_credits, bool)
+            or not isinstance(sticker_credits, int)
+            or sticker_credits < 0
+        ):
+            return (
+                jsonify({"error": "sticker_credits must be a non-negative integer"}),
+                400,
+            )
+
+        person = app.db.FindOne(Person, id=person_id, owner_id=user["id"])
+        if person is None:
+            return jsonify({"error": "person not found"}), 404
+
+        person["sticker_credits"] = sticker_credits
+        return jsonify(person.ui_safe())
+
     @app.route("/chores/person/delete", methods=["POST"])
     def delete_person():
         person_id = request.args.get("id", type=int)

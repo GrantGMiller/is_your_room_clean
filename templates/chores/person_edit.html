@@ -88,8 +88,31 @@
         />
         
         
+        {% if mode == 'edit' %}
+          <div class="mt-3">
+            <label class="form-label fw-semibold" for="person-sticker-credits">
+              Sticker credits
+            </label>
+            <input
+              class="form-control"
+              type="number"
+              id="person-sticker-credits"
+              min="0"
+              step="1"
+              value="{{ person.get('sticker_credits', 0) or 0 }}"
+            />
+            <div
+              id="sticker-credit-status"
+              class="form-text"
+              role="status"
+              aria-live="polite"
+            ></div>
+          </div>
+        {% endif %}
+
         <hr>
         <a href="/wall_display/clear_pin/{{ person.id }}" class='btn btn-primary'>Clear PIN</a>
+        
         <hr>
         <div class="mt-3">
           <label class="form-label fw-semibold" for="nintendo-device">
@@ -241,6 +264,42 @@
                 console.error('Error updating ChoreBucks:', error);
               });
           }
+      {% if mode == 'edit' %}
+        const stickerCredits = document.getElementById("person-sticker-credits");
+        const stickerCreditStatus = document.getElementById("sticker-credit-status");
+
+        async function updateStickerCredits(input) {
+          const value = input.valueAsNumber;
+          if (!Number.isInteger(value) || value < 0) {
+            stickerCreditStatus.textContent = "Enter a non-negative whole number.";
+            return;
+          }
+
+          stickerCreditStatus.textContent = "Saving...";
+          try {
+            const response = await fetch(
+              `/chores/person/{{ person.id }}/sticker-credits`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sticker_credits: value }),
+              },
+            );
+            if (!response.ok) {
+              throw new Error(`Request failed with status ${response.status}`);
+            }
+            await response.json();
+            stickerCreditStatus.textContent = "Saved.";
+          } catch (error) {
+            console.error("Error updating sticker credits:", error);
+            stickerCreditStatus.textContent = "Could not update sticker credits.";
+          }
+        }
+
+        stickerCredits.addEventListener("change", () =>
+          updateStickerCredits(stickerCredits),
+        );
+      {% endif %}
       const personForm = document.querySelector("form");
       const personName = document.getElementById("person-name");
       const nintendoDevice = document.getElementById("nintendo-device");

@@ -93,6 +93,17 @@
                   </span>
                 </button>
               {% endif %}
+              {% if person.get('sticker_credits', 0) %}
+                <button
+                  class="btn btn-lg sticker-picker-button"
+                  type="button"
+                  data-person-id="{{ person['id'] }}"
+                  data-sticker-credits="{{ person.get('sticker_credits', 0) }}"
+                  aria-label="Choose {{ person.get('sticker_credits', 0) }} stickers for {{ person.name }}"
+                >
+                  😀
+                </button>
+              {% endif %}
               <button
                 class="accordion-button collapsed bg-{{ person.get('color', 'primary') }}-subtle fw-bold fs-5 flex-grow-1"
                 type="button"
@@ -104,18 +115,21 @@
                 {{ person.name }}
                 {% if undone_count.value == 0 %}
                   <span
-                    class="badge text-bg-success ms-2 undone-count-badge"
+                    class="badge text-bg-success ms-2 undone-count-badge mr-2"
                     data-undone-count="0"
                     >ALL DONE</span
                   >
                 {% else %}
                   <span
-                    class="badge text-bg-secondary ms-2 undone-count-badge"
+                    class="badge text-bg-secondary ms-2 undone-count-badge mr-2"
                     data-undone-count="{{ undone_count.value }}"
                   >
                     {{ undone_count.value }} undone
                   </span>
                 {% endif %}
+                <span class="ml-1" id="{{ person.id }}_stickers"></span>
+                  {{ person.get_stickers() | join(' ') }}</span
+                >
               </button>
             </div>
             <div
@@ -195,6 +209,50 @@
       </div>
     </main>
 
+    <div
+      class="modal fade"
+      id="stickerPickerModal"
+      tabindex="-1"
+      aria-labelledby="stickerPickerModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="stickerPickerModalLabel">
+              Choose stickers
+            </h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p id="sticker-picker-instructions" class="mb-3"></p>
+            <div
+              id="sticker-picker-options"
+              class="d-flex flex-wrap justify-content-center gap-2"
+            ></div>
+            <p
+              id="sticker-picker-status"
+              class="mt-3 mb-0"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p
+      id="sticker-save-status"
+      class="container text-danger"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></p>
+
     <script>
       const toggleDeviceCardsButton = document.getElementById(
         "toggle-device-cards",
@@ -208,6 +266,168 @@
         toggleDeviceCardsButton.textContent = isHidden
           ? "Hide Camera Devices"
           : "Show Camera Devices";
+      });
+
+      const stickerPickerModalElement =
+        document.getElementById("stickerPickerModal");
+      const stickerPickerModal = new bootstrap.Modal(stickerPickerModalElement);
+      const stickerPickerInstructions = document.getElementById(
+        "sticker-picker-instructions",
+      );
+      const stickerPickerOptions = document.getElementById(
+        "sticker-picker-options",
+      );
+      const stickerPickerStatus = document.getElementById(
+        "sticker-picker-status",
+      );
+      const stickerSaveStatus = document.getElementById("sticker-save-status");
+      let activeStickerButton;
+      let stickerChoices = [];
+      let selectedStickerIndexes = [];
+      let stickerPickerRequestId = 0;
+      let savingStickers = false;
+
+      document.querySelectorAll(".sticker-picker-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!savingStickers) {
+            openStickerPicker(button);
+          }
+        });
+      });
+
+      async function openStickerPicker(button) {
+        activeStickerButton = button;
+        stickerChoices = [];
+        selectedStickerIndexes = [];
+        const credits = Number(button.dataset.stickerCredits);
+        const requestId = ++stickerPickerRequestId;
+        stickerPickerInstructions.textContent = `Select ${credits} sticker${credits === 1 ? "" : "s"}.`;
+        stickerPickerOptions.replaceChildren();
+        stickerPickerStatus.textContent = "Loading stickers...";
+        stickerSaveStatus.hidden = true;
+        activeStickerButton.disabled = true;
+        stickerPickerModal.show();
+
+        try {
+          const response = await fetch("/stickers/random_emoji/10");
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+          stickerChoices = await response.json();
+          if (!Array.isArray(stickerChoices) || stickerChoices.length !== 10) {
+            throw new Error(
+              "The sticker service returned an invalid response.",
+            );
+          }
+          if (requestId !== stickerPickerRequestId) {
+            return;
+          }
+          if (credits > stickerChoices.length) {
+            throw new Error("There are more credits than available choices.");
+          }
+          stickerPickerStatus.textContent = "";
+          renderStickerChoices(credits);
+        } catch (error) {
+          if (requestId !== stickerPickerRequestId) {
+            return;
+          }
+          console.error("Error loading sticker choices:", error);
+          stickerPickerStatus.textContent =
+            "Could not load sticker choices. Close and try again.";
+        }
+      }
+
+      function renderStickerChoices(credits) {
+        stickerPickerOptions.replaceChildren();
+        stickerChoices.forEach((sticker, index) => {
+          const choice = document.createElement("button");
+          choice.type = "button";
+          choice.className = "btn btn-outline-secondary fs-2";
+          choice.textContent = sticker;
+          choice.setAttribute("aria-pressed", "false");
+          choice.addEventListener("click", () => {
+            const selectedIndex = selectedStickerIndexes.indexOf(index);
+            if (selectedIndex !== -1) {
+              selectedStickerIndexes.splice(selectedIndex, 1);
+              choice.classList.remove("btn-primary");
+              choice.classList.add("btn-outline-secondary");
+              choice.setAttribute("aria-pressed", "false");
+              stickerPickerStatus.textContent = `${selectedStickerIndexes.length} of ${credits} selected.`;
+              return;
+            }
+            if (selectedStickerIndexes.length >= credits) {
+              return;
+            }
+
+            selectedStickerIndexes.push(index);
+            choice.classList.remove("btn-outline-secondary");
+            choice.classList.add("btn-primary");
+            choice.setAttribute("aria-pressed", "true");
+            stickerPickerStatus.textContent = `${selectedStickerIndexes.length} of ${credits} selected.`;
+            if (selectedStickerIndexes.length === credits) {
+              stickerPickerModal.hide();
+              saveSelectedStickers(activeStickerButton.dataset.personId);
+            }
+          });
+          stickerPickerOptions.append(choice);
+        });
+        stickerPickerStatus.textContent = `0 of ${credits} selected.`;
+      }
+
+      async function saveSelectedStickers(personId) {
+        const button = activeStickerButton;
+        const stickers = selectedStickerIndexes.map(
+          (index) => stickerChoices[index],
+        );
+        savingStickers = true;
+        document
+          .querySelectorAll(".sticker-picker-button")
+          .forEach((pickerButton) => {
+            pickerButton.disabled = true;
+          });
+        try {
+          const response = await fetch(`/stickers/add/${personId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stickers }),
+          });
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+          await response.json();
+          const stickerList = document.getElementById(`${personId}_stickers`);
+          stickerList.textContent = [
+            stickerList.textContent.trim(),
+            ...stickers,
+          ]
+            .filter(Boolean)
+            .join(" ");
+          button.remove();
+          stickerSaveStatus.hidden = true;
+        } catch (error) {
+          console.error("Error adding stickers:", error);
+          stickerSaveStatus.textContent =
+            "Could not save stickers. Please select them again and retry.";
+          stickerSaveStatus.hidden = false;
+        } finally {
+          savingStickers = false;
+          document
+            .querySelectorAll(".sticker-picker-button")
+            .forEach((pickerButton) => {
+              pickerButton.disabled = false;
+            });
+        }
+      }
+
+      stickerPickerModalElement.addEventListener("hidden.bs.modal", () => {
+        stickerPickerRequestId += 1;
+        if (
+          !savingStickers &&
+          activeStickerButton &&
+          activeStickerButton.isConnected
+        ) {
+          activeStickerButton.disabled = false;
+        }
       });
 
       function completeChore(button) {

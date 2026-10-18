@@ -48,6 +48,24 @@ class Person(BaseTable):
     owner_id: int
     nintendo_device_name: Optional[str] = None
     money: int = 0
+    sticker_credits: int = 0
+    stickers: List[str] = []
+    num_of_completed_chores: int = 0
+
+    def inc_completed_chore_count(self):
+        self['num_of_completed_chores'] = (self.get('num_of_completed_chores', 0) or 0) + 1
+        if self['num_of_completed_chores'] % 15 == 0:
+            self['sticker_credits'] = (self.get('sticker_credits', 0) or 0) + 1
+            
+    def get_stickers(self) -> List[str]:
+        stickers = self.get("stickers", []) or []
+        if isinstance(stickers, str):
+            stickers = json.loads(stickers)
+        if not isinstance(stickers, list) or any(
+            not isinstance(sticker, str) for sticker in stickers
+        ):
+            raise ValueError("Person stickers must be a list of strings")
+        return stickers
 
     def ui_safe(self):
         ret = {
@@ -57,7 +75,10 @@ class Person(BaseTable):
             "owner_id": self.get("owner_id", None),
             "nintendo_device_name": self.get("nintendo_device_name", None),
             "nintendo_time": self.get('nintendo_time', 0) or 0,
-            "money": self.get('money', 0) or 0
+            "money": self.get('money', 0) or 0,
+            "sticker_credits": self.get('sticker_credits', 0) or 0,
+            "num_of_completed_chores": self.get('num_of_completed_chores', 0) or 0,
+            "stickers": self.get_stickers(),
         }
         return ret
 
