@@ -140,7 +140,14 @@
                       <div
                         class="list-group-item chore-list-item d-flex justify-content-between align-items-center gap-3"
                       >
-                        <span>{{ chore.get('name', 'Unnamed chore') }}</span>
+                        <span
+                          >{{ chore.get('name', 'Unnamed chore') }}
+                          {% if chore['reward'] %}
+                            <span class="badge text-bg-success"
+                              >${{ chore['reward'] }}</span
+                            >
+                          {% endif %}
+                        </span>
 
                         {% set is_completed = person['id'] in chore.Get('completed_by', []) %}
                         <div>
