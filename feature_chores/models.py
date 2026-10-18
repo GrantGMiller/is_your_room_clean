@@ -44,6 +44,7 @@ class Person(BaseTable):
     color: Optional[PersonColor] = "primary"
     owner_id: int
     nintendo_device_name: Optional[str] = None
+    money: int = 0
 
     def ui_safe(self):
         ret = {
@@ -52,7 +53,8 @@ class Person(BaseTable):
             "color": self.get("color", None),
             "owner_id": self.get("owner_id", None),
             "nintendo_device_name": self.get("nintendo_device_name", None),
-            "nintendo_time": self.get('nintendo_time', 0)
+            "nintendo_time": self.get('nintendo_time', 0) or 0,
+            "money": self.get('money', 0) or 0
         }
         return ret
 

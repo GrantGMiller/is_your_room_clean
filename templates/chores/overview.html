@@ -66,13 +66,13 @@
                       <div class="display-6 lh-1">
                         {{ person.get_number_of_chores_assigned() }}
                       </div>
-                      <div class="text-muted small">assigned</div>
+                      <div class="text-muted small">chores assigned</div>
                     </div>
                     <div class="text-end">
                       <div class="display-6 lh-1">
-                        {{ person.get_number_of_chores_incomplete() }}
+                        ${{ person.get('money', 0) or 0 }}
                       </div>
-                      <div class="text-muted small">incomplete</div>
+                      <div class="text-muted small">ChoreBucks</div>
                     </div>
                   </div>
                 </div>

@@ -188,7 +188,7 @@ def setup(a: Flask):
         return render_template(
             "chores/edit_chore.html",
             chore=chore,
-            user=get_current_user(),
+            user=app.get_current_user(),
             persons=helpers.get_current_user_persons(),
             get_user_local_dt_from_utc=get_user_local_dt_from_utc,
         )
@@ -374,7 +374,7 @@ def setup(a: Flask):
             persons=helpers.get_current_user_persons(),
             chores=helpers.get_current_user_chores(),
             now=datetime.datetime.now(datetime.timezone.utc),
-            ring_user=get_current_user()
+            ring_user=app.get_current_user()
         )
 
     @app.route('/chores/wall_display', methods=['GET'])

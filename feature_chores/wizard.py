@@ -17,7 +17,7 @@ def setup(app: Flask):
             chore_fields = {
                 "name": request.form.get("name", "").strip(),
                 "kind": kind,
-                "enable": True,
+                "enabled": True,
             }
 
             if kind == "one-time":
@@ -36,7 +36,7 @@ def setup(app: Flask):
 
             chore = app.db.New(
                 Chore,
-                owner_id=get_current_user()["id"],
+                owner_id=app.get_current_user()["id"],
                 **chore_fields
             )
             if kind == "repeat":
@@ -71,5 +71,5 @@ def setup(app: Flask):
         return render_template(
             "chores/wizard_2.html",
             chore=chore,
-            persons=get_current_user_persons(),
+            persons=app.get_current_user_persons(),
         )

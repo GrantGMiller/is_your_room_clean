@@ -72,6 +72,23 @@
           required
         />
         <hr>
+        <label class="form-label fw-semibold" for="person-money">
+          ChoreBucks
+        </label>
+        <input
+          class="form-control"
+          type="number"
+          name="money"
+          id="person-money"
+          min="0"
+          step="1"
+          value="{{ person.get('money', 0) or 0}}"
+          required
+          onchange="updateChoreBucks(this.value)"
+        />
+        
+        
+        <hr>
         <a href="/wall_display/clear_pin/{{ person.id }}" class='btn btn-primary'>Clear PIN</a>
         <hr>
         <div class="mt-3">
@@ -214,6 +231,16 @@
       {% endif %}
     </main>
     <script>
+          function updateChoreBucks(value) {
+            fetch(`/money/set/{{ person.id }}/${value}`)
+              .then(response => response.json())
+              .then(data => {
+                console.log('Updated ChoreBucks:', data);
+              })
+              .catch(error => {
+                console.error('Error updating ChoreBucks:', error);
+              });
+          }
       const personForm = document.querySelector("form");
       const personName = document.getElementById("person-name");
       const nintendoDevice = document.getElementById("nintendo-device");

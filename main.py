@@ -21,6 +21,7 @@ from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
 from feature_email import setup as setup_email
 from feature_nintendo import setup as setup_nintendo
+from feature_money import setup as setup_money
 from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
 from ring.user import RingUser, RingImage, setup as ring_user_setup, get_snapshots_for_user_id
@@ -48,6 +49,7 @@ api.setup(app)
 repeat_jobs.setup(app)
 ui.setup(app)
 setup_chores(app)
+setup_money(app)
 if getattr(config, 'ENABLE_NINTENDO', False):
     setup_nintendo(app)
 
