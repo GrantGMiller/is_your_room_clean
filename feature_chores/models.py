@@ -285,7 +285,7 @@ class Chore(BaseTable):
                 return None
         else:
             if self.get('assignment_mode') == 'all':
-                isos = filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values())
+                isos = list(filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values()))
                 
                 send_slack_message("290 isos=", isos)
                 if len(list(isos)) == 0:
@@ -296,7 +296,7 @@ class Chore(BaseTable):
                 )
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
             elif self.get('assignment_mode') == 'first-done':
-                isos = filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values())        
+                isos = list(filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values()))
                 send_slack_message("299 isos=", isos)
                 if len(list(isos)) == 0:
                     send_slack_message('300 return None')
