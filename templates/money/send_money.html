@@ -16,7 +16,7 @@
       >
         <div>
           <p class="text-uppercase text-muted small fw-semibold mb-2">Money</p>
-          <h1 class="h2 mb-1">Send {{ money_name }}</h1>
+          <h1 class="h2 mb-1">Send {{ money_name }} - {{ person.name }}</h1>
           <p class="text-muted mb-0">
             Send {{ money_name }} to another person in your home.
           </p>
@@ -112,25 +112,26 @@
         <div class="card-body p-4">
           <h2 class="h5 mb-3" id="transactions-heading">Recent transactions</h2>
 
-          {% set transactions = recent_transactions if recent_transactions is defined else [] %}
+          {% set transactions = recent_transactions or [] %}
           {% if transactions %}
             <div class="list-group list-group-flush">
-              {% for transaction in transactions[:10] %}
-                {% set from_person = transaction.get_from_person() if transaction.get_from_person is defined else none %}
-                {% set to_person = transaction.get_to_person() if transaction.get_to_person is defined else none %}
+              {% for transaction in transactions[:100] %}
+                {% set from_person = transaction.get_from_person() or none %}
+                {% set to_person = transaction.get_to_person() or none %}
                 <div class="list-group-item px-0">
                   <div
                     class="d-flex justify-content-between align-items-start gap-3"
                   >
                     <div>
                       <div class="fw-semibold">
-                        {% if transaction.to_id == person.id %}
-                          From
-                          {{ from_person.name if from_person else 'someone' }}
-                        {% elif transaction.from_id == person.id %}
-                          To {{ to_person.name if to_person else 'someone' }}
+                        {% if transaction.get('to_id')|int == person['id']|int %}
+                          From {{ transaction.get_from_name() }}
+                        {% elif transaction.get('from_id')|int == person['id']|int %}
+                          To {{ transaction.get_to_name() }}
                         {% else %}
-                          {{ transaction.message }}
+                          From id={{ transaction.get('from_id') }} To
+                          id={{ transaction.get('to_id') }} - Person
+                          id={{ person.id }}
                         {% endif %}
                       </div>
                       <div class="text-muted small">
@@ -138,9 +139,9 @@
                       </div>
                     </div>
                     <div
-                      class="fw-semibold {% if transaction.to_id == person.id %}text-success{% else %}text-danger{% endif %}"
+                      class="fw-semibold {% if transaction.get('to_id')|int == person['id']|int %}text-success{% else %}text-danger{% endif %}"
                     >
-                      {% if transaction.to_id == person.id %}+{% else %}-{% endif %}${{ transaction.amount }}
+                      {% if transaction.get('to_id')|int == person['id']|int %}+{% else %}-{% endif %}${{ transaction.amount }}
                     </div>
                   </div>
                   <div class="text-muted small mt-1">

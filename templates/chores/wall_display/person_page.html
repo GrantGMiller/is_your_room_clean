@@ -62,6 +62,34 @@
           ></p>
         </div>
       </section>
+      <section class="card shadow-sm mt-4">
+        <div class="card-body p-4">
+          <h2 class="h5 mb-3" id="nintendo-playtime-heading">
+            {{ money_name }}
+          </h2>
+          <p
+            class="mb-2 playtime-label"
+            id="person-money-balance"
+            role="status"
+          >
+            ${{ person.get('money', 0) }}
+          </p>
+          <button
+            class="btn btn-primary"
+            id="send-money-button"
+            onclick="window.location='/money/send/{{ person.id }}'"
+          >
+            Send Money
+          </button>
+          <button
+            class="btn btn-primary"
+            id="send-money-button"
+            onclick="window.location='/money/send/{{ person.id }}'"
+          >
+            View Transactions
+          </button>
+        </div>
+      </section>
       {% if device_name %}
         {% set nintendo_time = person.get('nintendo_time', 0) | float %}
         {% set rooms_clean = namespace(value=true) %}
@@ -70,34 +98,7 @@
             {% set rooms_clean.value = false %}
           {% endif %}
         {% endfor %}
-        <section class="card shadow-sm mt-4">
-          <div class="card-body p-4">
-            <h2 class="h5 mb-3" id="nintendo-playtime-heading">
-              {{ money_name }}
-            </h2>
-            <p
-              class="mb-2 playtime-label"
-              id="person-money-balance"
-              role="status"
-            >
-              ${{ person.get('money', 0) }}
-            </p>
-            <button
-              class="btn btn-primary"
-              id="send-money-button"
-              onclick="window.location='/money/send/{{ person.id }}'"
-            >
-              Send Money
-            </button>
-            <button
-              class="btn btn-primary"
-              id="send-money-button"
-              onclick="window.location='/money/send/{{ person.id }}'"
-            >
-              View Transactions
-            </button>
-          </div>
-        </section>
+
         <section
           class="card shadow-sm mt-4"
           id="person-nintendo-playtime"
@@ -400,9 +401,7 @@
             tradeTimeStatus.classList.remove("text-danger");
             tradeTimeStatus.classList.add("text-success");
             if (result.nintendo_time <= 0) {
-              document.getElementById(
-                "send-time-to-nintendo-button",
-              )?.remove();
+              document.getElementById("send-time-to-nintendo-button")?.remove();
             }
             if (result.nintendo_time < 60) {
               tradeTimeButton.remove();
@@ -468,9 +467,7 @@
             addTimeStatus.hidden = false;
             addTimeModal.hide();
             if (result.remaining_minutes <= 0) {
-              document
-                .getElementById("send-time-to-nintendo-button")
-                ?.remove();
+              document.getElementById("send-time-to-nintendo-button")?.remove();
             }
             await loadNintendoPlaytime();
           } catch (error) {
