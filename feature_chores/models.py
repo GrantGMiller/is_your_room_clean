@@ -285,7 +285,7 @@ class Chore(BaseTable):
                 return None
         else:
             if self.get('assignment_mode') == 'all':
-                isos = filter(lambda x: x is not None, (self.Get('last_completed', {}) or {}).values())
+                isos = filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values())
                 if len(list(isos)) == 0:
                     return None
                 last_completed_iso = min(
@@ -293,7 +293,7 @@ class Chore(BaseTable):
                 )
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
             elif self.get('assignment_mode') == 'first-done':
-                isos = filter(lambda x: x is not None, (self.Get('last_completed', {}) or {}).values())        
+                isos = filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values())        
                 if len(list(isos)) == 0:
                     return None
                 last_completed_iso = max(
