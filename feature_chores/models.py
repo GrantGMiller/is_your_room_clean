@@ -268,14 +268,18 @@ class Chore(BaseTable):
             else:
                 return None
         else:
-            # return the most recent of all persons
-            completed_dates = list(filter(
-                lambda iso: iso is not None,
-                self.Get('last_completed', {}).values()
-            ))
-            print('200', self['name'], 'completed_dates=', completed_dates)
-            ret_dt_utc = max([datetime.datetime.fromisoformat(iso) for iso in completed_dates], default=None)
-            return ret_dt_utc
+            if self.get('assignment_mode') == 'all':
+                last_completed_iso = min(
+                    (self.Get('last_completed', {}) or {}).values()
+                )
+                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+            elif self.get('assignment_mode') == 'first-done':
+                last_completed_iso = max(
+                    (self.Get('last_completed', {}) or {}).values()
+                )
+                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+            
+            return last_completed_dt_utc
 
     def mark_incomplete_by(self, person_id: int) -> None:
         '''
@@ -341,7 +345,8 @@ class Chore(BaseTable):
         '''
         user_tz = self.user.get('timezone', 'UTC') or 'UTC'
         now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
-
+        now_dt_utc = datetime.datetime.now(datetime.timezone.utc)
+                    
         print('250 get_next_start_dt_utc chore=', self['name'])
         if self.get('kind') == 'one-time':
             dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
@@ -365,19 +370,7 @@ class Chore(BaseTable):
             # if this is a 'all' chore, then get the smallest last completed and schedule this +2 days
             # if this a first-done, then get the largest last completed
         
-            last_completed_dt_utc = None
-            if self.get('assignment_mode') == 'all':
-                last_completed_iso = min(
-                    (self.Get('last_completed', {}) or {}).values()
-                )
-                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
-            elif self.get('assignment_mode') == 'first-done':
-                last_completed_iso = max(
-                    (self.Get('last_completed', {}) or {}).values()
-                )
-                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
-
-            now_dt_utc = datetime.datetime.now(datetime.timezone.utc)
+            last_completed_dt_utc = self.get_last_completed_dt_utc(person_id)
             if not last_completed_dt_utc:
                 return now_dt_utc
 
@@ -388,33 +381,28 @@ class Chore(BaseTable):
                 return next_day_dt_utc
 
         elif self.get('repeat_interval') == 'weekly':
-            repeat_days = self.Get('repeat_day_of_week', []) or []
-            if isinstance(repeat_days, str):
-                repeat_days = [repeat_days]
+            selected_day_names = self.Get('repeat_day_of_week', []) or []
+
+            if not selected_day_names:
+                return None
 
             day_names = [
                 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
             ]
-            repeat_day_indexes = {
-                day_names.index(day) for day in repeat_days if day in day_names
-            }
-            if not repeat_day_indexes:
-                return None
 
-            for day_offset in range(8):
-                target_date_usertz = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
-                if target_date_usertz.weekday() not in repeat_day_indexes:
-                    continue
+            last_completed_dt_utc = self.get_last_completed_dt_utc(person_id)
+            next_dt_utc = last_completed_dt_utc
+            for i in range(7):
+                this_day_index = next_dt_utc.weekday()
+                if day_names[this_day_index] in selected_day_names:
+                    break
+                else:
+                    next_dt_utc += datetime.timedelta(days=1)
 
-                candidates = [
-                    get_utc_from_users_time(
-                        datetime.datetime.combine(target_date_usertz, chore_time), self.user
-                    )
-                    for chore_time in chore_times_usertz
-                ]
-                upcoming = [candidate for candidate in candidates if candidate > now_utc]
-                if upcoming:
-                    return min(upcoming)
+            if next_dt_utc < now_dt_utc:
+                return now_dt_utc
+            else:
+                return next_dt_utc
 
         elif self.get('repeat_interval') == 'other':
             print('324 repeat_interval=', 'other')
