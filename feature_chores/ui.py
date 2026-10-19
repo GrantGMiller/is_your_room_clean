@@ -183,7 +183,7 @@ def setup(a: Flask):
             ]:
                 if key in request.form:
                     if key in ['reward']:
-                        chore[key] = int(request.form.get(key, 0))
+                        chore[key] = int(request.form.get(key, 0) or 0)
                     else:
                         chore[key] = request.form.get(key)
 

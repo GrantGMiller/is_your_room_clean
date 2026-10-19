@@ -79,10 +79,12 @@ def setup(a:Flask):
         amount = request.form.get('amount', type=int)
         if not sender_id or not recipient_id or not amount:
             return jsonify({'error': 'missing sender, recipient, or amount'}), 400
+        
         sender = app.get_person(int(sender_id))
         recipient = app.get_person(recipient_id)
         if not sender or not recipient:
             return jsonify({'error': 'sender or recipient not found'}), 400
+        
         message = (request.form.get('message') or '').strip()
         sender.send_money(
             int(amount),
