@@ -11,7 +11,7 @@ from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
 from feature_money.models import MoneyTransaction
-from slack import send_slack_error
+from slack import send_slack_error, send_slack_message
 
 ChoreKind = Literal["one-time", "repeat"]
 AssignmentMode = Literal["all", "random", "first-done"]
@@ -286,7 +286,10 @@ class Chore(BaseTable):
         else:
             if self.get('assignment_mode') == 'all':
                 isos = filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values())
+                
+                send_slack_message("290 isos=", isos)
                 if len(list(isos)) == 0:
+                    send_slack_message('292 return None')
                     return None
                 last_completed_iso = min(
                     list(isos)
@@ -294,7 +297,9 @@ class Chore(BaseTable):
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
             elif self.get('assignment_mode') == 'first-done':
                 isos = filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values())        
+                send_slack_message("299 isos=", isos)
                 if len(list(isos)) == 0:
+                    send_slack_message('300 return None')
                     return None
                 last_completed_iso = max(
                     list(isos)
