@@ -251,6 +251,22 @@ class Chore(BaseTable):
                 if person['id'] != person_id:
                     self.unassign(person)
 
+    def get_next_chore_time_dt_utc(self, dt_utc: datetime.datetime) -> Optional[datetime.datetime]:
+        dt_usertz = get_user_local_dt_from_utc(dt_utc, self.user)
+        now_usertz = datetime.datetime.now(pytz.timezone(self.user.get('timezone', 'UTC')))
+        chore_times_usertz = self.get_chore_times_usertz()
+        for chore_time_usertz in chore_times_usertz:
+            this_dt_usertz = datetime.combine(
+                dt_usertz.date(),
+                chore_times_usertz
+            )
+            if this_dt_usertz > now_usertz:
+                return get_utc_from_users_time(
+                    this_dt_usertz
+                )
+        else:
+            return dt_utc
+
     def get_last_completed_dt_utc(self, person_id: Optional[int] = None) -> Optional[datetime.datetime]:
         '''
 
@@ -376,9 +392,13 @@ class Chore(BaseTable):
 
             next_day_dt_utc = last_completed_dt_utc + datetime.timedelta(days=1)
             if next_day_dt_utc < now_dt_utc:
-                return now_dt_utc
+                return self.get_next_chore_time_dt_utc(
+                    now_dt_utc
+                    )
             else:
-                return next_day_dt_utc
+                return self.get_next_chore_time_dt_utc(
+                    next_day_dt_utc
+                    )
 
         elif self.get('repeat_interval') == 'weekly':
             selected_day_names = self.Get('repeat_day_of_week', []) or []
@@ -398,26 +418,30 @@ class Chore(BaseTable):
                     break
                 else:
                     next_dt_utc += datetime.timedelta(days=1)
-
+            
             if next_dt_utc < now_dt_utc:
-                return now_dt_utc
+                return self.get_next_chore_time_dt_utc(
+                    now_dt_utc
+                    )
             else:
-                return next_dt_utc
+                return self.get_next_chore_time_dt_utc(
+                    next_dt_utc
+                    )
 
         elif self.get('repeat_interval') == 'other':
             print('324 repeat_interval=', 'other')
-            repeat_every = max(1, int(self.get('repeat_every_number_of', 1) or 1))
-            print('repeat_every=', repeat_every)
+            repeat_every_num_of = max(1, int(self.get('repeat_every_number_of', 1) or 1))
+            print('repeat_every=', repeat_every_num_of)
             target_date_utc = (self.get_last_completed_dt_utc(person_id) or now_utc).date()
             print('target_date_utc=', target_date_utc)
             print('repeat_units=', self.get('repeat_units', ''))
 
             if self.get('repeat_units') == 'day':
-                target_date_utc += datetime.timedelta(days=repeat_every)
+                target_date_utc += datetime.timedelta(days=repeat_every_num_of)
             elif self.get('repeat_units') == 'week':
-                target_date_utc += datetime.timedelta(days=repeat_every * 7)
+                target_date_utc += datetime.timedelta(days=repeat_every_num_of * 7)
             if self.get('repeat_units') == 'month':
-                month_index = target_date_utc.month - 1 + repeat_every
+                month_index = target_date_utc.month - 1 + repeat_every_num_of
                 target_year = target_date_utc.year + month_index // 12
                 target_month = month_index % 12 + 1
                 target_day = min(
@@ -467,6 +491,8 @@ class Chore(BaseTable):
         if isinstance(repeat_times, list):
             return repeat_times
         return []
+
+    
 
     def get_chore_times_usertz(self) -> List[datetime.time]:
         repeat_times = self.get_repeat_time_of_day()
