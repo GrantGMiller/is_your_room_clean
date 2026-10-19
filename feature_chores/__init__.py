@@ -4,6 +4,7 @@ from typing import cast
 
 from flask import Flask
 from flask_jobs import Job, JobScheduler
+from flask_dictabase import Dictabase
 
 from feature_chores.models import Person, get_user_local_dt_from_utc, get_utc_from_users_time
 from feature_chores.helpers import get_chores
@@ -60,6 +61,7 @@ def clear_completed_chores(user_id:int):
     '''
 
     print('clear_completed_chores called')
+    app.db = cast(Dictabase, app.db)
     with app.app_context():
 
         # keep track of how many chores each person completed
@@ -82,6 +84,10 @@ def clear_completed_chores(user_id:int):
                         if chore.get('reward', 0):
                             person['money'] = (person.get('money', 0) or 0) + int(chore['reward'])
                             print('new_money=', person['money'])
+                
+                        if chore.get('kind', None) == 'one-time':
+                            app.db.Delete(chore)
+                            
                 chore.clear_completed_by()
                 chore.refresh_scheduled_job()
 

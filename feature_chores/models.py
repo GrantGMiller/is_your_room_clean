@@ -354,25 +354,38 @@ class Chore(BaseTable):
 
         # For repeat chores, calculate the next start datetime based on the repeat settings
 
-        chore_times = self.get_chore_times_usertz()
-        if not chore_times:
+        chore_times_usertz = self.get_chore_times_usertz()
+        if not chore_times_usertz:
             return None
 
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         if self.get('repeat_interval') == 'daily':
-            for day_offset in range(2):
-                target_date = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
-                candidates = [
-                    get_utc_from_users_time(
-                        datetime.datetime.combine(target_date, chore_time), self.user
-                    )
-                    for chore_time in chore_times
-                ]
-                upcoming = [candidate for candidate in candidates if candidate > now_utc]
-                if upcoming:
-                    return min(upcoming)
-                else:
-                    return now_utc
+        
+            # get the last completed time
+            # if this is a 'all' chore, then get the smallest last completed and schedule this +2 days
+            # if this a first-done, then get the largest last completed
+        
+            last_completed_dt_utc = None
+            if self.get('assignment_mode') == 'all':
+                last_completed_iso = min(
+                    (self.Get('last_completed', {}) or {}).values()
+                )
+                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+            elif self.get('assignment_mode') == 'first-done':
+                last_completed_iso = max(
+                    (self.Get('last_completed', {}) or {}).values()
+                )
+                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+
+            now_dt_utc = datetime.datetime.now(datetime.timezone.utc)
+            if not last_completed_dt_utc:
+                return now_dt_utc
+
+            next_day_dt_utc = last_completed_dt_utc + datetime.timedelta(days=1)
+            if next_day_dt_utc < now_dt_utc:
+                return now_dt_utc
+            else:
+                return next_day_dt_utc
 
         elif self.get('repeat_interval') == 'weekly':
             repeat_days = self.Get('repeat_day_of_week', []) or []
@@ -389,15 +402,15 @@ class Chore(BaseTable):
                 return None
 
             for day_offset in range(8):
-                target_date = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
-                if target_date.weekday() not in repeat_day_indexes:
+                target_date_usertz = now_dt_usertz.date() + datetime.timedelta(days=day_offset)
+                if target_date_usertz.weekday() not in repeat_day_indexes:
                     continue
 
                 candidates = [
                     get_utc_from_users_time(
-                        datetime.datetime.combine(target_date, chore_time), self.user
+                        datetime.datetime.combine(target_date_usertz, chore_time), self.user
                     )
-                    for chore_time in chore_times
+                    for chore_time in chore_times_usertz
                 ]
                 upcoming = [candidate for candidate in candidates if candidate > now_utc]
                 if upcoming:
@@ -429,7 +442,7 @@ class Chore(BaseTable):
                 get_utc_from_users_time(
                     datetime.datetime.combine(target_date_utc, chore_time), self.user
                 )
-                for chore_time in chore_times
+                for chore_time in chore_times_usertz
             ]
             print('candidates=', candidates, ', min=', min(candidates))
             ret_dt_utc = min(candidates)
