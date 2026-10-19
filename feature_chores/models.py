@@ -102,8 +102,8 @@ class Person(BaseTable):
         self['money'] = (self.get('money', 0) or 0) + amount
         self.app.db.New(
             MoneyTransaction,
-            from_id=from_person_id,
-            to_id=self['id'],
+            from_id=int(from_person_id) if from_person_id else None,
+            to_id=int(self['id']),
             amount=amount,
             timestamp=time.time(),
             message=message
@@ -122,8 +122,8 @@ class Person(BaseTable):
         self['money'] = new_money
         self.app.db.New(
             MoneyTransaction,
-            from_id=self['id'],
-            to_id=to_person_id,
+            from_id=int(self['id']),
+            to_id=int(to_person_id) if to_person_id else None,
             amount=amount,
             timestamp=time.time(),
             message=message
