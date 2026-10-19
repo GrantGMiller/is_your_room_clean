@@ -1,10 +1,13 @@
+import datetime
 import html
 import json
 import random
+from typing import cast
 
 from flask import Flask, jsonify, request
+import pytz
 import requests
-
+from flask_jobs import Job, JobScheduler
 
 def setup(a: Flask):
     global app
@@ -38,6 +41,27 @@ def setup(a: Flask):
         person["stickers"] = json.dumps(person.get_stickers() + stickers)
         person['sticker_credits'] = 0
         return jsonify(person.ui_safe())
+
+def update_archive_sticker_job():
+    with app.app_context():
+        # archive the stickers weekly
+        job_name = 'archive_stickers_weekly'
+        job:Job = app.jobs.Find(name=job_name)
+        if job:
+            job.Delete()
+        app.jobs = cast(JobScheduler, app.jobs)
+        startDT = datetime.datetime.now(pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        for _ in range(7):
+            if startDT.weekday() == 6:  # job should run on Sunday
+                break
+            startDT += datetime.timedelta(days=1)
+    
+        new_job = app.jobs.RepeatJob(
+            name=job_name,
+            startDT=startDT,
+            days=7,
+        )
+        print('new_job=', new_job)
 
 
 def get_random_emoji(number: int):

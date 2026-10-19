@@ -21,7 +21,7 @@ from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
 from feature_email import setup as setup_email
 from feature_nintendo import setup as setup_nintendo
-from feature_stickers import setup as setup_stickers
+from feature_stickers import setup as setup_stickers, update_archive_sticker_job
 from feature_money import setup as setup_money
 from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
@@ -614,6 +614,8 @@ def get_all_user_persons() -> List[Person]:
 app.get_all_user_persons = get_all_user_persons
 
 app.get_user_local_dt_from_utc = get_user_local_dt_from_utc
+
+update_archive_sticker_job()
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)
