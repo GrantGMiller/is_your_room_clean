@@ -288,14 +288,14 @@ class Chore(BaseTable):
                 last_completed_iso = min(
                     (self.Get('last_completed', {}) or {}).values()
                 )
-                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+                return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
             elif self.get('assignment_mode') == 'first-done':
                 last_completed_iso = max(
                     (self.Get('last_completed', {}) or {}).values()
                 )
-                last_completed_dt_utc = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+                return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
             
-            return last_completed_dt_utc
+            return None
 
     def mark_incomplete_by(self, person_id: int) -> None:
         '''
