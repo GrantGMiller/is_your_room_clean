@@ -71,5 +71,5 @@ def setup(app: Flask):
         return render_template(
             "chores/wizard_2.html",
             chore=chore,
-            persons=app.get_current_user_persons(),
+            persons=app.get_all_user_persons(),
         )
