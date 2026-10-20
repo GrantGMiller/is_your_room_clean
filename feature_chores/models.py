@@ -258,11 +258,13 @@ class Chore(BaseTable):
         for chore_time_usertz in chore_times_usertz:
             this_dt_usertz = datetime.datetime.combine(
                 dt_usertz.date(),
-                chore_times_usertz
+                chore_time_usertz,
+                tzinfo=dt_usertz.tzinfo
             )
             if this_dt_usertz > now_usertz:
                 return get_utc_from_users_time(
-                    this_dt_usertz
+                    this_dt_usertz,
+                    self.user
                 )
         else:
             return dt_utc
@@ -555,9 +557,13 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
         dt_now_utc = datetime.datetime.now(pytz.timezone(user_tz_str))
         print('now.dst=', dt_now_utc.dst())
         user_tz = pytz.timezone(user_tz_str)
-        dt_with_tz = user_tz.localize(
-            dt_usertz,
-        )
+        if not dt_usertz.tzinfo:
+            dt_with_tz = user_tz.localize(
+                dt_usertz,
+            )
+        else:
+            dt_with_tz = dt_usertz.astimezone(user_tz)
+
         dt_utc = dt_with_tz.astimezone(pytz.utc)
 
         print('dt_with_tz=', dt_with_tz)
