@@ -422,7 +422,7 @@ class Chore(BaseTable):
             ]
 
             last_completed_dt_utc = self.get_last_completed_dt_utc(person_id)
-            next_dt_utc = last_completed_dt_utc
+            next_dt_utc = last_completed_dt_utc or now_dt_utc
             for i in range(7):
                 this_day_index = next_dt_utc.weekday()
                 if day_names[this_day_index] in selected_day_names:
