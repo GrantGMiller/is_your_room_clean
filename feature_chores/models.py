@@ -256,7 +256,7 @@ class Chore(BaseTable):
         now_usertz = datetime.datetime.now(pytz.timezone(self.user.get('timezone', 'UTC')))
         chore_times_usertz = self.get_chore_times_usertz()
         for chore_time_usertz in chore_times_usertz:
-            this_dt_usertz = datetime.combine(
+            this_dt_usertz = datetime.datetime.combine(
                 dt_usertz.date(),
                 chore_times_usertz
             )
