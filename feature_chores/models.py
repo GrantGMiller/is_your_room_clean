@@ -254,6 +254,7 @@ class Chore(BaseTable):
     def get_delta(self):
         # return the timedelta between two assignments
         # for example, if this repeats every 2 days then it will return a timedelta(days=2)
+
         if self.get('repeat_interval') == 'daily':
             return datetime.timedelta(days=1)
         elif self.get('repeat_interval') == 'weekly':
@@ -555,6 +556,22 @@ class Chore(BaseTable):
 
         return chore_times
 
+    def round_down_to_choretime_dt(self, dt_utc: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
+        # if the dt_utc is like 6:37am and the chore times are 6:00am, 7:00am, etc.,
+        # round it down to the nearest chore time.
+        chore_times_usertz = self.get_chore_times_usertz()
+        if dt_utc is None:
+            return None
+        dt_usertz = get_user_local_dt_from_utc(dt_utc, self.user)
+        for chore_time_usertz in sorted(chore_times_usertz, reverse=True):
+            if dt_usertz.time() >= chore_time_usertz:
+                return get_utc_from_users_time(
+                    dt_usertz.replace(hour=chore_time_usertz.hour, minute=chore_time_usertz.minute, second=chore_time_usertz.second),
+                    self.user
+                )
+        else:
+            return dt_utc
+
 
 def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
     '''
@@ -587,6 +604,9 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
         print('dt_with_tz=', dt_with_tz)
         print('442 return dt_utc=', dt_utc)
         return dt_utc
+    
+    
+
 
 
 def get_user_local_dt_from_utc(dt: datetime.datetime, user):
@@ -625,6 +645,7 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user):
     return local_dt
 
 
+
 def assign_chore_to_persons(chore_id: int):
     print('assign_chore_to_persons(chore_id=', chore_id, ')')
     with app.app_context():
@@ -649,6 +670,10 @@ def assign_chore_to_persons(chore_id: int):
             now_dt_utc = datetime.datetime.now(pytz.utc)
             for person in possible_assignees:
                 person_last_completed_dt_utc = chore.get_last_completed_dt_utc(person['id'])
+                if not person_last_completed_dt_utc:
+                    chore.assign_to(person)
+
+                person_last_completed_dt_utc = chore.round_down_to_choretime_dt(person_last_completed_dt_utc)
                 delta_last_completed = (now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
                 if not delta_last_completed:
                     chore.assign_to(person)
@@ -657,7 +682,7 @@ def assign_chore_to_persons(chore_id: int):
 
         elif chore.get('assignment_mode') in ['first-done', 'random']:
             # if someone completed the chore recently do nothing
-            last_completed_dt_utc = chore.get_last_completed_dt_utc()
+            last_completed_dt_utc = chore.round_down_to_choretime_dt(chore.get_last_completed_dt_utc())
             now_dt_utc = datetime.datetime.now(pytz.utc)
             delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
             
