@@ -307,7 +307,7 @@ class Chore(BaseTable):
                 return None
         else:
             if self.get('assignment_mode') == 'all':
-                isos = list(filter(None (self.Get('last_completed', {}) or {}).values()))
+                isos = list(filter(None, (self.Get('last_completed', {}) or {}).values()))
                 
                 if len(list(isos)) == 0:
                     return None
