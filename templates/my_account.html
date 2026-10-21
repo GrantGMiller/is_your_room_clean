@@ -17,40 +17,42 @@
             <div class="card-body p-4 p-md-5">
               <h1 class="h3 mb-3 text-dark">My Account ({{ masked_email }})</h1>
 
-              <div class="card border-0 bg-secondary shadow-sm mb-4">
-                <div class="card-body p-3 p-md-4">
-                  <h2 class="h5 mb-3">Advanced Features</h2>
+              {% if advanced_features %}
+                <div class="card border-0 bg-secondary shadow-sm mb-4">
+                  <div class="card-body p-3 p-md-4">
+                    <h2 class="h5 mb-3">Advanced Features</h2>
 
-                  <form
-                    id="advanced-features-form"
-                    method="POST"
-                    action="/my_account"
-                    class="d-grid gap-2"
-                  >
-                    {% for feature_name, is_enabled in advanced_features.items() %}
-                      <div
-                        class="d-flex justify-content-between align-items-center border border-secondary-subtle rounded-3 bg-white px-3 py-2"
-                      >
-                        <label
-                          class="form-check-label fw-medium text-capitalize"
-                          for="{{ feature_name }}"
+                    <form
+                      id="advanced-features-form"
+                      method="POST"
+                      action="/my_account"
+                      class="d-grid gap-2"
+                    >
+                      {% for feature_name, is_enabled in advanced_features.items() %}
+                        <div
+                          class="d-flex justify-content-between align-items-center border border-secondary-subtle rounded-3 bg-white px-3 py-2"
                         >
-                          {{ feature_name|replace('_', ' ')|title }}
-                        </label>
-                        <div class="form-check form-switch mb-0">
-                          <input
-                            class="form-check-input"
-                            type="checkbox"
-                            id="{{ feature_name }}"
-                            name="{{ feature_name }}"
-                            {% if is_enabled %}checked{% endif %}
-                          />
+                          <label
+                            class="form-check-label fw-medium text-capitalize"
+                            for="{{ feature_name }}"
+                          >
+                            {{ feature_name|replace('_', ' ')|title }}
+                          </label>
+                          <div class="form-check form-switch mb-0">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="{{ feature_name }}"
+                              name="{{ feature_name }}"
+                              {% if is_enabled %}checked{% endif %}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    {% endfor %}
-                  </form>
+                      {% endfor %}
+                    </form>
+                  </div>
                 </div>
-              </div>
+              {% endif %}
             </div>
           </div>
 
