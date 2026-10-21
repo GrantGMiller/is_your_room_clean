@@ -19,6 +19,7 @@ def setup(a: Flask):
 
     @app.route('/stickers/add/<int:person_id>', methods=['POST'])
     def add_sticker(person_id: int):
+
         person = app.get_person(person_id)
         if not person:
             return jsonify({"error": "Person not found"}), 404

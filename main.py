@@ -32,7 +32,12 @@ if not os.path.exists("images"):
     # this will hold the ring camera screenshots
     os.mkdir("images")
 
-app = Flask(getattr(config, 'APP_NAME', '{{ app_name }}'))
+class Application(Flask):
+    db: Dictabase
+    jobs: JobScheduler
+
+
+app = Application(getattr(config, 'APP_NAME', '{{ app_name }}'))
 app.secret_key = config.SECRET_KEY
 app.db = Dictabase(app)
 app.jobs = JobScheduler(
@@ -623,6 +628,8 @@ app.get_all_user_persons = get_all_user_persons
 app.get_user_local_dt_from_utc = get_user_local_dt_from_utc
 
 update_archive_sticker_job()
+
+
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

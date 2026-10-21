@@ -1,20 +1,21 @@
+from __future__ import annotations
+
 import datetime
 import os
-from typing import cast
+from typing import TYPE_CHECKING
 
-from flask_dictabase import Dictabase
-from flask_jobs import JobScheduler
+if TYPE_CHECKING:
+    from main import Application
 
 from ring.user import RingImage
 from slack import send_slack_message, send_slack_error, send_all_slack_messages
 
-global app
+app: Application
 
 
-def setup(a):
+def setup(a: Application) -> None:
     global app
     app = a
-    app.jobs = cast(JobScheduler, app.jobs)
 
     with app.app_context():
         add_new_repeat_job(
@@ -38,8 +39,7 @@ def setup(a):
         )
 
 
-def add_new_repeat_job(app, job_name, *a, **k):
-    app.jobs = cast(JobScheduler, app.jobs)
+def add_new_repeat_job(app: Application, job_name, *a, **k):
     with app.app_context():
         # if the job already exists, delete it first so we can add a new one
         existing_job = app.jobs.Find(name=job_name)
@@ -53,9 +53,6 @@ def add_new_repeat_job(app, job_name, *a, **k):
 
 
 def delete_old_images():
-    app.jobs = cast(JobScheduler, app.jobs)
-    app.db = cast(Dictabase, app.db)
-
     with app.app_context():
         dt_expired_img = datetime.datetime.now() - datetime.timedelta(hours=1)
         num_img_deleted = 0
