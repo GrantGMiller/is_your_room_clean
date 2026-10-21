@@ -61,24 +61,6 @@
           </a>
         {% endif %}
 
-        {% if enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user %}
-          <a
-            class="nav-item nav-link {% if request.path == '/email_notifications' %}active{% endif %}"
-            href="/email"
-          >
-            Email Settings
-          </a>
-        {% endif %}
-
-        {% if enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo') %}
-          <a
-            class="nav-item nav-link {% if request.path == '/nintendo' %}active{% endif %}"
-            href="/nintendo"
-          >
-            Nintendo
-          </a>
-        {% endif %}
-
         {% if current_user and current_user.is_authenticated and not current_user.is_wall_user %}
           <a
             class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"
@@ -87,14 +69,7 @@
             My Account
           </a>
         {% endif %}
-        {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user %}
-          <a
-            class="nav-item nav-link {% if request.path == '/admin' %}active{% endif %}"
-            href="/admin"
-          >
-            Admin
-          </a>
-        {% endif %}
+
         <a
           class="nav-item nav-link {% if request.path == '/contact' %}active{% endif %}"
           href="/contact"
@@ -120,24 +95,56 @@
             <a class="nav-item nav-link" href="/"> Sign In </a>
           {% endif %}
         {% endif %}
-        <li class="nav-item dropdown">
-          <button
-            class="nav-link dropdown-toggle"
-            role="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Advanced Features
-          </button>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item">Action</a></li>
-            <li><a class="dropdown-item">Another action</a></li>
-            <li>
-              <hr class="dropdown-divider" />
-            </li>
-            <li><a class="dropdown-item">Something else here</a></li>
-          </ul>
-        </li>
+        {% set show_advanced_features =
+          (enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user)
+          or (enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo'))
+          or (current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user)
+        %}
+        {% if show_advanced_features %}
+          <li class="nav-item dropdown">
+            <button
+              class="nav-link dropdown-toggle"
+              type="button"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              Advanced Features
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              {% if enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user %}
+                <li>
+                  <a
+                    class="dropdown-item {% if request.path == '/email' %}active{% endif %}"
+                    href="/email"
+                  >
+                    Email Settings
+                  </a>
+                </li>
+              {% endif %}
+              {% if enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo') %}
+                <li>
+                  <a
+                    class="dropdown-item {% if request.path == '/nintendo' %}active{% endif %}"
+                    href="/nintendo"
+                  >
+                    Nintendo
+                  </a>
+                </li>
+              {% endif %}
+              {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user %}
+                <li>
+                  <a
+                    class="dropdown-item {% if request.path == '/admin' %}active{% endif %}"
+                    href="/admin"
+                  >
+                    Admin
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </li>
+        {% endif %}
       </ul>
     </div>
   </div>
