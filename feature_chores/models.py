@@ -11,7 +11,7 @@ from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
 from feature_money.models import MoneyTransaction
-from slack import send_slack_error
+from slack import send_slack_error, send_slack_message
 
 ChoreKind = Literal["one-time", "repeat"]
 AssignmentMode = Literal["all", "random", "first-done"]
@@ -646,7 +646,7 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user):
 
 
 
-def assign_chore_to_persons(chore_id: int):
+def assign_chore_to_persons(chore_id: int, debug: bool = False):
     print('assign_chore_to_persons(chore_id=', chore_id, ')')
     with app.app_context():
         app.db = cast(Dictabase, app.db)
@@ -662,31 +662,43 @@ def assign_chore_to_persons(chore_id: int):
 
         chore.clear_completed_by()
         possible_assignees = chore.get_can_be_assigned_to_persons()
+        if debug:
+            send_slack_message('possible assignees for chore:', [p['name'] for p in possible_assignees])
         if not possible_assignees:
             print(f"No possible assignees for chore '{chore['name']}' (id: {chore_id}).")
             return
 
         if chore.get('assignment_mode') == 'all':
+            if debug:
+                send_slack_message('assignment mode is "all" for chore:', chore['name'])
             now_dt_utc = datetime.datetime.now(pytz.utc)
             for person in possible_assignees:
                 person_last_completed_dt_utc = chore.get_last_completed_dt_utc(person['id'])
                 if not person_last_completed_dt_utc:
                     chore.assign_to(person)
-
+                if debug: send_slack_message('person last completed dt for chore:', person['name'], person_last_completed_dt_utc)
                 person_last_completed_dt_utc = chore.round_down_to_choretime_dt(person_last_completed_dt_utc)
+                if debug: send_slack_message('person last completed dt rounded down for chore:', person['name'], person_last_completed_dt_utc)
                 delta_last_completed = (now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
+                if debug: send_slack_message('delta last completed for chore:', person['name'], delta_last_completed)
                 if not delta_last_completed:
+                    if debug: send_slack_message('assigning person to chore because no last completed dt:', person['name'], chore['name'])
                     chore.assign_to(person)
                 elif delta_last_completed >= chore.get_delta():
+                    if debug: send_slack_message('assigning person to chore because delta last completed is greater than or equal to chore delta:', person['name'], chore['name'], delta_last_completed, chore.get_delta())
                     chore.assign_to(person)
 
         elif chore.get('assignment_mode') in ['first-done', 'random']:
+            if debug:
+                send_slack_message('assignment mode is "first-done" or "random" for chore:', chore['name'], chore.get('assignment_mode'))
             # if someone completed the chore recently do nothing
             last_completed_dt_utc = chore.round_down_to_choretime_dt(chore.get_last_completed_dt_utc())
             now_dt_utc = datetime.datetime.now(pytz.utc)
             delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
+            if debug: send_slack_message('delta last completed for chore:', chore['name'], delta_last_completed)
             
             if not delta_last_completed:
+                if debug: send_slack_message('assigning person to chore because no last completed dt for chore:', chore['name'])
                 if chore.get('assignment_mode') == 'first-done':
                     for person in possible_assignees:
                         chore.assign_to(person)
@@ -695,6 +707,7 @@ def assign_chore_to_persons(chore_id: int):
                     chore.assign_to(person)
 
             elif delta_last_completed >= chore.get_delta():
+                if debug: send_slack_message('assigning person to chore because delta last completed is greater than or equal to chore delta for chore:', chore['name'], delta_last_completed, chore.get_delta())
                 if chore.get('assignment_mode') == 'first-done':
                     for person in possible_assignees:
                         chore.assign_to(person)

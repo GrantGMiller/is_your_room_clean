@@ -370,7 +370,7 @@ def setup(a: Flask):
         if chore_id is None or helpers.get_current_user_chore(int(chore_id)) is None:
             return jsonify({"error": "chore not found"}), 404
 
-        updated_chore = assign_chore_to_persons(int(chore_id))
+        updated_chore = assign_chore_to_persons(int(chore_id), debug=True)
         if updated_chore is None:
             return jsonify({"error": "chore not found"}), 404
         return jsonify(updated_chore.ui_safe())
