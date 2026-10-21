@@ -70,5 +70,6 @@ def delete_old_images():
                     os.remove(img['image_path'])  # delete the img from the server hard drive
                 except Exception as e:
                     send_slack_message('Error deleting old image', e)
-        if num_img_deleted:
-            send_slack_message('deleted', num_img_deleted, 'old images')
+
+        # if num_img_deleted:
+        #     send_slack_message('deleted', num_img_deleted, 'old images')

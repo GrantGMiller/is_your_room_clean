@@ -258,9 +258,25 @@ class Chore(BaseTable):
         if self.get('repeat_interval') == 'daily':
             return datetime.timedelta(days=1)
         elif self.get('repeat_interval') == 'weekly':
-            # weekly can mean every tues/thurs 
-            #todo
-            return datetime.timedelta(days=1)
+            # 'weekly' can mean every tues/thurs 
+            least_num_days = 7
+            day_names = []
+
+            temp_dt_usertz = get_user_local_dt_from_utc(datetime.datetime.now(datetime.timezone.utc), self.user)
+            for i in range(7):
+                day_names.append((temp_dt_usertz).strftime('%A').lower())
+                temp_dt_usertz += datetime.timedelta(days=1)
+
+            selected_day_names = self.Get('repeat_day_of_week', []) or []
+            for selected_day_name1 in selected_day_names:
+                for selected_day_name2 in selected_day_names:
+                    if selected_day_name1 != selected_day_name2:
+                        diff = abs(day_names.index(selected_day_name1) - day_names.index(selected_day_name2))
+                        if diff < least_num_days:
+                            least_num_days = diff
+                            
+            return datetime.timedelta(days=least_num_days)
+        
         elif self.get('repeat_interval') == 'other':
             repeat_unit = self.get('repeat_unit', 'days')
             repeat_value = self.get('repeat_value', 1)
