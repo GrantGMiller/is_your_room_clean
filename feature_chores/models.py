@@ -662,8 +662,9 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
 
         chore.clear_completed_by()
         possible_assignees = chore.get_can_be_assigned_to_persons()
-        if debug:
-            send_slack_message('possible assignees for chore:', [p['name'] for p in possible_assignees])
+        if debug: send_slack_message('assigning chore to persons for chore:', chore['name'])
+        if debug: send_slack_message('chore get_delta for chore:', chore['name'], chore.get_delta())
+        if debug: send_slack_message('possible assignees for chore:', [p['name'] for p in possible_assignees])
         if not possible_assignees:
             print(f"No possible assignees for chore '{chore['name']}' (id: {chore_id}).")
             return
