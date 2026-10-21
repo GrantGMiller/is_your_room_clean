@@ -251,6 +251,27 @@ class Chore(BaseTable):
                 if person['id'] != person_id:
                     self.unassign(person)
 
+    def get_delta(self):
+        # return the timedelta between two assignments
+        # for example, if this repeats every 2 days then it will return a timedelta(days=2)
+        if self.get('repeat_interval') == 'daily':
+            return datetime.timedelta(days=1)
+        elif self.get('repeat_interval') == 'weekly':
+            return datetime.timedelta(days=7)
+        elif self.get('repeat_interval') == 'other':
+            repeat_unit = self.get('repeat_unit', 'days')
+            repeat_value = self.get('repeat_value', 1)
+            if repeat_unit == 'days':
+                return datetime.timedelta(days=repeat_value)
+            elif repeat_unit == 'weeks':
+                return datetime.timedelta(days=repeat_value * 7)
+            elif repeat_unit == 'months':
+                return datetime.timedelta(days=repeat_value * 30)
+            else:
+                return None
+        else:
+            return None
+
     def get_next_chore_time_dt_utc(self, dt_utc: datetime.datetime) -> Optional[datetime.datetime]:
         dt_usertz = get_user_local_dt_from_utc(dt_utc, self.user)
         now_usertz = datetime.datetime.now(pytz.timezone(self.user.get('timezone', 'UTC')))
@@ -297,7 +318,7 @@ class Chore(BaseTable):
                     list(isos)
                 )
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
-            elif self.get('assignment_mode') == 'first-done':
+            elif self.get('assignment_mode') in ['first-done', 'random']:
                 isos = list(filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values()))
                 # send_slack_message("299 isos=", isos)
                 if len(list(isos)) == 0:
@@ -307,7 +328,7 @@ class Chore(BaseTable):
                     list(isos)
                 )
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
-            
+           
             return None
 
     def mark_incomplete_by(self, person_id: int) -> None:
@@ -627,12 +648,37 @@ def assign_chore_to_persons(chore_id: int):
             print(f"No possible assignees for chore '{chore['name']}' (id: {chore_id}).")
             return
 
-        if chore.get('assignment_mode') in ['all', 'first-done']:
+        if chore.get('assignment_mode') == 'all':
+            now_dt_utc = datetime.datetime.now(pytz.utc)
             for person in possible_assignees:
-                chore.assign_to(person)
+                person_last_completed_dt_utc = chore.get_last_completed_dt_utc(person['id'])
+                delta_last_completed = (now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
+                if not delta_last_completed:
+                    chore.assign_to(person)
+                elif delta_last_completed >= chore.get_delta():
+                    chore.assign_to(person)
 
-        elif chore.get('assignment_mode') == 'random':
-            person = random.choice(possible_assignees)
-            chore.assign_to(person)
+        elif chore.get('assignment_mode') in ['first-done', 'random']:
+            # if someone completed the chore recently do nothing
+            last_completed_dt_utc = chore.get_last_completed_dt_utc()
+            now_dt_utc = datetime.datetime.now(pytz.utc)
+            delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
+            
+            if not delta_last_completed:
+                if chore.get('assignment_mode') == 'first-done':
+                    for person in possible_assignees:
+                        chore.assign_to(person)
+                elif chore.get('assignment_mode') == 'random':
+                    person = random.choice(possible_assignees)
+                    chore.assign_to(person)
 
+            elif delta_last_completed >= chore.get_delta():
+                if chore.get('assignment_mode') == 'first-done':
+                    for person in possible_assignees:
+                        chore.assign_to(person)
+                elif chore.get('assignment_mode') == 'random':
+                    person = random.choice(possible_assignees)
+                    chore.assign_to(person)
+
+       
         return chore
