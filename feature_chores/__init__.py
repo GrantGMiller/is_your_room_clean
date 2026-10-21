@@ -82,7 +82,7 @@ def clear_completed_chores(user_id:int):
                         num_chores_complted[person['id']] = num_chores_complted.get(person['id'], 0) + 1
                         print('chore.reward=', chore['reward'])
                         if chore.get('reward', 0):
-                            person['money'] = (person.get('money', 0) or 0) + int(chore['reward'])
+                            person.add_money(int(chore['reward']), f'Chore Reward: {chore["name"]}')
                             print('new_money=', person['money'])
                 
                         if chore.get('kind', None) == 'one-time':
