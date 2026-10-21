@@ -302,24 +302,21 @@ class Chore(BaseTable):
 
             if iso:
                 dt_utc = datetime.datetime.fromisoformat(iso)
-                #print('return dt_utc=', dt_utc)
                 return dt_utc
             else:
                 return None
         else:
             if self.get('assignment_mode') == 'all':
-                isos = list(filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values()))
+                isos = list(filter(None (self.Get('last_completed', {}) or {}).values()))
                 
-                # send_slack_message("290 isos=", isos)
                 if len(list(isos)) == 0:
-                    # send_slack_message('292 return None')
                     return None
                 last_completed_iso = min(
                     list(isos)
                 )
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
             elif self.get('assignment_mode') in ['first-done', 'random']:
-                isos = list(filter(lambda x: not x, (self.Get('last_completed', {}) or {}).values()))
+                isos = list(filter(None, (self.Get('last_completed', {}) or {}).values()))
                 # send_slack_message("299 isos=", isos)
                 if len(list(isos)) == 0:
                     # send_slack_message('300 return None')
