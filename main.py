@@ -500,7 +500,7 @@ def page_not_found(e):
     user:RingUser = app.get_current_user()
     if not user:
         return redirect("/dashboard")
-    if user.is_wall_user():
+    if user.is_wall_user:
         return redirect("/wall_display")
     
     return redirect("/dashboard")
