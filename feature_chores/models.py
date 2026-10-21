@@ -258,7 +258,9 @@ class Chore(BaseTable):
         if self.get('repeat_interval') == 'daily':
             return datetime.timedelta(days=1)
         elif self.get('repeat_interval') == 'weekly':
-            return datetime.timedelta(days=7)
+            # weekly can mean every tues/thurs 
+            #todo
+            return datetime.timedelta(days=1)
         elif self.get('repeat_interval') == 'other':
             repeat_unit = self.get('repeat_unit', 'days')
             repeat_value = self.get('repeat_value', 1)
