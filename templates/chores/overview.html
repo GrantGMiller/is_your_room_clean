@@ -55,7 +55,7 @@
             aria-expanded="false"
             aria-controls="people-cards-collapse"
           >
-            Show details
+            Show People Details
           </button>
         </div>
         <div class="row g-3" id="people-summary">
@@ -375,7 +375,7 @@
 
       peopleCardsCollapse.addEventListener("shown.bs.collapse", function () {
         peopleSummary.hidden = true;
-        togglePeopleCardsButton.textContent = "Show names";
+        togglePeopleCardsButton.textContent = "Show Only People Names";
       });
       peopleCardsCollapse.addEventListener("hidden.bs.collapse", function () {
         peopleSummary.hidden = false;
