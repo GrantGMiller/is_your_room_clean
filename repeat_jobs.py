@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import datetime
 import os
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from main import Application
+from app_types import Application
 
 from ring.user import RingImage
 from slack import send_slack_message, send_slack_error, send_all_slack_messages

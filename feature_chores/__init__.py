@@ -6,12 +6,13 @@ from flask import Flask
 from flask_jobs import Job, JobScheduler
 from flask_dictabase import Dictabase
 
+from app_types import Application
 from feature_chores.models import Person, get_user_local_dt_from_utc, get_utc_from_users_time
 from feature_chores.helpers import get_chores
 from feature_chores.wall_display import setup as setup_wall_display
 from feature_nintendo.rewards import give_nintendo_reward
 
-def setup(a:Flask):
+def setup(a: Application):
     global app
     app = a
     setup_wall_display(app)

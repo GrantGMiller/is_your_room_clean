@@ -2,6 +2,7 @@ import datetime
 
 from flask import Flask, abort, flash, jsonify, redirect, render_template, request
 
+from app_types import Application
 import config
 from ring import user as ring_user
 from feature_email.jobs import (
@@ -15,7 +16,7 @@ from slack import send_slack_message
 SETTINGS_KEY = 'email_notification_settings'
 
 
-def setup(app: Flask):
+def setup(app: Application):
     setup_email_jobs(app)
 
     @app.route('/email', methods=['GET', 'POST'])

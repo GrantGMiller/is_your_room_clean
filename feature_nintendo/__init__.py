@@ -4,11 +4,12 @@ from flask import Flask, flash, jsonify, render_template, request
 from ring.helpers import get_user
 from ns_parental_controls import ParentalControl
 from flask_dictabase import Dictabase
+from app_types import Application
 from .rewards import setup as setup_rewards
 from .room_clean_settings import setup as setup_room_clean_settings
 
 
-def setup(a:Flask):
+def setup(a: Application):
     global app
     app = a
     setup_rewards(app)

@@ -12,6 +12,7 @@ import requests
 from flask import flash, Flask
 from flask_dictabase import BaseTable, Dictabase
 
+from app_types import Application
 import config
 import slack
 from ai_cleanliness import evaluate_cleanliness
@@ -449,7 +450,7 @@ class RingImage(BaseTable):
             )
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
     app.db = cast(Dictabase, app.db)

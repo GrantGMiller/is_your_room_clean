@@ -8,6 +8,7 @@ from flask import Flask, render_template
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler, Job
 
+from app_types import Application
 from feature_chores import models
 from feature_chores.helpers import get_chores
 import feature_email
@@ -18,7 +19,7 @@ from slack import send_slack_message
 app: Flask
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
 

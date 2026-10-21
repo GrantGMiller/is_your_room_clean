@@ -1,10 +1,11 @@
 from flask import Flask, jsonify, request
 
+from app_types import Application
 from feature_chores.models import Person
 from ring.helpers import get_user
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
 

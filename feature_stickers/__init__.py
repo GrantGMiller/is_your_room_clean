@@ -9,7 +9,10 @@ import pytz
 import requests
 from flask_jobs import Job, JobScheduler
 
-def setup(a: Flask):
+from app_types import Application
+
+
+def setup(a: Application):
     global app
     app = a
 

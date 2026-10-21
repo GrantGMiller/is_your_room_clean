@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, render_template, request
 
+from app_types import Application
 
 
-def setup(a:Flask):
+def setup(a: Application):
     global app
     app = a
 

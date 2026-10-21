@@ -5,12 +5,13 @@ import requests
 from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
+from app_types import Application
 import config
 
 app: Flask
 
 
-def setup(a):
+def setup(a: Application):
     global app
     app = a
 

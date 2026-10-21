@@ -6,13 +6,14 @@ import flask_login
 from flask import request, jsonify, send_file, flash, redirect, render_template
 from flask_dictabase import Dictabase
 
+from app_types import Application
 import config
 from ring.user import RingUser, RingImage
 
 app = None
 
 
-def setup(a):
+def setup(a: Application):
     global app
     app = a
     app.db = cast(Dictabase, app.db)

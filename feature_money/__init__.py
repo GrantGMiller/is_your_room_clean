@@ -2,10 +2,11 @@ import datetime
 
 from flask import Flask, jsonify, redirect, render_template, request, session
 
+from app_types import Application
 from feature_money.models import MoneyTransaction
 
 
-def setup(a:Flask):
+def setup(a: Application):
     global app
     app = a
 

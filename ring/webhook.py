@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 from flask_dictabase import BaseTable, Dictabase
 from flask_jobs import JobScheduler
 
+from app_types import Application
 import config
 from slack import send_slack_message
 
@@ -48,7 +49,7 @@ def verify_ring_webhook_signature(
 global app
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
     app.db = cast(Dictabase, app.db)

@@ -30,6 +30,7 @@ import flask_login
 import requests
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 
+from app_types import Application
 import config
 from ring.user import RingUser
 from slack import send_slack_message
@@ -45,7 +46,7 @@ AVA_BASE_URL = "https://api.amazonvision.com"
 NONCE_VALIDATION_WINDOW_SECONDS = 600  # 10 minutes
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
     app.db = cast(flask_dictabase.Dictabase, app.db)

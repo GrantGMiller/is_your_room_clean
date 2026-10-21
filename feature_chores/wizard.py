@@ -3,11 +3,12 @@ from typing import cast
 from flask import Flask, redirect, render_template, request
 from flask_dictabase import Dictabase
 
+from app_types import Application
 from feature_chores.helpers import get_current_user_persons
 from feature_chores.models import Chore
 
 
-def setup(app: Flask):
+def setup(app: Application):
     app.db = cast(Dictabase, app.db)
 
     @app.route("/chores/wizard/start", methods=["GET", "POST"])

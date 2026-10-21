@@ -10,6 +10,7 @@ import pytz
 from flask import Flask, session,flash, redirect, render_template, request, jsonify
 from flask_dictabase import Dictabase
 
+from app_types import Application
 import config
 from feature_chores import clear_completed_chores, helpers
 from feature_chores import update_job_clear_completed_chores
@@ -26,7 +27,7 @@ from feature_nintendo import get_device_names
 global app
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
     app.db = cast(Dictabase, app.db)

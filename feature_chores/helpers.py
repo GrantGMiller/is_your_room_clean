@@ -3,12 +3,13 @@ from typing import cast, Optional, List
 from flask import Flask
 from flask_dictabase import Dictabase
 
+from app_types import Application
 from feature_chores.models import Person, Chore
 
 global app
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
 
     app = a

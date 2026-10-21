@@ -1,9 +1,10 @@
 from flask import Flask, redirect, session, jsonify, render_template, request
 
+from app_types import Application
 from feature_chores.helpers import get_current_user_person
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
 

@@ -1,18 +1,15 @@
 import datetime
-from typing import cast
 
 import pytz
-from flask import Flask, request, jsonify
-from flask_dictabase import Dictabase
+from flask import jsonify, request
 
+from app_types import Application
 import config
 from feature_chores.models import Chore, Person
 from ring.user import RingUser
 
 
-def setup(app: Flask):
-    app.db = cast(Dictabase, app.db)
-
+def setup(app: Application):
     @app.route('/migrate/chore', methods=['POST'])
     def migrate_chore():
         apikey = request.json.get('api_key', None)

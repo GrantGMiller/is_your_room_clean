@@ -6,12 +6,13 @@ import time
 from typing import Optional, List
 
 import flask_login
-from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session
+from flask import flash, jsonify, redirect, render_template, request, send_file, session
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
+from app_types import Application
 import config
 from feature_chores.models import Person, get_user_local_dt_from_utc
 import migrate_helper
@@ -32,11 +33,6 @@ if not os.path.exists("images"):
     # this will hold the ring camera screenshots
     os.mkdir("images")
 
-class Application(Flask):
-    db: Dictabase
-    jobs: JobScheduler
-
-
 app = Application(getattr(config, 'APP_NAME', '{{ app_name }}'))
 app.secret_key = config.SECRET_KEY
 app.db = Dictabase(app)
@@ -45,6 +41,7 @@ app.jobs = JobScheduler(
     SERVER_HOST_URL=config.SERVER_HOST_URL,  # only required for linux
     deleteOldJobs=False,  # whether to keep old jobs in the database
 )
+
 
 token_endpoints.setup(app)
 webhook.setup(app)

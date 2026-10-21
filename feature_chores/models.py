@@ -10,6 +10,7 @@ import pytz
 from flask import Flask
 from flask_dictabase import BaseTable, Dictabase
 
+from app_types import Application
 from feature_money.models import MoneyTransaction
 from slack import send_slack_error, send_slack_message
 
@@ -37,7 +38,7 @@ LastCompleted = Dict[int, datetime.datetime.isoformat]
 app: Flask = None
 
 
-def setup(a: Flask):
+def setup(a: Application):
     global app
     app = a
 
