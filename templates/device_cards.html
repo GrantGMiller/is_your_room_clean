@@ -119,6 +119,8 @@
   }
 
   function imageLoaded(deviceId) {
+    document.getElementById("flash-messages")?.replaceChildren();
+
     const summaryEl = document.getElementById("summary-" + deviceId);
     summaryEl.hidden = false;
     summaryEl.textContent = "Analyzing room...";

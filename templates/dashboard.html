@@ -23,7 +23,8 @@
     </style>
   </head>
   <body class="bg-light">
-    {% include "js_css.html" %} {% include "flash_messages.html" %}
+    {% include "js_css.html" %}
+    <div id="flash-messages">{% include "flash_messages.html" %}</div>
     {%
       include
       "navbar.html"
