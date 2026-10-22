@@ -359,8 +359,6 @@ class RingUser(flask_login.UserMixin, BaseTable):
             return f'359 {resp.status_code} {resp.text}'
 
         if not resp.ok:
-            print('resp.status_code=', resp.status_code)
-            print('get_snapshot resp.text=', resp.text)
             return f'364 {resp.status_code} {resp.text}'
         
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
