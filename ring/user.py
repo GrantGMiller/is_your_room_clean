@@ -356,12 +356,12 @@ class RingUser(flask_login.UserMixin, BaseTable):
             # Or we otherwise lost the authorization
             print('clearing the latest_events for', device_id)
             self.SetItem('latest_events', device_id, None)
-            pass
+            return f'359 {resp.status_code} {resp.text}'
 
         if not resp.ok:
             print('resp.status_code=', resp.status_code)
             print('get_snapshot resp.text=', resp.text)
-            return resp.text
+            return f'364 {resp.status_code} {resp.text}'
         
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
             self['ring_user_claimed_at_ms'] = time.time() * 1000
