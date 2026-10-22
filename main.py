@@ -83,7 +83,7 @@ def get_snapshot(device_id):
         if img:
             return send_file(img["image_path"])
 
-    return "image not found", 404
+    return f"image id={img_id} not found", 404
 
 
 @app.route("/dashboard")
