@@ -113,8 +113,8 @@ def dashboard():
                     ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
 
         
-        send_slack_message('len(devs)=', len(devs))
-        send_slack_message('len(devices_without_events=', len(devices_without_events), ', devices_without_events=', devices_without_events)
+        # send_slack_message('len(devs)=', len(devs))
+        # send_slack_message('len(devices_without_events=', len(devices_without_events), ', devices_without_events=', devices_without_events)
         
         if devs and len(devices_without_events) == len(devs):
             return render_template(

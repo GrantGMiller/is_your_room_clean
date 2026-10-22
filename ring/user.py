@@ -361,20 +361,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
         if not resp.ok:
             print('resp.status_code=', resp.status_code)
             print('get_snapshot resp.text=', resp.text)
-
-            try:
-                errors = resp.json().get('errors', [])
-                for error in errors:
-                    print('error=', error)
-                    code = error.get('code', None)
-                    print('code=', code)
-                    if code == 'TIME_RANGE_NOT_AUTHORIZED':
-                        print('352 resetting latest events for', device_id)
-                        self.SetItem('latest_events', device_id, None)
-            except Exception as e:
-                print('354', e)
             return None
-
+        
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
             self['ring_user_claimed_at_ms'] = time.time() * 1000
 
