@@ -174,7 +174,7 @@ def process_webhook(request_id):
         # else:
         #     return jsonify({'error': 'Unknown event type'}), 400
 
-        data = webhook.Get('data', {})
+        data = webhook.Get('data', {}) or {}
         if event_type in ['app_integration_removed', 'subscription_deactivated']:
             if data['attributes']['source']:
                 account_id = data['attributes']['source']
