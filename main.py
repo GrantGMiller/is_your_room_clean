@@ -145,7 +145,7 @@ def events_exist():
     ring_user = app.get_current_user()
     print('125 ring_user=', ring_user)
     if not ring_user:
-        return 'no events exist', 404
+        return 'no user found', 404
 
     devs = ring_user.get_devices()
     # print('130 devs=', devs)
@@ -163,10 +163,10 @@ def events_exist():
                 ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
 
     if not devs or len(devices_without_events) == len(devs):
-        return 'no events exist', 404
+        return jsonify({'message': f'no events exist for any device. device={devices_without_events}'}), 404
 
     # at least one device with an event exist
-    return 'events exist', 200
+    return f'at least one device with an event exist. devices_without_events={devices_without_events}', 200
 
 
 @app.route("/send_login_email", methods=["GET", "POST"])
