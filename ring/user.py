@@ -308,14 +308,14 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         # ok some weirdness, you cannot request a start_time that is before the app was authorized
         # so use the start_time or the app creation time, whichever is greater
-        dt_five_min_ago = datetime.datetime.now(
+        dt_one_min_ago = datetime.datetime.now(
             datetime.timezone.utc,
-        ) - datetime.timedelta(minutes=5)
+        ) - datetime.timedelta(minutes=1)
         last_event_timestamp_ms = self.GetItem(
             'latest_events',
             device_id,
-            dt_five_min_ago.timestamp() * 1000
-        ) or dt_five_min_ago.timestamp() * 1000
+            dt_one_min_ago.timestamp() * 1000
+        ) or dt_one_min_ago.timestamp() * 1000
 
         start_timestamp_ms = int(last_event_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now
@@ -365,7 +365,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
                     code = error.get('code', None)
                     print('code=', code)
                     if code == 'TIME_RANGE_NOT_AUTHORIZED':
-                        print('352 resetting latest events')
+                        print('352 resetting latest events for', device_id)
                         self.SetItem('latest_events', device_id, None)
             except Exception as e:
                 print('354', e)
@@ -480,27 +480,28 @@ class RingImage(BaseTable):
 
 
 def delete_stored_images(app: Application, user_id: int) -> int:
-    ring_user = app.db.FindOne(RingUser, id=int(user_id))
-    if not ring_user:
-        return 0
+    with app.app_context():
+        ring_user = app.db.FindOne(RingUser, id=int(user_id))
+        if not ring_user:
+            return 0
 
-    image_records = list(
-        app.db.FindAll(RingImage, account_id=ring_user.get("account_id", None))
-    )
-    deleted_count = 0
-    for image in image_records:
-        image_path = image.get("image_path")
-        try:
-            if image_path:
-                path = Path(image_path)
-                if path.exists():
-                    path.unlink()
-        except OSError:
-            app.logger.exception("Failed to delete image file")
-        app.db.Delete(image)
-        deleted_count += 1
+        image_records = list(
+            app.db.FindAll(RingImage, account_id=ring_user.get("account_id", None))
+        )
+        deleted_count = 0
+        for image in image_records:
+            image_path = image.get("image_path")
+            try:
+                if image_path:
+                    path = Path(image_path)
+                    if path.exists():
+                        path.unlink()
+            except OSError:
+                app.logger.exception("Failed to delete image file")
+            app.db.Delete(image)
+            deleted_count += 1
 
-    return deleted_count
+        return deleted_count
 
 
 def setup(a: Application):
