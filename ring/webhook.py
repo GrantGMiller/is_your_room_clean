@@ -146,7 +146,7 @@ def process_webhook(request_id):
             return
 
         data = webhook.Get('data', {}) or {}
-        event_type = webhook.get('type', None)
+        event_type = data.get('type', None)
         if event_type in ['motion_detected']:
             return
 
