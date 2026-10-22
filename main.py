@@ -106,6 +106,11 @@ def dashboard():
                     print('saving latest event')
                     ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
 
+        if devices_without_events:
+            send_slack_message('devices without events: ' + ', '.join(devices_without_events))
+            send_slack_message('len(devs)=', len(devs), ', devs=', devs)
+            send_slack_message('len(devices_without_events=', len(devices_without_events), ', devices_without_events=', devices_without_events)
+        
         if devs and len(devices_without_events) == len(devs):
             return render_template(
                 "ring/no_events.html",
