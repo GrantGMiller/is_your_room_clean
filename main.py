@@ -26,7 +26,13 @@ from feature_nintendo import setup as setup_nintendo
 from feature_stickers import setup as setup_stickers, update_archive_sticker_job
 from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
-from ring.user import RingUser, RingImage, setup as ring_user_setup, get_snapshots_for_user_id
+from ring.user import (
+    RingUser,
+    RingImage,
+    delete_stored_images,
+    setup as ring_user_setup,
+    get_snapshots_for_user_id,
+)
 from slack import send_slack_message, setup as slack_setup, send_slack_error
 
 if not os.path.exists("images"):
@@ -450,26 +456,13 @@ def delete_account():
 
 
 @app.route("/delete_stored_images", methods=["POST"])
-def delete_stored_images():
+def delete_stored_images_endpoint():
     ring_user = app.get_current_user()
     if not ring_user:
         return redirect("/dashboard")
 
     try:
-        image_records = list(
-            app.db.FindAll(RingImage, account_id=ring_user.get("account_id", None))
-        )
-        deleted_count = 0
-        for image in image_records:
-            image_path = image.get("image_path")
-            try:
-                if image_path and os.path.exists(image_path):
-                    os.remove(image_path)
-            except Exception:
-                app.logger.exception("Failed to delete image file")
-            app.db.Delete(image)
-            deleted_count += 1
-
+        deleted_count = delete_stored_images(app, ring_user.get("id"))
         if deleted_count > 0:
             flash(f"Deleted {deleted_count} stored image(s).", "success")
         else:

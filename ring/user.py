@@ -467,6 +467,30 @@ class RingImage(BaseTable):
             )
 
 
+def delete_stored_images(app: Application, user_id: int) -> int:
+    ring_user = app.db.FindOne(RingUser, id=int(user_id))
+    if not ring_user:
+        return 0
+
+    image_records = list(
+        app.db.FindAll(RingImage, account_id=ring_user.get("account_id", None))
+    )
+    deleted_count = 0
+    for image in image_records:
+        image_path = image.get("image_path")
+        try:
+            if image_path:
+                path = Path(image_path)
+                if path.exists():
+                    path.unlink()
+        except OSError:
+            app.logger.exception("Failed to delete image file")
+        app.db.Delete(image)
+        deleted_count += 1
+
+    return deleted_count
+
+
 def setup(a: Application):
     global app
     app = a

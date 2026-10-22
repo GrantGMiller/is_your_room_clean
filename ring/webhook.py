@@ -8,6 +8,7 @@ from flask_jobs import JobScheduler
 
 from app_types import Application
 import config
+from ring.user import RingUser, delete_stored_images
 from slack import send_slack_message
 
 # Store this in an environment variable, not in source control.
@@ -110,12 +111,17 @@ def setup(a: Application):
 
         # Store the authenticated webhook.
         send_slack_message('storing webhook with', data)
-        app.db.New(
+
+        if event_type in ['app_integration_removed']:
+            send_slack_message('storing webhook with', data)
+
+        new_ring_webhook =app.db.New(
             RingWebhook,
             request_id=request_id,
             account_id=account_id,
-            data=data,
+            
         )
+        new_ring_webhook.Set('data', data)
 
         app.jobs.AddJob(
             func=process_webhook,
@@ -142,8 +148,6 @@ def process_webhook(request_id):
         if not webhook:
             return
 
-        if webhook['type'] in ['motion_detected']:
-            return
 
         send_slack_message(webhook)
         # Route to appropriate handler
@@ -169,3 +173,14 @@ def process_webhook(request_id):
         #     handle_subscription_deactivated(payload)
         # else:
         #     return jsonify({'error': 'Unknown event type'}), 400
+
+        data = webhook.Get('data', {})
+        event_type = data.get('type')
+        if event_type == 'app_integration_removed':
+            if data['attributes']['source']:
+                account_id=data['attributes']['source']
+                send_slack_message('app_integration_removed for account_id', account_id)
+                ring_user = app.db.FindOne(RingUser, account_id=account_id)
+                if ring_user:
+                    send_slack_message('deleting stored images for ring_user', ring_user['email'])
+                    delete_stored_images(app, ring_user['id'])
