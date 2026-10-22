@@ -359,7 +359,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
             return f'359 {resp.status_code} {resp.text}'
 
         if not resp.ok:
-            return f'364 {resp.status_code} {resp.text}'
+            return f'364 {resp.status_code} {resp.text} {resp.reason} {resp.headers}'
         
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
             self['ring_user_claimed_at_ms'] = time.time() * 1000
