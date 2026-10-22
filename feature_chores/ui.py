@@ -435,18 +435,21 @@ def setup(a: Application):
         user: RingUser = app.db.FindOne(RingUser, wall_display_url=url)
         if not user:
             flash('User not found. Please try again.', 'danger')
-            return redirect('/')
+            return redirect('/wall_display')
 
         if user and time.time() > float(user.get('wall_link_expires_at', 0)):
             flash('Wall Link expired.', 'danger')
-            return redirect('/')
+            return redirect('/wall_display')
 
         # dont let them use the same code twice
         user['wall_link_expires_at'] = time.time()
 
-        print('wall user logged in')
+        print('before wall user logged in')
         wall_user = user.get_wall_user()
         print('login_user(wall_user=', wall_user)
+        if not wall_user:
+            flash('unrecognized wall user', 'danger')
+            return redirect('/wall_display')
         flask_login.login_user(wall_user, remember=True)
 
         return redirect('/wall_display')

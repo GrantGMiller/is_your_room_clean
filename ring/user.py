@@ -425,7 +425,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
             return self
 
     def get_wall_user(self):
+        print('428 get_wall_user')
         if self.get('is_wall_user', False):
+            print('returning wall_user self')
             return self
 
         if self.get('wall_user_id', None) is None:
@@ -440,9 +442,16 @@ class RingUser(flask_login.UserMixin, BaseTable):
             )
 
             self['wall_user_id'] = wall_user['id']
+            print('443 wall_user=', wall_user)
             return wall_user
 
+        print('returning wall_user self wall_user_id=', self.get('wall_user_id', None))
         wall_user: Optional[RingUser] = self.app.db.FindOne(RingUser, id=self.get('wall_user_id', None))
+        if not wall_user:
+            self['wall_user_id'] = None
+            print('woohoo recursion!!!')
+            return self.get_wall_user() #
+        print('450 returning walluser=', wall_user)
         return wall_user
 
     @property
