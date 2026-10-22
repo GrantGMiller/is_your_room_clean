@@ -199,7 +199,10 @@
             console.warn("Unable to check for Ring events; will retry.", error);
           }
 
-          window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
+          window.setTimeout(
+            pollForEvents,
+            EVENT_POLL_INTERVAL_MS + Math.random() * 2000,
+          );
         }
 
         window.setTimeout(pollForEvents, EVENT_POLL_INTERVAL_MS);
