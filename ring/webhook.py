@@ -10,6 +10,7 @@ from app_types import Application
 import config
 from ring.user import RingUser, delete_stored_images
 from slack import send_slack_message
+import slack
 
 # Store this in an environment variable, not in source control.
 HMAC_KEY = config.RING_HMAC_SIGNATURE_KEY
@@ -123,6 +124,7 @@ def setup(a: Application):
             func=process_webhook,
             args=(request_id,),
             name=f"Webhook {request_id}",
+            errorCallback=slack.send_slack_error
         )
 
         return jsonify({
@@ -145,7 +147,7 @@ def process_webhook(request_id):
             return
 
 
-        send_slack_message(webhook)
+        send_slack_message(webhook.get('type'), webhook.Get('data'))
         # Route to appropriate handler
         # if event_type == 'motion_detected':
         #     handle_motion_detection(payload)
