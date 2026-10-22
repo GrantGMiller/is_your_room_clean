@@ -265,6 +265,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         response = self.make_authenticated_request(
             f'https://api.amazonvision.com/v1/history/devices/{device_id}/events'
         )
+        print('response.text=', response.text)
         if response.ok:
             events = response.json().get('data', [])
             return events[0] if events else None
