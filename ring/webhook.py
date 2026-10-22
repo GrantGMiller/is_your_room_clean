@@ -2,15 +2,15 @@ import hashlib
 import hmac
 from typing import cast
 
-from flask import Flask, request, jsonify
+from flask import request, jsonify
 from flask_dictabase import BaseTable, Dictabase
 from flask_jobs import JobScheduler
 
-from app_types import Application
 import config
+import slack
+from app_types import Application
 from ring.user import RingUser, delete_stored_images
 from slack import send_slack_message
-import slack
 
 # Store this in an environment variable, not in source control.
 HMAC_KEY = config.RING_HMAC_SIGNATURE_KEY
@@ -111,12 +111,11 @@ def setup(a: Application):
             return jsonify({"status": "already_processed"}), 200
 
         # Store the authenticated webhook.
-        
-        new_ring_webhook =app.db.New(
+
+        new_ring_webhook = app.db.New(
             RingWebhook,
             request_id=request_id,
             account_id=account_id,
-            
         )
         new_ring_webhook.Set('data', data)
 
@@ -146,8 +145,11 @@ def process_webhook(request_id):
         if not webhook:
             return
 
+        event_type = data.get('type')
+        if event_type in ['motion_detected']:
+            return
 
-        send_slack_message(webhook.get('type'), webhook.Get('data'))
+        send_slack_message('webhook event_type=', event_type, webhook.Get('data'))
         # Route to appropriate handler
         # if event_type == 'motion_detected':
         #     handle_motion_detection(payload)
@@ -173,10 +175,9 @@ def process_webhook(request_id):
         #     return jsonify({'error': 'Unknown event type'}), 400
 
         data = webhook.Get('data', {})
-        event_type = data.get('type')
-        if event_type == 'app_integration_removed':
+        if event_type in ['app_integration_removed', 'subscription_deactivated']:
             if data['attributes']['source']:
-                account_id=data['attributes']['source']
+                account_id = data['attributes']['source']
                 send_slack_message('app_integration_removed for account_id', account_id)
                 ring_user = app.db.FindOne(RingUser, account_id=account_id)
                 if ring_user:
