@@ -361,7 +361,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         if not resp.ok:
             print('resp.status_code=', resp.status_code)
             print('get_snapshot resp.text=', resp.text)
-            return None
+            return resp.text
         
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
             self['ring_user_claimed_at_ms'] = time.time() * 1000

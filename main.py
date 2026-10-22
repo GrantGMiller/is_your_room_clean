@@ -77,6 +77,7 @@ def index():
 @app.route("/get_snapshot/<device_id>")
 def get_snapshot(device_id):
     ring_user: RingUser = app.get_current_user()
+    img_id = 'none'
     if ring_user:
         img_id = ring_user.get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
