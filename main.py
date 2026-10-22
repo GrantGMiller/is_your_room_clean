@@ -12,18 +12,18 @@ from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
 
 import api
-from app_types import Application
 import config
-from feature_chores.models import Person, get_user_local_dt_from_utc
 import migrate_helper
 import repeat_jobs
+from app_types import Application
 from feature_chores import setup as setup_chores
 from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
+from feature_chores.models import Person, get_user_local_dt_from_utc
 from feature_email import setup as setup_email
+from feature_money import setup as setup_money
 from feature_nintendo import setup as setup_nintendo
 from feature_stickers import setup as setup_stickers, update_archive_sticker_job
-from feature_money import setup as setup_money
 from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
 from ring.user import RingUser, RingImage, setup as ring_user_setup, get_snapshots_for_user_id
@@ -41,7 +41,6 @@ app.jobs = JobScheduler(
     SERVER_HOST_URL=config.SERVER_HOST_URL,  # only required for linux
     deleteOldJobs=False,  # whether to keep old jobs in the database
 )
-
 
 token_endpoints.setup(app)
 webhook.setup(app)
@@ -86,7 +85,7 @@ def dashboard():
     # Ring calls this the "App Homepage"
 
     ring_user = app.get_current_user()
-    #print('77 ring_user=', ring_user)
+    # print('77 ring_user=', ring_user)
     if ring_user:
         # if no events have occured since the app was authorized
         # then no snapshots can be grabbed and this app is useless
@@ -96,7 +95,7 @@ def dashboard():
         if len(devs) == 0:
             # all devices were unauthorized, clear the stored latest events
             ring_user.Set('latest_events', {})
-        #print('devs=', devs)
+        # print('devs=', devs)
 
         for dev in devs:
             if not ring_user.GetItem('latest_events', dev['id'], None):
@@ -139,7 +138,7 @@ def events_exist():
         return 'no events exist', 404
 
     devs = ring_user.get_devices()
-    #print('130 devs=', devs)
+    # print('130 devs=', devs)
     devices_without_events = []
 
     for dev in devs:
@@ -230,7 +229,7 @@ def image_summary(device_id):
 
 def get_latest_ring_image(device_id):
     ring_user = flask_login.current_user
-    if ring_user:
+    if ring_user.is_authenticated:
         images = list(
             app.db.FindAll(
                 RingImage,
@@ -244,6 +243,7 @@ def get_latest_ring_image(device_id):
         if images:
             return images[0]
         return None
+    return None
 
 
 @app.route("/job/<job_id>")
@@ -339,7 +339,7 @@ def admin():
 
         if masked_email not in user_rows and created_age != "Unknown":
             devs = user.Get('last_devices', []) or []
-            #print('devs=', [dev['attributes']['name'] for dev in devs])
+            # print('devs=', [dev['attributes']['name'] for dev in devs])
             num_devices += len(devs)
 
         user_rows[masked_email] = created_age
@@ -499,12 +499,12 @@ def page_not_found(e):
     if not 'installHook' in request.path:
         flash('Page not found: ' + request.path, 'danger')
 
-    user:RingUser = app.get_current_user()
+    user: RingUser = app.get_current_user()
     if not user:
         return redirect("/dashboard")
     if user.is_wall_user:
         return redirect("/wall_display")
-    
+
     return redirect("/dashboard")
 
 
@@ -582,7 +582,7 @@ def inject_app_values():
         'app_name': getattr(config, 'APP_NAME', '{{ app_name }}'),
         'app_url': getattr(config, 'APP_URL', '/'),
         'money_name': getattr(config, 'MONEY_NAME', 'ChoreBucks'),
-     }
+    }
 
 
 @app.route('/favicon.ico')
@@ -595,38 +595,47 @@ def get_current_user() -> Optional[RingUser]:
         # return user object if logged in, else return None
 
         user = flask_login.current_user
-        #print('392 user=', user)
+        # print('392 user=', user)
         if user and user.is_anonymous:
             return None
 
         return user
+
+
 app.get_current_user = get_current_user
+
 
 def get_person(person_id) -> Optional[Person]:
     with app.app_context():
         user = get_current_user().get_ring_user()
         person = app.db.FindOne(Person, id=person_id, owner_id=user['id'])
         return person
+
+
 app.get_person = get_person
+
 
 def get_user(user_id) -> Optional[RingUser]:
     with app.app_context():
         user = app.db.FindOne(RingUser, id=user_id)
         return user
+
+
 app.get_user = get_user
+
 
 def get_all_user_persons() -> List[Person]:
     with app.app_context():
         user = get_current_user().get_ring_user()
         persons = app.db.FindAll(Person, owner_id=user['id'])
         return persons
+
+
 app.get_all_user_persons = get_all_user_persons
 
 app.get_user_local_dt_from_utc = get_user_local_dt_from_utc
 
 update_archive_sticker_job()
-
-
 
 if __name__ == "__main__":
     app.run(port=3888, debug=True)

@@ -9,13 +9,13 @@ from typing import Optional, TypedDict, cast
 
 import flask_login
 import requests
-from flask import flash, Flask
+from flask import flash
 from flask_dictabase import BaseTable, Dictabase
 
-from app_types import Application
 import config
 import slack
 from ai_cleanliness import evaluate_cleanliness
+from app_types import Application
 from feature_email import render_room_clean_email, SETTINGS_KEY
 from feature_email.helpers import send_email
 from slack import send_slack_message
@@ -79,7 +79,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
     @property
     def clean_threshold(self):
-        return 50 # percent
+        return 50  # percent
 
     @property
     def are_all_rooms_clean(self):
@@ -295,7 +295,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
             _limit=1,
             _reverse=True,
         ))
-        # self.app.logger.error('lastest images=' + str(latest_images))
+
+        print('dev=', device_id[-10:], 'lastest images=' + str(latest_images))
         if latest_images and (latest_images[0].get('timestamp_epoch_ms', 0) or 0) > (time.time() * 1000) - (
                 IMAGE_REQUEST_TIMEOUT * 1000):
             img = latest_images[0]
@@ -307,18 +308,20 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         # ok some weirdness, you cannot request a start_time that is before the app was authorized
         # so use the start_time or the app creation time, whichever is greater
+        dt_five_min_ago = datetime.datetime.now(
+            datetime.timezone.utc,
+        ) - datetime.timedelta(minutes=5)
+        last_event_timestamp_ms = self.GetItem(
+            'latest_events',
+            device_id,
+            dt_five_min_ago.timestamp() * 1000
+        ) or dt_five_min_ago.timestamp() * 1000
 
-        start_timestamp_ms = int(time.time() * 1000) - (12 * 60 * 60 * 1000)
-        five_mins_ago_ms = (time.time() * 1000) - (5 * 60 * 60 * 1000)
-        if start_timestamp_ms < int(self.GetItem('latest_events', device_id, five_mins_ago_ms) or five_mins_ago_ms):
-            # start one second after app was authorized
-            start_timestamp_ms = int(
-                self.GetItem('latest_events', device_id, five_mins_ago_ms) or five_mins_ago_ms) + 1000
-
-        start_timestamp_ms = int(start_timestamp_ms)  # make sure its an int cuz server will reject a float
+        start_timestamp_ms = int(last_event_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now
 
-        print('grabbing a new snapshot')
+        print('grabbing a new snapshot, start_timestamp_ms=', start_timestamp_ms, 'as dt=',
+              datetime.datetime.fromtimestamp(start_timestamp_ms / 1000))
         resp = self.make_authenticated_request(
             'https://api.amazonvision.com/v1/devices/{}/media/image/download'.format(device_id),
             method='POST',
@@ -340,6 +343,20 @@ class RingUser(flask_login.UserMixin, BaseTable):
             pass
 
         if not resp.ok:
+            print('resp.status_code=', resp.status_code)
+            print('get_snapshot resp.text=', resp.text)
+
+            try:
+                errors = resp.json().get('errors', [])
+                for error in errors:
+                    print('error=', error)
+                    code = error.get('code', None)
+                    print('code=', code)
+                    if code == 'TIME_RANGE_NOT_AUTHORIZED':
+                        print('352 resetting latest events')
+                        self.SetItem('latest_events', device_id, None)
+            except Exception as e:
+                print('354', e)
             return None
 
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
@@ -465,9 +482,6 @@ def setup(a: Application):
         except Exception as e:
             print('Error loading user_id=', user_id, e)
             return None
-
-
-
 
 
 def get_current_wall_user() -> Optional[RingUser]:

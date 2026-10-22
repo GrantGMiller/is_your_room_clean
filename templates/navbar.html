@@ -95,7 +95,8 @@
             <a class="nav-item nav-link" href="/"> Sign In </a>
           {% endif %}
         {% endif %}
-        {% set show_advanced_features =
+        {%
+          set show_advanced_features =
           (enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user)
           or (enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo'))
           or (current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user)
@@ -112,7 +113,9 @@
               Advanced Features
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-              {% if enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user %}
+              {% set show_email = enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user %}
+
+              {% if  show_email %}
                 <li>
                   <a
                     class="dropdown-item {% if request.path == '/email' %}active{% endif %}"
