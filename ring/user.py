@@ -268,6 +268,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
         if response.ok:
             events = response.json().get('data', [])
             return events[0] if events else None
+        else:
+            send_slack_message(response.text)
 
         return None
 

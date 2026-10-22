@@ -156,7 +156,8 @@ def events_exist():
             print('get_latest_event')
             latest_event = ring_user.get_latest_event(dev['id'])
             if not latest_event:
-                devices_without_events.append(dev["attributes"]["name"])
+                dev_name = dev["attributes"]["name"]
+                devices_without_events.append(dev_name)
             else:
                 print('saving latest event')
                 ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
