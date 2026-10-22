@@ -109,6 +109,7 @@ def setup(a: Application):
             return jsonify({"status": "already_processed"}), 200
 
         # Store the authenticated webhook.
+        send_slack_message('storing webhook with', data)
         app.db.New(
             RingWebhook,
             request_id=request_id,
