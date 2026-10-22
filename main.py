@@ -79,7 +79,7 @@ def get_snapshot(device_id):
     ring_user: RingUser = app.get_current_user()
     img_id = 'no user'
     if ring_user:
-        img_id = ring_user.get_snapshot(device_id)
+        img_id = ring_user.get_ring_user().get_snapshot(device_id)
         img: RingImage = app.db.FindOne(RingImage, id=img_id)
         if img:
             return send_file(img["image_path"])
