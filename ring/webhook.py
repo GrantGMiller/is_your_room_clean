@@ -145,7 +145,8 @@ def process_webhook(request_id):
         if not webhook:
             return
 
-        event_type = data.get('type')
+        data = webhook.Get('data', {}) or {}
+        event_type = webhook.get('type', None)
         if event_type in ['motion_detected']:
             return
 
@@ -174,7 +175,6 @@ def process_webhook(request_id):
         # else:
         #     return jsonify({'error': 'Unknown event type'}), 400
 
-        data = webhook.Get('data', {}) or {}
         if event_type in ['app_integration_removed', 'subscription_deactivated']:
             if data['attributes']['source']:
                 account_id = data['attributes']['source']
