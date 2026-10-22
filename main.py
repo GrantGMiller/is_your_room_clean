@@ -164,6 +164,7 @@ def events_exist():
     if not devs or len(devices_without_events) == len(devs):
         return 'no events exist', 404
 
+    # at least one device with an event exist
     return 'events exist', 200
 
 

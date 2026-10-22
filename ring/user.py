@@ -261,6 +261,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
     def get_latest_event(self, device_id: str) -> Optional[dict]:
         """Return the newest event for a device, or None when no events exist."""
+        print('get_latest_event', device_id[-10:])
         response = self.make_authenticated_request(
             f'https://api.amazonvision.com/v1/history/devices/{device_id}/events'
         )
