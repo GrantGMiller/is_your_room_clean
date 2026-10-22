@@ -335,7 +335,19 @@ class RingUser(flask_login.UserMixin, BaseTable):
             },
         )
 
-        if resp.status_code == 416:
+        has_time_range_error = False
+        try:
+            errors = resp.json().get('errors', [])
+            for error in errors:
+                print('error=', error)
+                code = error.get('code', None)
+                print('code=', code)
+                if code == 'TIME_RANGE_NOT_AUTHORIZED':
+                    has_time_range_error = True
+        except Exception as e:
+            print('354', e)
+
+        if resp.status_code == 416 or has_time_range_error:
             # The user may have tried to access a time before this app was authorized
             # Or we otherwise lost the authorization
             print('clearing the latest_events for', device_id)
