@@ -371,9 +371,11 @@ def admin():
 
         masked_email = mask_email(email)
 
-        if created_age == 'Unknown':
+        if created_age == 'Unknown' or \
+            'amazon.com' in registered_user.get("email", "") or \
+            'ring.com' in registered_user.get("email", ""):
             continue
-        
+
         if masked_email not in user_rows and created_age != "Unknown":
             devs = registered_user.Get('last_devices', []) or []
             # print('devs=', [dev['attributes']['name'] for dev in devs])
