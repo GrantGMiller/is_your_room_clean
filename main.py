@@ -115,7 +115,7 @@ def dashboard():
 
         
         # send_slack_message('len(devs)=', len(devs))
-        # send_slack_message('len(devices_without_events=', len(devices_without_events), ', devices_without_events=', devices_without_events)
+        send_slack_message('len(devs)=', len(devs), ', len(devices_without_events=', len(devices_without_events), ', devices_without_events=', devices_without_events)
         
         if devs and len(devices_without_events) == len(devs):
             return render_template(
