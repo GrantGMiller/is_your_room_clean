@@ -376,7 +376,11 @@ def admin():
             # print('devs=', [dev['attributes']['name'] for dev in devs])
             num_devices += len(devs)
 
-        user_rows[masked_email] = (created_age, registered_user.get("webhook_status", ""))
+        subscription_status = registered_user.get("subscription_status", '')
+        if not subscription_status:
+            subscription_status = registered_user.get_subscription_status()
+
+        user_rows[masked_email] = (created_age, subscription_status)
 
     return render_template(
         "admin.html",

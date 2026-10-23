@@ -38,15 +38,15 @@
                 <tr>
                   <th scope="col">Masked email</th>
                   <th scope="col">Account created</th>
-                  <th scope="col">Webhook status</th>
+                  <th scope="col">Subscription status</th>
                 </tr>
               </thead>
               <tbody>
-                {% for email, (created_age, webhook_status) in user_rows.items() %}
+                {% for email, (created_age, subscription_status) in user_rows.items() %}
                   <tr>
                     <td>{{ email }}</td>
                     <td>{{ created_age }}</td>
-                    <td>{{ webhook_status }}</td>
+                    <td>{{ sub_status }}</td>
                   </tr>
                 {% else %}
                   <tr>

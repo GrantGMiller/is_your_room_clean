@@ -54,7 +54,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     is_wall_user: bool
     enabled_features: dict  # {str(feature_name): bool(enabled)}
     last_clean_score: str
-    webhook_status: str # latest webhook status
+    subscription_status: str # latest subscription status
 
     def log_cleanliness_score(self, device_id: str, cleanliness_score: float):
         print('log_cleanliness_score', device_id[:10], cleanliness_score)
@@ -126,8 +126,39 @@ class RingUser(flask_login.UserMixin, BaseTable):
         # Need to make sure the ids are not duplicated.
         return self['id']
 
-    def __str__(self):
-        return BaseTable.__str__(self)
+    def get_subscription_status(self):
+        resp = self.make_authenticated_request(
+            url='https://api.amazonvision.com/v1/accounts/me/subscriptions'
+        )
+        if not resp.ok:
+            return None
+
+        resp_payload = resp.json()
+        print('resp_payload=', resp_payload)
+        if not isinstance(resp_payload, dict) or not isinstance(resp_payload.get('data'), list):
+            print('Invalid subscriptions response: expected a data list')
+            return None
+
+        statuses = []
+        for subscription in resp_payload['data']:
+            if not isinstance(subscription, dict):
+                print('Invalid subscription entry')
+                return None
+            attributes = subscription.get('attributes')
+            if not isinstance(attributes, dict) or not isinstance(
+                attributes.get('status'), str
+            ):
+                print('Invalid subscription entry: missing status')
+                return None
+            sub_id = subscription.get('id')
+            sub_status = attributes['status']
+            statuses.append(f'{sub_id}: {sub_status}')
+
+        status_string = ', '.join(statuses)
+        if statuses:
+            self['subscription_status'] = status_string
+            return status_string
+        return None
 
     def ui_safe(self):
         return {
