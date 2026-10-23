@@ -257,6 +257,7 @@
       hidden
     ></p>
 
+    <script src="/static/confetti.js"></script>
     <script>
       const toggleDeviceCardsButton = document.getElementById(
         "toggle-device-cards",
@@ -485,6 +486,10 @@
             badge.classList.toggle("text-bg-secondary", undoneCount !== 0);
             badge.textContent =
               undoneCount === 0 ? "ALL DONE" : undoneCount + " undone";
+
+            if (isCompleted && !wasCompleted && undoneCount === 0) {
+              confetti.start(5000);
+            }
 
             completedInput.value = String(isCompleted);
             button.classList.toggle("btn-success", isCompleted);
