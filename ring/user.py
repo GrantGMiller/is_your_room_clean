@@ -153,9 +153,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
             ):
                 print('Invalid subscription entry: missing status')
                 return None
-            sub_id = subscription.get('id')
+            sub_type= attributes.get('sub_type')
             sub_status = attributes['status']
-            statuses.append(f'{sub_id[-10:]}: {sub_status}')
+            statuses.append(f'{sub_type}: {sub_status}')
 
         status_string = ', '.join(statuses)
         if statuses:
