@@ -183,7 +183,7 @@ def process_webhook(request_id):
                 if ring_user:
                     send_slack_message('deleting stored images for ring_user', ring_user['email'])
                     delete_stored_images(app, ring_user['id'])
-                    ring_user['webhook_status'] = event_type
+                    ring_user['subscription_status'] = event_type
 
         elif event_type in ['app_integration_added', 'subscription_activated']:
             if data['attributes']['source']:
@@ -191,5 +191,5 @@ def process_webhook(request_id):
                 send_slack_message('app_integration_added for account_id', account_id)
                 ring_user = app.db.FindOne(RingUser, account_id=account_id)
                 if ring_user:
-                    ring_user['webhook_status'] = event_type
+                    ring_user['subscription_status'] = event_type
             

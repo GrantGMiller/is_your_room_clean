@@ -371,10 +371,14 @@ def admin():
 
         masked_email = mask_email(email)
 
+        if created_age == 'Unknown':
+            continue
+        
         if masked_email not in user_rows and created_age != "Unknown":
-            devs = user.Get('last_devices', []) or []
+            devs = registered_user.Get('last_devices', []) or []
             # print('devs=', [dev['attributes']['name'] for dev in devs])
             num_devices += len(devs)
+        
 
         subscription_status = registered_user.get("subscription_status", '')
         if not subscription_status:

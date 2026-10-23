@@ -127,6 +127,9 @@ class RingUser(flask_login.UserMixin, BaseTable):
         return self['id']
 
     def get_subscription_status(self):
+        if not self['access_token']:
+            return None
+        
         resp = self.make_authenticated_request(
             url='https://api.amazonvision.com/v1/accounts/me/subscriptions'
         )
