@@ -376,7 +376,7 @@ def admin():
             # print('devs=', [dev['attributes']['name'] for dev in devs])
             num_devices += len(devs)
 
-        user_rows[masked_email] = created_age
+        user_rows[masked_email] = (created_age, registered_user.get("webhook_status", ""))
 
     return render_template(
         "admin.html",

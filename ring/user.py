@@ -54,6 +54,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     is_wall_user: bool
     enabled_features: dict  # {str(feature_name): bool(enabled)}
     last_clean_score: str
+    webhook_status: str # latest webhook status
 
     def log_cleanliness_score(self, device_id: str, cleanliness_score: float):
         print('log_cleanliness_score', device_id[:10], cleanliness_score)
