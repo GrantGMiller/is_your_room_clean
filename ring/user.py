@@ -155,7 +155,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
                 return None
             sub_id = subscription.get('id')
             sub_status = attributes['status']
-            statuses.append(f'{sub_id}: {sub_status}')
+            statuses.append(f'{sub_id[-10:]}: {sub_status}')
 
         status_string = ', '.join(statuses)
         if statuses:
