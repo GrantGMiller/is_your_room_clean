@@ -434,7 +434,18 @@
         }
       });
 
+      function playRandomSound() {
+
+      const sound = new Audio();
+        sound.src = "/get_sound?" + Date.now();
+        sound.play().catch((error) => {
+          console.error("Failed to play chore sound:", error);
+        });
+      }
+
       function completeChore(button) {
+        playRandomSound();
+
         const choreContainer = button.parentElement;
         const formData = new FormData();
 

@@ -1,12 +1,24 @@
 import datetime
 import json
 import os
+import random
 import sys
 import time
+from pathlib import Path
 from typing import Optional, List
 
 import flask_login
-from flask import flash, jsonify, redirect, render_template, request, send_file, session
+from flask import (
+    abort,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+    session,
+)
 from flask_dictabase import Dictabase
 from flask_jobs import JobScheduler
 from flask_tools import IsValidEmail, SendEmail_SMTP
@@ -258,23 +270,32 @@ def get_latest_ring_image(device_id):
         return None
     return None
 
+@app.route('/get_sound')
+def get_sound():
+    sound_directory = Path(app.static_folder) / "sounds"
+    sound_extensions = {
+        ".aac",
+        ".flac",
+        ".m4a",
+        ".mp3",
+        ".ogg",
+        ".opus",
+        ".wav",
+        ".webm",
+    }
+    sound_files = [
+        path.name
+        for path in sound_directory.iterdir()
+        if path.is_file() and path.suffix.lower() in sound_extensions
+    ]
+    if not sound_files:
+        abort(404, description="No sound files are available.")
 
-@app.route("/job/<job_id>")
-def job(job_id):
-    if not datetime.datetime.now() < datetime.datetime.now().replace(
-            year=2026,
-            month=8,
-            day=24,
-    ):
-        return "too late"
-
-    job = app.jobs.GetJob(job_id)
-    ret = {}
-    for key, value in job.items():
-        ret[key] = str(value)
-
-    return jsonify(ret)
-
+    return send_from_directory(
+        sound_directory,
+        random.choice(sound_files),
+        conditional=True,
+    )
 
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
