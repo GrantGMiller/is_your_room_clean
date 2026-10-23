@@ -379,6 +379,7 @@ def admin():
         if masked_email not in user_rows and created_age != "Unknown":
             devs = registered_user.Get('last_devices', []) or []
             # print('devs=', [dev['attributes']['name'] for dev in devs])
+            this_num_devices = len(devs)
             num_devices += len(devs)
         
 
@@ -386,7 +387,7 @@ def admin():
         if not subscription_status:
             subscription_status = registered_user.get_subscription_status()
 
-        user_rows[masked_email] = (created_age, subscription_status)
+        user_rows[masked_email] = (created_age, this_num_devices, subscription_status)
 
     return render_template(
         "admin.html",
