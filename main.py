@@ -384,7 +384,7 @@ def admin():
         
 
         subscription_status = registered_user.get("subscription_status", '')
-        if not subscription_status:
+        if True:#not subscription_status:
             subscription_status = registered_user.get_subscription_status()
 
         user_rows[masked_email] = (created_age, this_num_devices, subscription_status)
