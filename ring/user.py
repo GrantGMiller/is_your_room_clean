@@ -347,14 +347,14 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         # ok some weirdness, you cannot request a start_time that is before the app was authorized
         # so use the start_time or the app creation time, whichever is greater
-        dt_one_min_ago = datetime.datetime.now(
+        dt_a_bit_ago = datetime.datetime.now(
             datetime.timezone.utc,
-        ) - datetime.timedelta(minutes=1)
+        ) - datetime.timedelta(minutes=5)
         last_event_timestamp_ms = self.GetItem(
             'latest_events',
             device_id,
-            dt_one_min_ago.timestamp() * 1000
-        ) or dt_one_min_ago.timestamp() * 1000
+            dt_a_bit_ago.timestamp() * 1000
+        ) or dt_a_bit_ago.timestamp() * 1000
 
         start_timestamp_ms = int(last_event_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now
