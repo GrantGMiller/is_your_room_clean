@@ -356,6 +356,13 @@ class RingUser(flask_login.UserMixin, BaseTable):
             dt_a_bit_ago.timestamp() * 1000
         ) or dt_a_bit_ago.timestamp() * 1000
 
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        now_ms = now_utc.timestamp() * 1000
+
+        if abs(last_event_timestamp_ms - now_ms) > datetime.timedelta(days=1).total_seconds() * 1000:
+            last_event_timestamp_ms = now_ms
+        
+
         start_timestamp_ms = int(last_event_timestamp_ms)  # make sure its an int cuz server will reject a float
         # end_timestamp_ms = int(time.time() * 1000) # defaults to now
 
