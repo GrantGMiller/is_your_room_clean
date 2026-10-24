@@ -125,10 +125,9 @@ def dashboard():
                     print('saving latest event')
                     ring_user.SetItem('latest_events', dev['id'], latest_event['attributes']['start'])
 
-        
         # send_slack_message('len(devs)=', len(devs))
         # send_slack_message('len(devs)=', len(devs), ', len(devices_without_events=', len(devices_without_events), ', devices_without_events=', devices_without_events)
-        
+
         if devs and len(devices_without_events) == len(devs):
             return render_template(
                 "ring/no_events.html",
@@ -270,6 +269,7 @@ def get_latest_ring_image(device_id):
         return None
     return None
 
+
 @app.route('/get_sound')
 def get_sound():
     sound_directory = Path(app.static_folder) / "sounds"
@@ -296,6 +296,7 @@ def get_sound():
         random.choice(sound_files),
         conditional=True,
     )
+
 
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
@@ -372,8 +373,8 @@ def admin():
         masked_email = mask_email(email)
 
         if created_age == 'Unknown' or \
-            'amazon.com' in registered_user.get("email", "") or \
-            'ring.com' in registered_user.get("email", ""):
+                'amazon.com' in registered_user.get("email", "") or \
+                'ring.com' in registered_user.get("email", ""):
             continue
 
         if masked_email not in user_rows and created_age != "Unknown":
@@ -381,11 +382,11 @@ def admin():
             # print('devs=', [dev['attributes']['name'] for dev in devs])
             this_num_devices = len(devs)
             num_devices += len(devs)
-        
 
         subscription_status = registered_user.get("subscription_status", '')
-        if True:#not subscription_status:
+        if not subscription_status:
             subscription_status = registered_user.get_subscription_status()
+            
 
         user_rows[masked_email] = (created_age, this_num_devices, subscription_status)
 

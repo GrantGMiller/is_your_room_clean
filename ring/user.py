@@ -54,7 +54,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     is_wall_user: bool
     enabled_features: dict  # {str(feature_name): bool(enabled)}
     last_clean_score: str
-    subscription_status: str # latest subscription status
+    subscription_status: str  # latest subscription status
 
     def log_cleanliness_score(self, device_id: str, cleanliness_score: float):
         print('log_cleanliness_score', device_id[:10], cleanliness_score)
@@ -129,7 +129,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     def get_subscription_status(self):
         if not self['access_token']:
             return None
-        
+
         resp = self.make_authenticated_request(
             url='https://api.amazonvision.com/v1/accounts/me/subscriptions'
         )
@@ -149,11 +149,11 @@ class RingUser(flask_login.UserMixin, BaseTable):
                 return None
             attributes = subscription.get('attributes')
             if not isinstance(attributes, dict) or not isinstance(
-                attributes.get('status'), str
+                    attributes.get('status'), str
             ):
                 print('Invalid subscription entry: missing status')
                 return None
-            sub_type= attributes.get('sub_type')
+            sub_type = attributes.get('sub_type')
             sub_status = attributes['status']
             statuses.append(f'{sub_type}: {sub_status}')
 
@@ -395,7 +395,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
 
         if not resp.ok:
             return f'364 {resp.status_code} {resp.text} {resp.reason} {resp.headers}'
-        
+
         if resp.ok and not self.get('ring_user_claimed_at_ms', None):
             self['ring_user_claimed_at_ms'] = time.time() * 1000
 
@@ -471,7 +471,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         if not wall_user:
             self['wall_user_id'] = None
             print('woohoo recursion!!!')
-            return self.get_wall_user() #
+            return self.get_wall_user()  #
         print('450 returning walluser=', wall_user)
         return wall_user
 
