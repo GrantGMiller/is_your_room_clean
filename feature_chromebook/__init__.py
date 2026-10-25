@@ -1,13 +1,13 @@
-from flask import flash, jsonify, redirect, render_template, request
 from urllib.parse import unquote
+
 from familylink_bonustime import FamilyLinkWithBonusTime
 from familylink_bonustime.helper import get_cookies_dict
+from flask import flash, jsonify, redirect, render_template, request
+
 from app_types import Application
-import config
 
 
-
-def setup(a:Application):
+def setup(a: Application):
     global app
     app = a
 
@@ -17,38 +17,34 @@ def setup(a:Application):
         if not user:
             flash('Unrecognized user', 'danger')
             return redirect('/')
-        
+
         familylink = get_family_link()
 
         if request.method == 'POST':
-            # cookie_string = config.CHROMEBOOK_COOKIES# request.form.get('cookie_string')
-            # account_index = config.CHROMEBOOK_AUTH_USER#request.form.get('account_index', 0)
-            
-            cookie_string = request.form.get('cookie_string')
-            account_index = request.form.get('account_index', 0)
-            
+
+            cookie_string = str(request.form.get('cookie_string'))
+            account_index = int(request.form.get('account_index', 0))
+
             if cookie_string:
-                user.SetItem('chromebook', 'cookie_string', unquote(cookie_string))
+                user.SetItem('chromebook', 'cookie_string', str(unquote(cookie_string)))
                 user.SetItem('chromebook', 'account_index', int(account_index))
                 familylink = get_family_link()
 
         if not familylink:
             return render_template(
                 "chromebook/needs_auth.html",
-                                   persons=app.get_all_user_persons(),
-                                   user=user,
-                                   familylink=familylink
-                                   )
-        
+                persons=app.get_all_user_persons(),
+                user=user,
+                familylink=familylink
+            )
+
         return render_template(
-            'chromebook/assign_devices.html', 
+            'chromebook/assign_devices.html',
             persons=list(app.get_all_user_persons()),
             assigned_devices=user.GetItem('chromebook', 'assigned_devices', {}) or {},
-                                   user=user,
-                                   familylink=familylink
-                                   )
-
-       
+            user=user,
+            familylink=familylink
+        )
 
     @app.route('/chromebook/get_devices/<int:person_id>')
     def get_devices(person_id):
@@ -63,7 +59,7 @@ def setup(a:Application):
         person_id = request.form.get('person_id', type=int)
         chromebook_child_name = request.form.get('chromebook_child_name')
         chromebook_device_name = request.form.get('chromebook_device_name')
-        
+
         user = app.get_current_user()
         if not user:
             return jsonify({'error': 'Unrecognized user', 'category': 'danger'}), 404
@@ -117,11 +113,11 @@ def setup(a:Application):
             return jsonify({'error': 'FamilyLink not configured', 'category': 'danger'}), 404
 
         # Assuming FamilyLinkWithBonusTime has a method to add bonus time
-        
+
         data = user.GetItem('chromebook', 'assigned_devices', {}) or {}
         if str(person_id) not in data:
             return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
-        
+
         familylink.add_bonus_time(
             child_name=data[str(person_id)][0],
             device_name=data[str(person_id)][1],
@@ -137,28 +133,29 @@ def setup(a:Application):
         if not user:
             flash('Unrecognized user', 'danger')
             return redirect('/')
-        
+
         user.SetItem('chromebook', 'cookie_string', None)
         user.SetItem('chromebook', 'account_index', 0)
         flash('Logged out of Chromebook', 'success')
         return redirect('/chromebook')
 
+
 def get_family_link():
     with app.app_context():
-        user= app.get_current_user()
+        user = app.get_current_user()
         if not user:
             return None
-        
+
         cookie_string = user.GetItem('chromebook', 'cookie_string', None)
         auth_user_index = user.GetItem('chromebook', 'account_index', 0) or 0
 
         print('cookie_string:', cookie_string)
         print('auth_user_index:', auth_user_index)
-        
+
         if cookie_string:
             return FamilyLinkWithBonusTime(
                 cookies=get_cookies_dict(cookie_string),
                 auth_user=auth_user_index
-                )
-        
+            )
+
         return None
