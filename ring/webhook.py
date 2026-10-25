@@ -147,7 +147,14 @@ def process_webhook(request_id):
 
         data = webhook.Get('data', {}) or {}
         event_type = data.get('type', None)
-        if event_type in ['motion_detected', 'button_press', 'device_offline', 'device_online']:
+        if event_type in [
+            'motion_detected', 
+            'button_press', 
+            'device_offline',
+              'device_online',
+              'device_removed',
+              'device_added'
+              ]:
             return
 
         send_slack_message('webhook event_type=', event_type, webhook.Get('data'))

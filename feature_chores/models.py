@@ -577,7 +577,7 @@ class Chore(BaseTable):
 
         return chore_times
 
-    def round_down_to_choretime_dt(self, dt_utc: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
+    def round_down_to_choretime_dt_utc(self, dt_utc: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
         # if the dt_utc is like 6:37am and the chore times are 6:00am, 7:00am, etc.,
         # round it down to the nearest chore time.
         chore_times_usertz = self.get_chore_times_usertz()
@@ -699,7 +699,7 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                 if not person_last_completed_dt_utc:
                     chore.assign_to(person)
                 if debug: send_slack_message('person last completed dt for chore:', person['name'], person_last_completed_dt_utc)
-                person_last_completed_dt_utc = chore.round_down_to_choretime_dt(person_last_completed_dt_utc)
+                person_last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(person_last_completed_dt_utc)
                 if debug: send_slack_message('person last completed dt rounded down for chore:', person['name'], person_last_completed_dt_utc)
                 delta_last_completed = (now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
                 if debug: send_slack_message('delta last completed for chore:', person['name'], delta_last_completed)
@@ -714,7 +714,7 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
             if debug:
                 send_slack_message('assignment mode is "first-done" or "random" for chore:', chore['name'], chore.get('assignment_mode'))
             # if someone completed the chore recently do nothing
-            last_completed_dt_utc = chore.round_down_to_choretime_dt(chore.get_last_completed_dt_utc())
+            last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(chore.get_last_completed_dt_utc())
             now_dt_utc = datetime.datetime.now(pytz.utc)
             delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
             if debug: send_slack_message('delta last completed for chore:', chore['name'], delta_last_completed)
