@@ -80,81 +80,82 @@ def setup(a: Application):
         user.SetItem('chromebook', 'assigned_devices', data)
 
         return jsonify({
-            'message': f'Assigned {chromebook_device_name} to {chromebook_child_name} for person {person["name"]}'
-                       'user': user.ui_safe()
+            'message': f'Assigned {chromebook_device_name} to {chromebook_child_name} for person {person["name"]}',
+            'user': user.ui_safe()
         })
 
-        @app.route('/chromebook/unassign/<int:person_id>')
-        def unassign_device(person_id):
-            user = app.get_current_user()
-            if not user:
-                return jsonify({'error': 'Unrecognized user', 'category': 'danger'}), 404
+    @app.route('/chromebook/unassign/<int:person_id>')
+    def unassign_device(person_id):
+        user = app.get_current_user()
+        if not user:
+            return jsonify({'error': 'Unrecognized user', 'category': 'danger'}), 404
 
-            data = user.GetItem('chromebook', 'assigned_devices', {}) or {}
-            if str(person_id) in data:
-                del data[str(person_id)]
-                user.SetItem('chromebook', 'assigned_devices', data)
-                return jsonify({'message': f'Unassigned device for person {person_id}'})
-            else:
-                return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
+        data = user.GetItem('chromebook', 'assigned_devices', {}) or {}
+        if str(person_id) in data:
+            del data[str(person_id)]
+            user.SetItem('chromebook', 'assigned_devices', data)
+            return jsonify({'message': f'Unassigned device for person {person_id}'})
+        else:
+            return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
 
-        @app.route('/chromebook/add_bonus_time/<int:person_id>/<int:minutes>')
-        def add_bonus_time(person_id, minutes):
-            user = app.get_current_user()
-            if not user:
-                return jsonify({'error': 'Unrecognized user', 'category': 'danger'}), 404
+    @app.route('/chromebook/add_bonus_time/<int:person_id>/<int:minutes>')
+    def add_bonus_time(person_id, minutes):
+        user = app.get_current_user()
+        if not user:
+            return jsonify({'error': 'Unrecognized user', 'category': 'danger'}), 404
 
-            person = app.get_person(person_id)
-            if not person:
-                return jsonify({'error': 'Person not found', 'category': 'danger'}), 404
+        person = app.get_person(person_id)
+        if not person:
+            return jsonify({'error': 'Person not found', 'category': 'danger'}), 404
 
-            familylink = get_family_link()
-            if not familylink:
-                return jsonify({'error': 'FamilyLink not configured', 'category': 'danger'}), 404
+        familylink = get_family_link()
+        if not familylink:
+            return jsonify({'error': 'FamilyLink not configured', 'category': 'danger'}), 404
 
-            # Assuming FamilyLinkWithBonusTime has a method to add bonus time
+        # Assuming FamilyLinkWithBonusTime has a method to add bonus time
 
-            data = user.GetItem('chromebook', 'assigned_devices', {}) or {}
-            if str(person_id) not in data:
-                return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
+        data = user.GetItem('chromebook', 'assigned_devices', {}) or {}
+        if str(person_id) not in data:
+            return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
 
-            familylink.add_bonus_time(
-                child_name=data[str(person_id)][0],
-                device_name=data[str(person_id)][1],
-                minutes=minutes,
-                verify=True
+        familylink.add_bonus_time(
+            child_name=data[str(person_id)][0],
+            device_name=data[str(person_id)][1],
+            minutes=minutes,
+            verify=True
+        )
+
+        return jsonify({'message': f'Added bonus time {minutes} minutes for person {person["name"]}'})
+
+    @app.route('/chromebook/logout')
+    def chromebook_logout():
+        user = app.get_current_user()
+        if not user:
+            flash('Unrecognized user', 'danger')
+            return redirect('/')
+
+        user.SetItem('chromebook', 'cookie_string', None)
+        user.SetItem('chromebook', 'account_index', 0)
+        flash('Logged out of Chromebook', 'success')
+        return redirect('/chromebook')
+
+
+def get_family_link():
+    with app.app_context():
+        user = app.get_current_user()
+        if not user:
+            return None
+
+        cookie_string = user.GetItem('chromebook', 'cookie_string', None)
+        auth_user_index = user.GetItem('chromebook', 'account_index', 0) or 0
+
+        print('cookie_string:', cookie_string)
+        print('auth_user_index:', auth_user_index)
+
+        if cookie_string:
+            return FamilyLinkWithBonusTime(
+                cookies=get_cookies_dict(cookie_string),
+                auth_user=auth_user_index
             )
 
-            return jsonify({'message': f'Added bonus time {minutes} minutes for person {person["name"]}'})
-
-        @app.route('/chromebook/logout')
-        def chromebook_logout():
-            user = app.get_current_user()
-            if not user:
-                flash('Unrecognized user', 'danger')
-                return redirect('/')
-
-            user.SetItem('chromebook', 'cookie_string', None)
-            user.SetItem('chromebook', 'account_index', 0)
-            flash('Logged out of Chromebook', 'success')
-            return redirect('/chromebook')
-
-    def get_family_link():
-        with app.app_context():
-            user = app.get_current_user()
-            if not user:
-                return None
-
-            cookie_string = user.GetItem('chromebook', 'cookie_string', None)
-            auth_user_index = user.GetItem('chromebook', 'account_index', 0) or 0
-
-            print('cookie_string:', cookie_string)
-            print('auth_user_index:', auth_user_index)
-
-            if cookie_string:
-                return FamilyLinkWithBonusTime(
-                    cookies=get_cookies_dict(cookie_string),
-                    auth_user=auth_user_index
-                )
-
-            return None
+        return None
