@@ -35,6 +35,7 @@ from feature_chores.models import Person, get_user_local_dt_from_utc
 from feature_email import setup as setup_email
 from feature_money import setup as setup_money
 from feature_nintendo import setup as setup_nintendo
+from feature_chromebook import setup as setup_chromebook
 from feature_stickers import setup as setup_stickers, update_archive_sticker_job
 from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
@@ -79,6 +80,9 @@ if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
 
 if getattr(config, 'ENABLE_MIGRATE_CHORES', False):
     migrate_helper.setup(app)
+
+if getattr(config, 'ENABLE_CHROMEBOOK', False):
+    setup_chromebook(app)
 
 
 @app.route("/")
@@ -376,7 +380,7 @@ def admin():
                 'amazon.com' in registered_user.get("email", "") or \
                 'ring.com' in registered_user.get("email", ""):
             continue
-
+        this_num_devices = 0
         if masked_email not in user_rows and created_age != "Unknown":
             devs = registered_user.Get('last_devices', []) or []
             # print('devs=', [dev['attributes']['name'] for dev in devs])
@@ -440,7 +444,7 @@ def my_account():
     masked_email = f"{local[:4]}*****@{domain[-9:]}"
 
     if request.method == "POST":
-        for key in ['chores', 'email_notifications', 'nintendo']:
+        for key in ['chores', 'email_notifications', 'nintendo', 'chromebook']:
             if key in request.form and request.form.get(key, type=bool):
                 new_state = True
             else:
@@ -458,6 +462,9 @@ def my_account():
 
     if getattr(config, 'ENABLE_NINTENDO', False):
         advanced_features['nintendo'] = ring_user.GetItem('enabled_features', 'nintendo')
+
+    if getattr(config, 'ENABLE_CHROMEBOOK', False):
+        advanced_features['chromebook'] = ring_user.GetItem('enabled_features', 'chromebook')
 
     return render_template(
         "my_account.html",
@@ -611,6 +618,7 @@ def inject_app_values():
             'admins': getattr(config, 'ADMINS', []),
             'email_notifications': getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False),
             'nintendo': getattr(config, 'ENABLE_NINTENDO', False),
+            'chromebook': getattr(config, 'ENABLE_CHROMEBOOK', False),
         },
         'app_name': getattr(config, 'APP_NAME', '{{ app_name }}'),
         'app_url': getattr(config, 'APP_URL', '/'),
@@ -638,9 +646,12 @@ def get_current_user() -> Optional[RingUser]:
 app.get_current_user = get_current_user
 
 
-def get_person(person_id) -> Optional[Person]:
+def get_person(person_id:int) -> Optional[Person]:
     with app.app_context():
-        user = get_current_user().get_ring_user()
+        user = get_current_user()
+        if not user:
+            return None
+        user = user.get_ring_user()
         person = app.db.FindOne(Person, id=person_id, owner_id=user['id'])
         return person
 
@@ -659,7 +670,9 @@ app.get_user = get_user
 
 def get_all_user_persons() -> List[Person]:
     with app.app_context():
-        user = get_current_user().get_ring_user()
+        user = get_current_user()
+        if user:
+            user = user.get_ring_user()
         persons = app.db.FindAll(Person, owner_id=user['id'])
         return persons
 

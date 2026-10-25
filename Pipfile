@@ -16,6 +16,7 @@ pytz = "*"
 pyqrcode = "*"
 pypng = "*"
 ns-parental-controls = "*"
+familylink-bonustime = "*"
 
 [dev-packages]
 black = "==24.8.0"

@@ -145,6 +145,16 @@
                   </a>
                 </li>
               {% endif %}
+                {% if current_user and current_user.is_authenticated and not current_user.is_wall_user and current_user.GetItem('enabled_features', 'chromebook')%}
+                <li>
+                  <a
+                    class="dropdown-item {% if request.path == '/chromebook' %}active{% endif %}"
+                    href="/chromebook"
+                  >
+                    Chromebook
+                  </a>
+                </li>
+              {% endif %}
             </ul>
           </li>
         {% endif %}

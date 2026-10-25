@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assign Chromebook Devices | {{ app_name }}</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <section class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+              <h2 class="h4 mb-3">Current assignments</h2>
+              <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Person</th>
+                      <th scope="col">Chromebook child</th>
+                      <th scope="col">Device name</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="current-assignments">
+                    {% set assignment_count = namespace(value=0) %}
+                    {% for person in persons %}
+                      {% set assignment = assigned_devices.get(person['id']|string) or assigned_devices.get(person['id']) %}
+                      {% if assignment %}
+                        {% set assignment_count.value = assignment_count.value + 1 %}
+                        <tr data-person-id="{{ person['id'] }}">
+                          <td>{{ person['name'] }}</td>
+                          <td>{{ assignment[0] }}</td>
+                          <td>{{ assignment[1] }}</td>
+                          <td>
+                            <div class="d-flex flex-wrap gap-2">
+                              <button
+                                class="btn btn-outline-primary btn-sm"
+                                type="button"
+                                data-add-time-person-id="{{ person['id'] }}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#add-time-modal"
+                              >
+                                ADD TIME
+                              </button>
+                              <button
+                                class="btn btn-outline-danger btn-sm"
+                                type="button"
+                                data-unassign-person-id="{{ person['id'] }}"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      {% endif %}
+                    {% endfor %}
+                    {% if assignment_count.value == 0 %}
+                      <tr id="no-assignments">
+                        <td class="text-muted" colspan="4">
+                          No Chromebook devices assigned yet.
+                        </td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-4">Assign Chromebook devices</h1>
+
+              {% set device_names = [] %}
+              {% for child in familylink.get_children() %}
+                {% for device_name in familylink.get_device_names(child['name']) %}
+                  {% set _ = device_names.append(device_name) %}
+                {% endfor %}
+              {% endfor %}
+
+              <form id="assign-device-form" action="/chromebook/assign" method="post">
+                <div class="mb-3">
+                  <label class="form-label" for="person">Assign Person</label>
+                  <select class="form-select" id="person" name="person_id">
+                    {% for person in persons %}
+                      <option value="{{ person['id'] }}">
+                        {{ person['name'] }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="chromebook-child">
+                    to Chromebook Child
+                  </label>
+                  <select class="form-select" id="chromebook-child" name="chromebook_child_name">
+                    {% for child in familylink.get_children() %}
+                      <option value="{{ child['name'] }}">
+                        {{ child['name'] }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label" for="device-name">Device name</label>
+                  <select class="form-select" id="device-name" name="chromebook_device_name">
+                    {% for device_name in device_names %}
+                      <option value="{{ device_name }}">{{ device_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <button class="btn btn-primary w-100" type="submit">
+                  Assign device
+                </button>
+              </form>
+
+              <div
+                id="assignment-message"
+                class="alert mt-3 mb-0"
+                role="status"
+                aria-live="polite"
+                hidden
+              ></div>
+
+              <a class="btn btn-outline-secondary w-100 mt-3" href="/chromebook/logout">
+                Logout of FamilyLink
+              </a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <div
+      class="modal fade"
+      id="add-time-modal"
+      tabindex="-1"
+      aria-labelledby="add-time-modal-label"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form id="add-time-form">
+            <div class="modal-header">
+              <h2 class="modal-title h5" id="add-time-modal-label">
+                Add Chromebook time
+              </h2>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <label class="form-label" for="add-time-minutes">
+                Minutes to add
+              </label>
+              <input
+                class="form-control"
+                id="add-time-minutes"
+                type="number"
+                min="1"
+                step="1"
+                required
+              />
+              <p
+                id="add-time-error"
+                class="text-danger mt-3 mb-0"
+                role="alert"
+                hidden
+              ></p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button class="btn btn-primary" id="add-time-submit" type="submit">
+                ADD TIME
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const assignDeviceForm = document.getElementById("assign-device-form");
+      const assignmentMessage = document.getElementById("assignment-message");
+      const addTimeForm = document.getElementById("add-time-form");
+      const addTimeModalElement = document.getElementById("add-time-modal");
+      const addTimeModal = bootstrap.Modal.getOrCreateInstance(
+        addTimeModalElement,
+      );
+      const addTimeMinutes = document.getElementById("add-time-minutes");
+      const addTimeError = document.getElementById("add-time-error");
+      const addTimeSubmit = document.getElementById("add-time-submit");
+      let addTimePersonId;
+      const assignDeviceButton = assignDeviceForm.querySelector(
+        'button[type="submit"]',
+      );
+
+      addTimeModalElement.addEventListener("show.bs.modal", (event) => {
+        addTimePersonId =
+          event.relatedTarget.dataset.addTimePersonId;
+        addTimeForm.reset();
+        addTimeError.hidden = true;
+      });
+
+      addTimeForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        addTimeError.hidden = true;
+
+        const minutes = Number(addTimeMinutes.value);
+        if (!Number.isInteger(minutes) || minutes < 1) {
+          addTimeError.textContent = "Enter a whole number of minutes greater than zero.";
+          addTimeError.hidden = false;
+          return;
+        }
+
+        addTimeSubmit.disabled = true;
+        try {
+          const response = await fetch(
+            `/chromebook/add_bonus_time/${encodeURIComponent(addTimePersonId)}/${encodeURIComponent(minutes)}`,
+          );
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || "Unable to add Chromebook time.");
+          }
+
+          addTimeModal.hide();
+          assignmentMessage.className = "alert alert-success mt-3 mb-0";
+          assignmentMessage.textContent =
+            result.message || "Chromebook time added successfully.";
+          assignmentMessage.hidden = false;
+        } catch (error) {
+          console.error("Failed to add Chromebook time", error);
+          addTimeError.textContent =
+            error.message || "Unable to add Chromebook time.";
+          addTimeError.hidden = false;
+          assignmentMessage.className = "alert alert-danger mt-3 mb-0";
+          assignmentMessage.textContent = addTimeError.textContent;
+          assignmentMessage.hidden = false;
+        } finally {
+          addTimeSubmit.disabled = false;
+        }
+      });
+
+      assignDeviceForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        assignmentMessage.hidden = true;
+        assignDeviceButton.disabled = true;
+
+        try {
+          const response = await fetch(assignDeviceForm.action, {
+            method: "POST",
+            body: new FormData(assignDeviceForm),
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          });
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || "Unable to assign this device.");
+          }
+
+          assignmentMessage.className = "alert alert-success mt-3 mb-0";
+          assignmentMessage.textContent =
+            result.message || "Device assigned successfully.";
+
+          const personSelect = document.getElementById("person");
+          const selectedPerson = personSelect.selectedOptions[0];
+          const childSelect = document.getElementById("chromebook-child");
+          const deviceSelect = document.getElementById("device-name");
+          const assignmentsTable = document.getElementById("current-assignments");
+          const personId = personSelect.value;
+          let assignmentRow = assignmentsTable.querySelector(
+            `tr[data-person-id="${personId}"]`,
+          );
+
+          if (!assignmentRow) {
+            document.getElementById("no-assignments")?.remove();
+            assignmentRow = document.createElement("tr");
+            assignmentRow.dataset.personId = personId;
+            assignmentsTable.appendChild(assignmentRow);
+          }
+
+          assignmentRow.replaceChildren(
+            ...[
+              selectedPerson.textContent.trim(),
+              childSelect.value,
+              deviceSelect.value,
+            ].map((value) => {
+              const cell = document.createElement("td");
+              cell.textContent = value;
+              return cell;
+            }),
+          );
+          const actionCell = document.createElement("td");
+          const actionButtons = document.createElement("div");
+          actionButtons.className = "d-flex flex-wrap gap-2";
+          const addTimeButton = document.createElement("button");
+          addTimeButton.className = "btn btn-outline-primary btn-sm";
+          addTimeButton.type = "button";
+          addTimeButton.dataset.addTimePersonId = personId;
+          addTimeButton.dataset.bsToggle = "modal";
+          addTimeButton.dataset.bsTarget = "#add-time-modal";
+          addTimeButton.textContent = "ADD TIME";
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "btn btn-outline-danger btn-sm";
+          deleteButton.type = "button";
+          deleteButton.dataset.unassignPersonId = personId;
+          deleteButton.textContent = "Delete";
+          actionButtons.append(addTimeButton, deleteButton);
+          actionCell.appendChild(actionButtons);
+          assignmentRow.appendChild(actionCell);
+        } catch (error) {
+          console.error("Failed to assign Chromebook device", error);
+          assignmentMessage.className = "alert alert-danger mt-3 mb-0";
+          assignmentMessage.textContent =
+            error.message || "Unable to assign this device.";
+        } finally {
+          assignmentMessage.hidden = false;
+          assignDeviceButton.disabled = false;
+        }
+      });
+
+      document
+        .getElementById("current-assignments")
+        .addEventListener("click", async (event) => {
+          const deleteButton = event.target.closest(
+            "button[data-unassign-person-id]",
+          );
+          if (!deleteButton) {
+            return;
+          }
+
+          const personId = deleteButton.dataset.unassignPersonId;
+          if (!window.confirm("Delete this Chromebook assignment?")) {
+            return;
+          }
+
+          deleteButton.disabled = true;
+          assignmentMessage.hidden = true;
+
+          try {
+            const response = await fetch(
+              `/chromebook/unassign/${encodeURIComponent(personId)}`,
+            );
+            const result = await response.json();
+
+            if (!response.ok) {
+              throw new Error(result.error || "Unable to delete this assignment.");
+            }
+
+            deleteButton.closest("tr").remove();
+            if (
+              !document.querySelector(
+                "#current-assignments tr[data-person-id]",
+              )
+            ) {
+              const emptyRow = document.createElement("tr");
+              emptyRow.id = "no-assignments";
+              const emptyCell = document.createElement("td");
+              emptyCell.className = "text-muted";
+              emptyCell.colSpan = 4;
+              emptyCell.textContent = "No Chromebook devices assigned yet.";
+              emptyRow.appendChild(emptyCell);
+              document
+                .getElementById("current-assignments")
+                .appendChild(emptyRow);
+            }
+
+            assignmentMessage.className = "alert alert-success mt-3 mb-0";
+            assignmentMessage.textContent =
+              result.message || "Assignment deleted successfully.";
+          } catch (error) {
+            console.error("Failed to delete Chromebook assignment", error);
+            assignmentMessage.className = "alert alert-danger mt-3 mb-0";
+            assignmentMessage.textContent =
+              error.message || "Unable to delete this assignment.";
+          } finally {
+            assignmentMessage.hidden = false;
+            if (deleteButton.isConnected) {
+              deleteButton.disabled = false;
+            }
+          }
+        });
+    </script>
+  </body>
+</html>

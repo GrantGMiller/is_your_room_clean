@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connect Chromebook | {{ app_name }}</title>
+    {% include "js_css.html" %}
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %}
+    {% include "navbar.html" %}
+
+    <main class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <section class="card shadow-sm">
+            <div class="card-body p-4 p-md-5">
+              <h1 class="h2 mb-3">Connect your Chromebook account</h1>
+              <form method="post" action="/chromebook">
+                <div class="mb-4">
+                  <label class="form-label" for="cookie-string">
+                    Paste the cookie string from your browser dev tools here
+                  </label>
+                  <input
+                    class="form-control"
+                    id="cookie-string"
+                    type="text"
+                    name="cookie_string"
+                    required
+                  />
+                </div>
+                <button class="btn btn-primary w-100" type="submit">
+                  Connect account
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

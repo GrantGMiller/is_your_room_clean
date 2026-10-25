@@ -53,6 +53,7 @@ class Person(BaseTable):
     stickers: List[str] = []
     sticker_archive: List[str] = []
     num_of_completed_chores: int = 0
+    
 
     def inc_completed_chore_count(self):
         self['num_of_completed_chores'] = (self.get('num_of_completed_chores', 0) or 0) + 1
@@ -75,6 +76,7 @@ class Person(BaseTable):
             "sticker_credits": self.get('sticker_credits', 0) or 0,
             "num_of_completed_chores": self.get('num_of_completed_chores', 0) or 0,
             "stickers": self.get_stickers(),
+            "chromebook_assigned_device": self.GetItem('chromebook', 'assigned_devices', {}) or {}
         }
         return ret
 

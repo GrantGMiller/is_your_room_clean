@@ -359,6 +359,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         now_ms = now_utc.timestamp() * 1000
 
+        # dont request a range greater than 24hrs
         if abs(last_event_timestamp_ms - now_ms) > datetime.timedelta(days=1).total_seconds() * 1000:
             last_event_timestamp_ms = now_ms
         
