@@ -102,7 +102,7 @@ def setup(a: Application):
             return "User not authenticated", 401
 
         ns = get_ns_manager(user['id'])
-        minutes = request.json.get('minutes', 0)
+        minutes = request.json.get('minutes', 0) if request.json else 0
         ns.add_playtime_minutes_for_today(device_name, minutes)
         return jsonify({'status': 'success'})
 

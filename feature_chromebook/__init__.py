@@ -103,10 +103,13 @@ def setup(a: Application):
         user = app.get_current_user()
         if not user:
             return jsonify({'error': 'Unrecognized user', 'category': 'danger'}), 404
-
+        user = user.get_ring_user()
         person = app.get_person(person_id)
         if not person:
             return jsonify({'error': 'Person not found', 'category': 'danger'}), 404
+
+        if minutes > person.get('nintendo_time', 0):
+            return jsonify({'error': 'Not enough Nintendo time available', 'category': 'danger'}), 404
 
         familylink = get_family_link()
         if not familylink:
@@ -115,15 +118,19 @@ def setup(a: Application):
         # Assuming FamilyLinkWithBonusTime has a method to add bonus time
 
         data = user.GetItem('chromebook', 'assigned_devices', {}) or {}
+        print('123 data=', data)
         if str(person_id) not in data:
             return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
 
-        familylink.add_bonus_time(
+        result = familylink.add_bonus_time(
             child_name=data[str(person_id)][0],
             device_name=data[str(person_id)][1],
             minutes=minutes,
             verify=True
         )
+
+        if result and not request.args.get('dont_subtract_nintendo_time', type=bool):
+            person['nintendo_time'] = person.get('nintendo_time', 0) - minutes
 
         return jsonify({'message': f'Added bonus time {minutes} minutes for person {person["name"]}'})
 
@@ -145,6 +152,7 @@ def get_family_link():
         user = app.get_current_user()
         if not user:
             return None
+        user = user.get_ring_user()
 
         cookie_string = user.GetItem('chromebook', 'cookie_string', None)
         auth_user_index = user.GetItem('chromebook', 'account_index', 0) or 0

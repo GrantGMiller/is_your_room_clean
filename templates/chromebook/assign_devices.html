@@ -234,7 +234,7 @@
         addTimeSubmit.disabled = true;
         try {
           const response = await fetch(
-            `/chromebook/add_bonus_time/${encodeURIComponent(addTimePersonId)}/${encodeURIComponent(minutes)}`,
+            `/chromebook/add_bonus_time/${encodeURIComponent(addTimePersonId)}/${encodeURIComponent(minutes)}?dont_subtract_nintendo_time=true`,
           );
           const result = await response.json();
 

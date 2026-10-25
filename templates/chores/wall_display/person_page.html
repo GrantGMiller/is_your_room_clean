@@ -28,6 +28,7 @@
           Back to wall display
         </a>
       </div>
+
       {% set device_name = person.get('nintendo_device_name') %}
       <section
         class="card shadow-sm mt-4"
@@ -62,6 +63,7 @@
           ></p>
         </div>
       </section>
+
       <section class="card shadow-sm mt-4">
         <div class="card-body p-4">
           <h2 class="h5 mb-3" id="nintendo-playtime-heading">
@@ -90,6 +92,43 @@
           </button>
         </div>
       </section>
+      {% if chromebook_assignment %}
+        <section
+          class="card shadow-sm mt-4"
+          aria-labelledby="chromebook-time-heading"
+        >
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="chromebook-time-heading">
+              Chromebook time
+            </h2>
+            <p class="mb-3">
+              Assigned to {{ chromebook_assignment[0] }} ·
+              {{ chromebook_assignment[1] }}
+            </p>
+            <p class="mb-3">
+              Available time:
+              <strong>{{ person.get('nintendo_time', 0) or 0 }}</strong>
+              minutes
+            </p>
+            <button
+              class="btn btn-primary"
+              id="add-chromebook-time-button"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#addChromebookTimeModal"
+            >
+              Add time to Chromebook
+            </button>
+            <p
+              id="add-chromebook-time-status"
+              class="mt-3 mb-0"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
+          </div>
+        </section>
+      {% endif %}
       {% if device_name %}
         {% set nintendo_time = person.get('nintendo_time', 0) | float %}
         {% set rooms_clean = namespace(value=true) %}
@@ -328,6 +367,75 @@
       </div>
     </div>
 
+    {% if chromebook_assignment %}
+      <div
+        class="modal fade"
+        id="addChromebookTimeModal"
+        tabindex="-1"
+        aria-labelledby="addChromebookTimeModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <form id="add-chromebook-time-form">
+              <div class="modal-header">
+                <h2 class="modal-title h5" id="addChromebookTimeModalLabel">
+                  Add Chromebook time
+                </h2>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <label for="add-chromebook-time-minutes" class="form-label">
+                  Minutes to add
+                </label>
+                <input
+                  class="form-control"
+                  type="number"
+                  id="add-chromebook-time-minutes"
+                  min="1"
+                  max="{{ person.get('nintendo_time', 0) | int }}"
+                  step="1"
+                  inputmode="numeric"
+                  required
+                />
+                <div class="form-text">
+                  Available Nintendo time:
+                  {{ person.get('nintendo_time', 0) or 0 }} minutes.
+                </div>
+                <p
+                  id="add-chromebook-time-error"
+                  class="text-danger mt-3 mb-0"
+                  role="alert"
+                  hidden
+                ></p>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="add-chromebook-time-submit"
+                >
+                  Add time
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
     <script>
       const colorPreview = document.getElementById("person-color-preview");
       const colorPreviewList = document.getElementById("color-preview-list");
@@ -347,6 +455,80 @@
       const stickerArchiveModal = bootstrap.Modal.getOrCreateInstance(
         document.getElementById("stickerArchiveModal"),
       );
+      const addChromebookTimeForm = document.getElementById(
+        "add-chromebook-time-form",
+      );
+
+      if (addChromebookTimeForm) {
+        const minutesInput = document.getElementById(
+          "add-chromebook-time-minutes",
+        );
+        const errorMessage = document.getElementById(
+          "add-chromebook-time-error",
+        );
+        const submitButton = document.getElementById(
+          "add-chromebook-time-submit",
+        );
+        const statusMessage = document.getElementById(
+          "add-chromebook-time-status",
+        );
+        const addTimeModal = bootstrap.Modal.getOrCreateInstance(
+          document.getElementById("addChromebookTimeModal"),
+        );
+
+        addChromebookTimeForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const minutes = Number(minutesInput.value);
+          const maxMinutes = Number(minutesInput.max);
+          if (
+            !Number.isInteger(minutes) ||
+            minutes < 1 ||
+            minutes > maxMinutes
+          ) {
+            errorMessage.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
+            errorMessage.hidden = false;
+            return;
+          }
+
+          submitButton.disabled = true;
+          errorMessage.hidden = true;
+          try {
+            const response = await fetch(
+              `/chromebook/add_bonus_time/{{ person.id }}/${minutes}`,
+            );
+            const result = await response.json();
+            if (!response.ok) {
+              throw new Error(result.error || "Unable to add Chromebook time.");
+            }
+
+            const remainingMinutes = maxMinutes - minutes;
+            minutesInput.max = String(remainingMinutes);
+            minutesInput.value = "";
+            const nintendoBalance = document.getElementById(
+              "nintendo-time-balance",
+            );
+            if (nintendoBalance) {
+              nintendoBalance.textContent = String(remainingMinutes);
+            }
+            statusMessage.textContent =
+              result.message || `${minutes} minutes added to the Chromebook.`;
+            statusMessage.classList.remove("text-danger");
+            statusMessage.classList.add("text-success");
+            statusMessage.hidden = false;
+            addTimeModal.hide();
+          } catch (error) {
+            console.error("Failed to add Chromebook time", error);
+            errorMessage.textContent = error.message;
+            errorMessage.hidden = false;
+            statusMessage.textContent = error.message;
+            statusMessage.classList.remove("text-success");
+            statusMessage.classList.add("text-danger");
+            statusMessage.hidden = false;
+          } finally {
+            submitButton.disabled = false;
+          }
+        });
+      }
 
       stickerArchiveButton.addEventListener("click", async function () {
         stickerArchiveButton.disabled = true;
