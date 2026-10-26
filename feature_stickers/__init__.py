@@ -4,12 +4,13 @@ import json
 import random
 from typing import cast
 
-from flask import Flask, jsonify, request
 import pytz
 import requests
+from flask import jsonify, request
 from flask_jobs import Job, JobScheduler
 
 from app_types import Application
+from feature_chores import Person
 
 
 def setup(a: Application):
@@ -30,11 +31,11 @@ def setup(a: Application):
         payload = request.get_json(silent=True)
         stickers = payload.get('stickers') if isinstance(payload, dict) else None
         if (
-            not isinstance(stickers, list)
-            or not stickers
-            or any(
-                not isinstance(sticker, str) or not sticker for sticker in stickers
-            )
+                not isinstance(stickers, list)
+                or not stickers
+                or any(
+            not isinstance(sticker, str) or not sticker for sticker in stickers
+        )
         ):
             return jsonify({"error": "A non-empty list of stickers is required"}), 400
 
@@ -46,11 +47,20 @@ def setup(a: Application):
         person['sticker_credits'] = 0
         return jsonify(person.ui_safe())
 
+    @app.route('/stickers/archive_now')
+    def archive_now():
+        result = archive_all_stickers()
+        return jsonify({
+            'message': 'archived all stickers',
+            'persons affected': result
+        })
+
+
 def update_archive_sticker_job():
     with app.app_context():
         # archive the stickers weekly
         job_name = 'archive_stickers_weekly'
-        job:Job = app.jobs.Find(name=job_name)
+        job: Job = app.jobs.Find(name=job_name)
         if job:
             job.Delete()
         app.jobs = cast(JobScheduler, app.jobs)
@@ -59,11 +69,12 @@ def update_archive_sticker_job():
             if startDT.weekday() == 6:  # job should run on Sunday
                 break
             startDT += datetime.timedelta(days=1)
-    
+
         new_job = app.jobs.RepeatJob(
             name=job_name,
             startDT=startDT,
             days=7,
+            func=archive_all_stickers
         )
         print('new_job=', new_job)
 
@@ -89,6 +100,18 @@ def get_random_emoji(number: int):
         data = resp.json()
         ret.append(html.unescape(data['htmlCode'][0]))
     return ret
+
+
+def archive_all_stickers():
+    with app.app_context():
+        ret = []
+        for person in app.db.FindAll(Person):
+            if not person:
+                continue
+            archive_stickers(person['id'])
+            ret.append(person['name'])
+        return ret
+
 
 def archive_stickers(person_id: int):
     with app.app_context():
