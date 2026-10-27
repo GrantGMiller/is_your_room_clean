@@ -84,7 +84,7 @@ def setup(a: Application):
         else:
             return jsonify({'error': 'No device assigned to this person', 'category': 'danger'}), 404
 
-    @app.route('/amazon/add_bonus_time/<int:person_id>/<int:minutes>')
+    @app.route('/amazon/add_bonus_time/<int:person_id>/<int:minutes>', methods=['GET', 'POST'])
     def amazon_add_bonus_time(person_id, minutes):
         user = app.get_current_user()
         if not user:

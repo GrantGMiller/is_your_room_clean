@@ -1,801 +1,990 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>{{ person.name }} | {{ app_name }}</title>
     {% include "js_css.html" %}
-  </head>
+</head>
 
-  <body class="bg-light">
-    {% include "flash_messages.html" %}
-    {% include "navbar.html" %}
+<body class="bg-light">
+{% include "flash_messages.html" %}
+{% include "navbar.html" %}
 
-    <main class="container py-5">
-      <div
-        class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
-      >
+<main class="container py-5">
+    <div
+            class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"
+    >
         <div>
-          <p class="text-uppercase text-muted small fw-semibold mb-2">
-            Wall Display
-          </p>
-          <h1 class="h2 mb-1">{{ person.name }}'s settings</h1>
-          <p class="text-muted mb-0">
-            Choose the color for your name and chores.
-          </p>
+            <p class="text-uppercase text-muted small fw-semibold mb-2">
+                Wall Display
+            </p>
+            <h1 class="h2 mb-1">{{ person.name }}'s settings</h1>
+            <p class="text-muted mb-0">
+                Choose the color for your name and chores.
+            </p>
         </div>
         <a class="btn btn-outline-secondary" href="/wall_display">
-          Back to wall display
+            Back to wall display
         </a>
-      </div>
+    </div>
 
-      {% set device_name = person.get('nintendo_device_name') %}
-      <section
-        class="card shadow-sm mt-4"
-        aria-labelledby="person-progress-heading"
-      >
+    {% set device_name = person.get('nintendo_device_name') %}
+    <section
+            class="card shadow-sm mt-4"
+            aria-labelledby="person-progress-heading"
+    >
         <div class="card-body p-4">
-          <h2 class="h5 mb-3" id="person-progress-heading">
-            Progress and stickers
-          </h2>
-          <p class="mb-3">
-            Chores completed:
-            <strong>{{ person.get('num_of_completed_chores', 0) or 0 }}</strong>
-          </p>
-          <p class="mb-0">
-            Stickers:
-            <strong>
-              {{ person.get_stickers() | join(' ') or 'No stickers yet' }}
-            </strong>
-          </p>
-          <button
-            class="btn btn-outline-primary mt-3"
-            id="view-sticker-archive-button"
-            type="button"
-          >
-            View sticker archive
-          </button>
-          <p
-            id="sticker-archive-error"
-            class="text-danger mt-3 mb-0"
-            role="alert"
-            hidden
-          ></p>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mt-4">
-        <div class="card-body p-4">
-          <h2 class="h5 mb-3" id="nintendo-playtime-heading">
-            {{ money_name }}
-          </h2>
-          <p
-            class="mb-2 playtime-label"
-            id="person-money-balance"
-            role="status"
-          >
-            ${{ person.get('money', 0) }}
-          </p>
-          <button
-            class="btn btn-primary"
-            id="send-money-button"
-            onclick="window.location='/money/send/{{ person.id }}'"
-          >
-            Send Money
-          </button>
-          <button
-            class="btn btn-primary"
-            id="send-money-button"
-            onclick="window.location='/money/send/{{ person.id }}'"
-          >
-            View Transactions
-          </button>
-        </div>
-      </section>
-      {% if chromebook_assignment %}
-        <section
-          class="card shadow-sm mt-4"
-          aria-labelledby="chromebook-time-heading"
-        >
-          <div class="card-body p-4">
-            <h2 class="h5 mb-3" id="chromebook-time-heading">
-              Chromebook time
+            <h2 class="h5 mb-3" id="person-progress-heading">
+                Progress and stickers
             </h2>
             <p class="mb-3">
-              Assigned to {{ chromebook_assignment[0] }} ·
-              {{ chromebook_assignment[1] }}
+                Chores completed:
+                <strong>{{ person.get('num_of_completed_chores', 0) or 0 }}</strong>
             </p>
-            <p class="mb-3">
-              Available time:
-              <strong>{{ person.get('nintendo_time', 0) or 0 }}</strong>
-              minutes
+            <p class="mb-0">
+                Stickers:
+                <strong>
+                    {{ person.get_stickers() | join(' ') or 'No stickers yet' }}
+                </strong>
             </p>
             <button
-              class="btn btn-primary"
-              id="add-chromebook-time-button"
-              type="button"
-              data-bs-toggle="modal"
-              data-bs-target="#addChromebookTimeModal"
+                    class="btn btn-outline-primary mt-3"
+                    id="view-sticker-archive-button"
+                    type="button"
             >
-              Add time to Chromebook
+                View sticker archive
             </button>
             <p
-              id="add-chromebook-time-status"
-              class="mt-3 mb-0"
-              role="status"
-              aria-live="polite"
-              hidden
+                    id="sticker-archive-error"
+                    class="text-danger mt-3 mb-0"
+                    role="alert"
+                    hidden
             ></p>
-          </div>
-        </section>
-      {% endif %}
-      {% if device_name %}
-        {% set nintendo_time = person.get('nintendo_time', 0) | float %}
-        {% set rooms_clean = namespace(value=true) %}
-        {% for room_name in rooms_to_clean %}
-          {% if (current_cleanliness.get(room_name, 0) | int) < (minimum_cleanliness | int) %}
-            {% set rooms_clean.value = false %}
-          {% endif %}
-        {% endfor %}
+        </div>
+    </section>
 
-        <section
-          class="card shadow-sm mt-4"
-          id="person-nintendo-playtime"
-          data-device-name="{{ device_name }}"
-          aria-labelledby="nintendo-playtime-heading"
-        >
-          <div class="card-body p-4">
+    <section class="card shadow-sm mt-4">
+        <div class="card-body p-4">
             <h2 class="h5 mb-3" id="nintendo-playtime-heading">
-              Nintendo time · {{ device_name }}
+                {{ money_name }}
+            </h2>
+            <p
+                    class="mb-2 playtime-label"
+                    id="person-money-balance"
+                    role="status"
+            >
+                ${{ person.get('money', 0) }}
+            </p>
+            <button
+                    class="btn btn-primary"
+                    id="send-money-button"
+                    onclick="window.location='/money/send/{{ person.id }}'"
+            >
+                Send Money
+            </button>
+            <button
+                    class="btn btn-primary"
+                    id="view-transactions-button"
+                    onclick="window.location='/money/send/{{ person.id }}'"
+            >
+                View Transactions
+            </button>
+        </div>
+    </section>
+    {% if chromebook_assignment %}
+    <section
+            class="card shadow-sm mt-4"
+            aria-labelledby="chromebook-time-heading"
+    >
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="chromebook-time-heading">
+                Chromebook time
+            </h2>
+            <p class="mb-3">
+                Assigned to {{ chromebook_assignment[0] }} ·
+                {{ chromebook_assignment[1] }}
+            </p>
+            <p class="mb-3">
+                Available time:
+                <strong>{{ person.get('nintendo_time', 0) or 0 }}</strong>
+                minutes
+            </p>
+            <button
+                    class="btn btn-primary"
+                    id="add-chromebook-time-button"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addChromebookTimeModal"
+            >
+                Add time to Chromebook
+            </button>
+            <p
+                    id="add-chromebook-time-status"
+                    class="mt-3 mb-0"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+            ></p>
+        </div>
+    </section>
+    {% endif %}
+    {# amazon stuff below here #}
+    {% if amazon_assignment %}
+    <section
+            class="card shadow-sm mt-4"
+            aria-labelledby="amazon-time-heading"
+    >
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="amazon-time-heading">
+                Amazon time
+            </h2>
+            <p class="mb-3">
+                Assigned to {{ amazon_assignment }}
+            </p>
+            <p class="mb-3">
+                Available time:
+                <strong>{{ person.get('nintendo_time', 0) or 0 }}</strong>
+                minutes
+            </p>
+            <button
+                    class="btn btn-primary"
+                    id="add-amazon-time-button"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addAmazonTimeModal"
+            >
+                Add time to Amazon Devices
+            </button>
+            <p
+                    id="add-amazon-time-status"
+                    class="mt-3 mb-0"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+            ></p>
+        </div>
+    </section>
+    {% endif %}
+    {# nintendo stuff below #}
+    {% if device_name %}
+    {% set nintendo_time = person.get('nintendo_time', 0) | float %}
+    {% set rooms_clean = namespace(value=true) %}
+    {% for room_name in rooms_to_clean %}
+    {% if (current_cleanliness.get(room_name, 0) | int) < (minimum_cleanliness | int) %}
+    {% set rooms_clean.value = false %}
+    {% endif %}
+    {% endfor %}
+
+    <section
+            class="card shadow-sm mt-4"
+            id="person-nintendo-playtime"
+            data-device-name="{{ device_name }}"
+            aria-labelledby="nintendo-playtime-heading"
+    >
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="nintendo-playtime-heading">
+                Nintendo time · {{ device_name }}
             </h2>
             <p class="mb-2 playtime-label" role="status">
               <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
               ></span
               >Loading today's playtime...
             </p>
             <div
-              class="progress"
-              role="progressbar"
-              aria-label="{{ device_name }} playtime used today"
-              aria-valuenow="0"
-              aria-valuemin="0"
-              aria-valuemax="100"
+                    class="progress"
+                    role="progressbar"
+                    aria-label="{{ device_name }} playtime used today"
+                    aria-valuenow="0"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
             >
-              <div class="progress-bar" style="width: 0%"></div>
+                <div class="progress-bar" style="width: 0%"></div>
             </div>
             <p class="text-danger mt-3 mb-0" role="alert" hidden>
-              Unable to load Nintendo playtime.
+                Unable to load Nintendo playtime.
             </p>
-          </div>
-          <div class="card-body pt-0">
+        </div>
+        <div class="card-body pt-0">
             <p class="mb-3">
-              Available Nintendo time:
-              <strong id="nintendo-time-balance">{{ nintendo_time }}</strong>
-              minutes
+                Available Nintendo time:
+                <strong id="nintendo-time-balance">{{ nintendo_time }}</strong>
+                minutes
             </p>
             <p class="text-muted mb-3">
-              These rooms must be at least
-              <b>{{ minimum_cleanliness }}%</b> clean before you can add
-              Nintendo time.
+                These rooms must be at least
+                <b>{{ minimum_cleanliness }}%</b> clean before you can add
+                Nintendo time.
             </p>
 
             {% if rooms_to_clean %}
-              <div class="list-group">
+            <div class="list-group">
                 {% for room_name in rooms_to_clean %}
-                  {% set cleanliness = current_cleanliness.get(room_name, 0) | int %}
-                  {% if cleanliness < minimum_cleanliness | int %}
-                    {% set room_status = "danger" %}
-                  {% else %}
-                    {% set room_status = "success" %}
-                  {% endif %}
-                  <div
-                    class="list-group-item list-group-item-{{ room_status }} d-flex justify-content-between align-items-center gap-3"
-                  >
+                {% set cleanliness = current_cleanliness.get(room_name, 0) | int %}
+                {% if cleanliness < minimum_cleanliness | int %}
+                {% set room_status = "danger" %}
+                {% else %}
+                {% set room_status = "success" %}
+                {% endif %}
+                <div
+                        class="list-group-item list-group-item-{{ room_status }} d-flex justify-content-between align-items-center gap-3"
+                >
                     <span class="fw-semibold">{{ room_name }}</span>
                     <span class="badge text-bg-{{ room_status }} rounded-pill">
                       {{ cleanliness }}%
                     </span>
-                  </div>
+                </div>
                 {% endfor %}
-              </div>
+            </div>
             {% else %}
-              <p class="text-muted mb-0">No rooms are required to be clean.</p>
+            <p class="text-muted mb-0">No rooms are required to be clean.</p>
             {% endif %}
             {% if rooms_clean.value and person.get('nintendo_time', 0) > 0 %}
-              <button
-                type="button"
-                class="btn btn-primary mt-3"
-                id="send-time-to-nintendo-button"
-                data-bs-toggle="modal"
-                data-bs-target="#personAddTimeModal"
-                {% if nintendo_time < 1 %}disabled{% endif %}
-              >
-                Send Time to Nintendo
-              </button>
-              {% if nintendo_time >= 60 %}
-                <button
-                  type="button"
-                  class="btn btn-primary mt-3"
-                  id="trade-time-button"
-                >
-                  Trade 1 hour for 1$
-                </button>
-              {% endif %}
+            <button
+                    type="button"
+                    class="btn btn-primary mt-3"
+                    id="send-time-to-nintendo-button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#personAddTimeModal"
+                    {% if nintendo_time
+            < 1 %}disabled{% endif %}
+            >
+            Send Time to Nintendo
+            </button>
+            {% if nintendo_time >= 60 %}
+            <button
+                    type="button"
+                    class="btn btn-primary mt-3"
+                    id="trade-time-button"
+            >
+                Trade 1 hour for 1$
+            </button>
+            {% endif %}
             {% endif %}
             <p
-              id="trade-time-status"
-              class="mt-3 mb-0"
-              role="status"
-              aria-live="polite"
-              hidden
+                    id="trade-time-status"
+                    class="mt-3 mb-0"
+                    role="status"
+                    aria-live="polite"
+                    hidden
             ></p>
             <p
-              id="add-person-time-status"
-              class="mt-3 mb-0"
-              role="status"
-              hidden
+                    id="add-person-time-status"
+                    class="mt-3 mb-0"
+                    role="status"
+                    hidden
             ></p>
-          </div>
-        </section>
-        {% if rooms_clean.value %}
-          <div
+        </div>
+    </section>
+    {% if rooms_clean.value %}
+    <div
             class="modal fade"
             id="personAddTimeModal"
             tabindex="-1"
             aria-labelledby="personAddTimeModalLabel"
             aria-hidden="true"
-          >
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                <form id="person-add-time-form">
-                  <div class="modal-header">
-                    <h2 class="modal-title h5" id="personAddTimeModalLabel">
-                      Add Nintendo time
-                    </h2>
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div class="modal-body">
-                    <label for="person-add-time-minutes" class="form-label">
-                      Minutes to add
-                    </label>
-                    <input
-                      class="form-control"
-                      type="number"
-                      id="person-add-time-minutes"
-                      min="1"
-                      max="{{ nintendo_time | int }}"
-                      step="1"
-                      inputmode="numeric"
-                      required
-                    />
-                    <div class="form-text">
-                      You can add up to {{ nintendo_time }} available minutes.
-                    </div>
-                    <p
-                      id="person-add-time-error"
-                      class="text-danger mt-3 mb-0"
-                      role="alert"
-                      hidden
-                    ></p>
-                  </div>
-                  <div class="modal-footer">
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      class="btn btn-primary"
-                      id="person-add-time-submit"
-                    >
-                      Add time
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-        <hr />
-      {% endif %}
-      <section class="card shadow-sm" aria-labelledby="person-color-heading">
-        <div class="card-body p-4">
-          <h2 class="h5 mb-3" id="person-color-heading">Person color</h2>
-          <p
-            class="d-inline-block px-3 py-2 rounded border mb-4"
-            id="person-color-preview"
-          >
-            {{ person.name }}'s Color
-          </p>
-          <div class="row row-cols-2 row-cols-sm-4 g-2" id="color-preview-list">
-            {% for color in ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"] %}
-              <div class="col">
-                <button
-                  class="card color-preview-button h-100 w-100 text-start border-{{ color }} bg-{{ color }}-subtle"
-                  type="button"
-                  data-color="{{ color }}"
-                  aria-label="Select {{ color }} color"
-                  aria-pressed="{{ 'true' if person.get('color', 'primary') == color else 'false' }}"
-                >
-                  <div class="card-body py-2 px-3">
-                    <span class="fw-semibold">{{ color | capitalize }}</span>
-                  </div>
-                </button>
-              </div>
-            {% endfor %}
-          </div>
-          <p id="color-save-status" class="mt-3 mb-0" role="status" hidden></p>
-        </div>
-      </section>
-    </main>
-
-    <div
-      class="modal fade"
-      id="stickerArchiveModal"
-      tabindex="-1"
-      aria-labelledby="stickerArchiveModalLabel"
-      aria-hidden="true"
     >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title h5" id="stickerArchiveModalLabel">
-              Sticker archive
-            </h2>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <p id="sticker-archive-content" class="fs-2 mb-0"></p>
-          </div>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="person-add-time-form">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="personAddTimeModalLabel">
+                            Add Nintendo time
+                        </h2>
+                        <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="person-add-time-minutes" class="form-label">
+                            Minutes to add
+                        </label>
+                        <input
+                                class="form-control"
+                                type="number"
+                                id="person-add-time-minutes"
+                                min="1"
+                                max="{{ nintendo_time | int }}"
+                                step="1"
+                                inputmode="numeric"
+                                required
+                        />
+                        <div class="form-text">
+                            You can add up to {{ nintendo_time }} available minutes.
+                        </div>
+                        <p
+                                id="person-add-time-error"
+                                class="text-danger mt-3 mb-0"
+                                role="alert"
+                                hidden
+                        ></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                                type="submit"
+                                class="btn btn-primary"
+                                id="person-add-time-submit"
+                        >
+                            Add time
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
     </div>
+    {% endif %}
+    <hr/>
+    {% endif %}
+    <section class="card shadow-sm" aria-labelledby="person-color-heading">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="person-color-heading">Person color</h2>
+            <p
+                    class="d-inline-block px-3 py-2 rounded border mb-4"
+                    id="person-color-preview"
+            >
+                {{ person.name }}'s Color
+            </p>
+            <div class="row row-cols-2 row-cols-sm-4 g-2" id="color-preview-list">
+                {% for color in ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"] %}
+                <div class="col">
+                    <button
+                            class="card color-preview-button h-100 w-100 text-start border-{{ color }} bg-{{ color }}-subtle"
+                            type="button"
+                            data-color="{{ color }}"
+                            aria-label="Select {{ color }} color"
+                            aria-pressed="{{ 'true' if person.get('color', 'primary') == color else 'false' }}"
+                    >
+                        <div class="card-body py-2 px-3">
+                            <span class="fw-semibold">{{ color | capitalize }}</span>
+                        </div>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            <p id="color-save-status" class="mt-3 mb-0" role="status" hidden></p>
+        </div>
+    </section>
+</main>
 
-    {% if chromebook_assignment %}
-      <div
+<div
+        class="modal fade"
+        id="stickerArchiveModal"
+        tabindex="-1"
+        aria-labelledby="stickerArchiveModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="stickerArchiveModalLabel">
+                    Sticker archive
+                </h2>
+                <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <p id="sticker-archive-content" class="fs-2 mb-0"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if chromebook_assignment %}
+<div
         class="modal fade"
         id="addChromebookTimeModal"
         tabindex="-1"
         aria-labelledby="addChromebookTimeModalLabel"
         aria-hidden="true"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
             <form id="add-chromebook-time-form">
-              <div class="modal-header">
-                <h2 class="modal-title h5" id="addChromebookTimeModalLabel">
-                  Add Chromebook time
-                </h2>
-                <button
-                  type="button"
-                  class="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div class="modal-body">
-                <label for="add-chromebook-time-minutes" class="form-label">
-                  Minutes to add
-                </label>
-                <input
-                  class="form-control"
-                  type="number"
-                  id="add-chromebook-time-minutes"
-                  min="1"
-                  max="{{ person.get('nintendo_time', 0) | int }}"
-                  step="1"
-                  inputmode="numeric"
-                  required
-                />
-                <div class="form-text">
-                  Available Nintendo time:
-                  {{ person.get('nintendo_time', 0) or 0 }} minutes.
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="addChromebookTimeModalLabel">
+                        Add Chromebook time
+                    </h2>
+                    <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                    ></button>
                 </div>
-                <p
-                  id="add-chromebook-time-error"
-                  class="text-danger mt-3 mb-0"
-                  role="alert"
-                  hidden
-                ></p>
-              </div>
-              <div class="modal-footer">
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  id="add-chromebook-time-submit"
-                >
-                  Add time
-                </button>
-              </div>
+                <div class="modal-body">
+                    <label for="add-chromebook-time-minutes" class="form-label">
+                        Minutes to add
+                    </label>
+                    <input
+                            class="form-control"
+                            type="number"
+                            id="add-chromebook-time-minutes"
+                            min="1"
+                            max="{{ person.get('nintendo_time', 0) | int }}"
+                            step="1"
+                            inputmode="numeric"
+                            required
+                    />
+                    <div class="form-text">
+                        Available Nintendo time:
+                        {{ person.get('nintendo_time', 0) or 0 }} minutes.
+                    </div>
+                    <p
+                            id="add-chromebook-time-error"
+                            class="text-danger mt-3 mb-0"
+                            role="alert"
+                            hidden
+                    ></p>
+                </div>
+                <div class="modal-footer">
+                    <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                            type="submit"
+                            class="btn btn-primary"
+                            id="add-chromebook-time-submit"
+                    >
+                        Add time
+                    </button>
+                </div>
             </form>
-          </div>
         </div>
-      </div>
-    {% endif %}
+    </div>
+</div>
+{% endif %}
+{% if amazon_assignment %}
+<div
+        class="modal fade"
+        id="addAmazonTimeModal"
+        tabindex="-1"
+        aria-labelledby="addAmazonTimeModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="add-amazon-time-form">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="addAmazonTimeModalLabel">
+                        Add Amazon time
+                    </h2>
+                    <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <label for="add-amazon-time-minutes" class="form-label">
+                        Minutes to add
+                    </label>
+                    <input
+                            class="form-control"
+                            type="number"
+                            id="add-amazon-time-minutes"
+                            min="1"
+                            max="{{ person.get('nintendo_time', 0) | int }}"
+                            step="1"
+                            inputmode="numeric"
+                            required
+                    />
+                    <div class="form-text">
+                        Available Nintendo time:
+                        {{ person.get('nintendo_time', 0) or 0 }} minutes.
+                    </div>
+                    <p
+                            id="add-amazon-time-error"
+                            class="text-danger mt-3 mb-0"
+                            role="alert"
+                            hidden
+                    ></p>
+                </div>
+                <div class="modal-footer">
+                    <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                            type="submit"
+                            class="btn btn-primary"
+                            id="add-amazon-time-submit"
+                    >
+                        Add time
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 
-    <script>
-      const colorPreview = document.getElementById("person-color-preview");
-      const colorPreviewList = document.getElementById("color-preview-list");
-      const colorSaveStatus = document.getElementById("color-save-status");
-      const personAddTimeForm = document.getElementById("person-add-time-form");
-      const tradeTimeButton = document.getElementById("trade-time-button");
-      const tradeTimeStatus = document.getElementById("trade-time-status");
-      const stickerArchiveButton = document.getElementById(
-        "view-sticker-archive-button",
+<script>
+    const colorPreview = document.getElementById("person-color-preview");
+    const colorPreviewList = document.getElementById("color-preview-list");
+    const colorSaveStatus = document.getElementById("color-save-status");
+    const personAddTimeForm = document.getElementById("person-add-time-form");
+    const tradeTimeButton = document.getElementById("trade-time-button");
+    const tradeTimeStatus = document.getElementById("trade-time-status");
+    const stickerArchiveButton = document.getElementById(
+      "view-sticker-archive-button",
+    );
+    const stickerArchiveError = document.getElementById(
+      "sticker-archive-error",
+    );
+    const stickerArchiveContent = document.getElementById(
+      "sticker-archive-content",
+    );
+    const stickerArchiveModal = bootstrap.Modal.getOrCreateInstance(
+      document.getElementById("stickerArchiveModal"),
+    );
+    const addChromebookTimeForm = document.getElementById(
+      "add-chromebook-time-form",
+    );
+
+    if (addChromebookTimeForm) {
+      const minutesInput = document.getElementById(
+        "add-chromebook-time-minutes",
       );
-      const stickerArchiveError = document.getElementById(
-        "sticker-archive-error",
+      const errorMessage = document.getElementById(
+        "add-chromebook-time-error",
       );
-      const stickerArchiveContent = document.getElementById(
-        "sticker-archive-content",
-      );
-      const stickerArchiveModal = bootstrap.Modal.getOrCreateInstance(
-        document.getElementById("stickerArchiveModal"),
-      );
-      const addChromebookTimeForm = document.getElementById(
-        "add-chromebook-time-form",
+      const submitButton = document.getElementById(
+        "add-chromebook-time-submit",
       );
 
-      if (addChromebookTimeForm) {
-        const minutesInput = document.getElementById(
-          "add-chromebook-time-minutes",
-        );
-        const errorMessage = document.getElementById(
-          "add-chromebook-time-error",
-        );
-        const submitButton = document.getElementById(
-          "add-chromebook-time-submit",
-        );
-        const statusMessage = document.getElementById(
-          "add-chromebook-time-status",
-        );
-        const addTimeModal = bootstrap.Modal.getOrCreateInstance(
-          document.getElementById("addChromebookTimeModal"),
-        );
 
-        addChromebookTimeForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const minutes = Number(minutesInput.value);
-          const maxMinutes = Number(minutesInput.max);
-          if (
-            !Number.isInteger(minutes) ||
-            minutes < 1 ||
-            minutes > maxMinutes
-          ) {
-            errorMessage.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
-            errorMessage.hidden = false;
-            return;
-          }
+      // chromebook stuff below here
+      const statusMessage = document.getElementById(
+        "add-chromebook-time-status",
+      );
+      const addTimeModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById("addChromebookTimeModal"),
+      );
 
-          submitButton.disabled = true;
-          errorMessage.hidden = true;
-          try {
-            const response = await fetch(
-              `/chromebook/add_bonus_time/{{ person.id }}/${minutes}`,
-            );
-            const result = await response.json();
-            if (!response.ok) {
-              throw new Error(result.error || "Unable to add Chromebook time.");
-            }
+      addChromebookTimeForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const minutes = Number(minutesInput.value);
+        const maxMinutes = Number(minutesInput.max);
+        if (
+          !Number.isInteger(minutes) ||
+          minutes < 1 ||
+          minutes > maxMinutes
+        ) {
+          errorMessage.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
+          errorMessage.hidden = false;
+          return;
+        }
 
-            const remainingMinutes = maxMinutes - minutes;
-            minutesInput.max = String(remainingMinutes);
-            minutesInput.value = "";
-            const nintendoBalance = document.getElementById(
-              "nintendo-time-balance",
-            );
-            if (nintendoBalance) {
-              nintendoBalance.textContent = String(remainingMinutes);
-            }
-            statusMessage.textContent =
-              result.message || `${minutes} minutes added to the Chromebook.`;
-            statusMessage.classList.remove("text-danger");
-            statusMessage.classList.add("text-success");
-            statusMessage.hidden = false;
-            addTimeModal.hide();
-          } catch (error) {
-            console.error("Failed to add Chromebook time", error);
-            errorMessage.textContent = error.message;
-            errorMessage.hidden = false;
-            statusMessage.textContent = error.message;
-            statusMessage.classList.remove("text-success");
-            statusMessage.classList.add("text-danger");
-            statusMessage.hidden = false;
-          } finally {
-            submitButton.disabled = false;
-          }
-        });
-      }
-
-      stickerArchiveButton.addEventListener("click", async function () {
-        stickerArchiveButton.disabled = true;
-        stickerArchiveError.hidden = true;
+        submitButton.disabled = true;
+        errorMessage.hidden = true;
         try {
           const response = await fetch(
-            "/wall_display/person/{{ person.id }}/sticker_archive",
+            `/chromebook/add_bonus_time/{{ person.id }}/${minutes}`,
           );
           const result = await response.json();
           if (!response.ok) {
-            throw new Error(result.error || "Unable to load sticker archive.");
+            throw new Error(result.error || "Unable to add Chromebook time.");
           }
-          if (
-            !Array.isArray(result.stickers) ||
-            result.stickers.some((sticker) => typeof sticker !== "string")
-          ) {
-            throw new Error("The sticker archive response is invalid.");
+
+          const remainingMinutes = maxMinutes - minutes;
+          minutesInput.max = String(remainingMinutes);
+          minutesInput.value = "";
+          const nintendoBalance = document.getElementById(
+            "nintendo-time-balance",
+          );
+          if (nintendoBalance) {
+            nintendoBalance.textContent = String(remainingMinutes);
           }
-          stickerArchiveContent.textContent =
-            result.stickers.join(" ") || "No archived stickers yet.";
-          stickerArchiveModal.show();
+          statusMessage.textContent =
+            result.message || `${minutes} minutes added to the Chromebook.`;
+          statusMessage.classList.remove("text-danger");
+          statusMessage.classList.add("text-success");
+          statusMessage.hidden = false;
+          addTimeModal.hide();
         } catch (error) {
-          console.error("Failed to load sticker archive", error);
-          stickerArchiveError.textContent = error.message;
-          stickerArchiveError.hidden = false;
+          console.error("Failed to add Chromebook time", error);
+          errorMessage.textContent = error.message;
+          errorMessage.hidden = false;
+          statusMessage.textContent = error.message;
+          statusMessage.classList.remove("text-success");
+          statusMessage.classList.add("text-danger");
+          statusMessage.hidden = false;
         } finally {
-          stickerArchiveButton.disabled = false;
+          submitButton.disabled = false;
         }
       });
+    }
 
-      if (tradeTimeButton) {
-        tradeTimeButton.addEventListener("click", async function () {
-          tradeTimeButton.disabled = true;
-          tradeTimeStatus.hidden = true;
+    // Amazon time
+    const addAmazonTimeForm = document.getElementById("add-amazon-time-form");
 
-          try {
-            const response = await fetch("/money/trade_time", {
+    if (addAmazonTimeForm) {
+      const minutesInput = document.getElementById("add-amazon-time-minutes");
+      const errorMessage = document.getElementById("add-amazon-time-error");
+      const submitButton = document.getElementById("add-amazon-time-submit");
+      const statusMessage = document.getElementById("add-amazon-time-status");
+      const addTimeModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById("addAmazonTimeModal"),
+      );
+
+      addAmazonTimeForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const minutes = Number(minutesInput.value);
+        const maxMinutes = Number(minutesInput.max);
+
+        if (!Number.isInteger(minutes) || minutes < 1 || minutes > maxMinutes) {
+          errorMessage.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
+          errorMessage.hidden = false;
+          return;
+        }
+
+        submitButton.disabled = true;
+        errorMessage.hidden = true;
+        statusMessage.hidden = true;
+
+        try {
+          const response = await fetch(
+            `/amazon/add_bonus_time/{{ person.id }}/${minutes}`,
+            {
               method: "POST",
               credentials: "same-origin",
-            });
-            const result = await response.json();
-            tradeTimeButton.disabled = false;
-            if (!response.ok) {
-              throw new Error(result.error || "Unable to trade Nintendo time.");
-            }
-
-            document.getElementById("person-money-balance").textContent =
-              `$${result.money}`;
-            document.getElementById("nintendo-time-balance").textContent =
-              result.nintendo_time;
-            tradeTimeStatus.textContent = "Traded 60 minutes for $1.";
-            tradeTimeStatus.classList.remove("text-danger");
-            tradeTimeStatus.classList.add("text-success");
-            if (result.nintendo_time <= 0) {
-              document.getElementById("send-time-to-nintendo-button")?.remove();
-            }
-            if (result.nintendo_time < 60) {
-              tradeTimeButton.remove();
-            }
-          } catch (error) {
-            console.error("Failed to trade Nintendo time", error);
-            tradeTimeStatus.textContent = error.message;
-            tradeTimeStatus.classList.remove("text-success");
-            tradeTimeStatus.classList.add("text-danger");
-            tradeTimeButton.disabled = false;
-          } finally {
-            tradeTimeStatus.hidden = false;
-          }
-        });
-      }
-
-      if (personAddTimeForm) {
-        const addTimeInput = document.getElementById("person-add-time-minutes");
-        const addTimeError = document.getElementById("person-add-time-error");
-        const addTimeSubmit = document.getElementById("person-add-time-submit");
-        const addTimeStatus = document.getElementById("add-person-time-status");
-        const addTimeModal = bootstrap.Modal.getOrCreateInstance(
-          document.getElementById("personAddTimeModal"),
-        );
-
-        personAddTimeForm.addEventListener("submit", async function (event) {
-          event.preventDefault();
-          const minutes = Number(addTimeInput.value);
-          const maxMinutes = Number(addTimeInput.max);
-          if (
-            !Number.isInteger(minutes) ||
-            minutes < 1 ||
-            minutes > maxMinutes
-          ) {
-            addTimeError.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
-            addTimeError.hidden = false;
-            return;
-          }
-
-          addTimeSubmit.disabled = true;
-          addTimeError.hidden = true;
-          try {
-            const response = await fetch(
-              `/wall_display/add_nintendo_time/{{ person.id }}`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ minutes: minutes }),
-              },
-            );
-            const result = await response.json();
-            if (!response.ok) {
-              throw new Error(result.error || "Unable to add Nintendo time.");
-            }
-
-            document.getElementById("nintendo-time-balance").textContent =
-              result.remaining_minutes;
-            addTimeInput.max = String(result.remaining_minutes);
-            addTimeInput.value = "";
-            addTimeStatus.textContent = `${minutes} minutes added to ${result.device_name}.`;
-            addTimeStatus.classList.remove("text-danger");
-            addTimeStatus.classList.add("text-success");
-            addTimeStatus.hidden = false;
-            addTimeModal.hide();
-            if (result.remaining_minutes <= 0) {
-              document.getElementById("send-time-to-nintendo-button")?.remove();
-            }
-            await loadNintendoPlaytime();
-          } catch (error) {
-            console.error("Failed to add Nintendo time", error);
-            addTimeError.textContent = error.message;
-            addTimeError.hidden = false;
-          } finally {
-            addTimeSubmit.disabled = false;
-          }
-        });
-      }
-
-      async function fetchPlaytime(deviceName, endpoint, property) {
-        const response = await fetch(
-          `/nintendo/${endpoint}/${encodeURIComponent(deviceName)}`,
-        );
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${endpoint}: ${response.status}`);
-        }
-        const data = await response.json();
-        if (!Number.isFinite(data[property])) {
-          throw new Error(`Invalid ${property} for device ${deviceName}`);
-        }
-        return data[property];
-      }
-
-      async function loadNintendoPlaytime() {
-        const card = document.getElementById("person-nintendo-playtime");
-        if (!card) {
-          return;
-        }
-
-        const deviceName = card.dataset.deviceName;
-        const label = card.querySelector(".playtime-label");
-        const progress = card.querySelector(".progress");
-        const progressBar = card.querySelector(".progress-bar");
-        const errorMessage = card.querySelector('[role="alert"]');
-
-        try {
-          const [played, allowed] = await Promise.all([
-            fetchPlaytime(
-              deviceName,
-              "get_today_playtime_minutes",
-              "today_playtime_minutes",
-            ),
-            fetchPlaytime(
-              deviceName,
-              "get_allowed_playtime_today",
-              "allowed_playtime_today",
-            ),
-          ]);
-          const percentage =
-            allowed > 0
-              ? Math.min(100, Math.max(0, (played / allowed) * 100))
-              : played > 0
-                ? 100
-                : 0;
-          const progressColor =
-            percentage >= 90
-              ? "bg-danger"
-              : percentage >= 70
-                ? "bg-warning"
-                : "bg-success";
-
-          label.textContent = `${played}/${allowed} minutes played today`;
-          progress.setAttribute(
-            "aria-valuenow",
-            String(Math.round(percentage)),
+              headers: { "Content-Type": "application/json" },
+            },
           );
-          progressBar.style.width = `${percentage}%`;
-          progressBar.classList.add(progressColor);
-        } catch (fetchError) {
-          console.error("Failed to load Nintendo playtime", fetchError);
-          label.hidden = true;
-          progress.hidden = true;
-          errorMessage.hidden = false;
-        }
-      }
 
-      function updateColorPreview(color) {
-        [
-          "primary",
-          "secondary",
-          "success",
-          "danger",
-          "warning",
-          "info",
-          "light",
-          "dark",
-        ].forEach(function (availableColor) {
-          colorPreview.classList.remove(
-            `bg-${availableColor}-subtle`,
-            `border-${availableColor}`,
-          );
-        });
-        colorPreview.classList.add(`bg-${color}-subtle`, `border-${color}`);
+          const result = await response.json();
 
-        colorPreviewList
-          .querySelectorAll("[data-color]")
-          .forEach(function (button) {
-            const isSelected = button.dataset.color === color;
-            button.setAttribute("aria-pressed", String(isSelected));
-            button.classList.toggle("border-3", isSelected);
-          });
-      }
-
-      loadNintendoPlaytime();
-      updateColorPreview("{{ person.get('color', 'primary') }}");
-      colorPreviewList.addEventListener("click", async function (event) {
-        const button = event.target.closest("[data-color]");
-        if (!button) {
-          return;
-        }
-
-        const color = button.dataset.color;
-        updateColorPreview(color);
-        colorPreviewList
-          .querySelectorAll("button")
-          .forEach((colorButton) => (colorButton.disabled = true));
-        colorSaveStatus.hidden = true;
-
-        try {
-          const response = await fetch(`/wall_display/person/{{ person.id }}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ color: color }),
-          });
           if (!response.ok) {
-            throw new Error(`Failed to save color: ${response.status}`);
+            throw new Error(result.error || "Unable to add Amazon time.");
           }
-          colorSaveStatus.textContent = "Color saved.";
-          colorSaveStatus.classList.remove("text-danger");
-          colorSaveStatus.classList.add("text-success");
+
+          // The available time pool is shared with the other device integrations.
+          const remainingMinutes = Number(
+            result.remaining_minutes ?? result.nintendo_time,
+          );
+
+          if (Number.isFinite(remainingMinutes)) {
+            minutesInput.max = String(remainingMinutes);
+            const nintendoBalance = document.getElementById("nintendo-time-balance");
+            if (nintendoBalance) {
+              nintendoBalance.textContent = String(remainingMinutes);
+            }
+          }
+
+          minutesInput.value = "";
+          statusMessage.textContent =
+            result.message || `${minutes} minutes added to Amazon devices.`;
+          statusMessage.classList.remove("text-danger");
+          statusMessage.classList.add("text-success");
+          statusMessage.hidden = false;
+          addTimeModal.hide();
         } catch (error) {
-          console.error("Failed to save person color", error);
-          colorSaveStatus.textContent =
-            "Unable to save color. Please try again.";
-          colorSaveStatus.classList.remove("text-success");
-          colorSaveStatus.classList.add("text-danger");
+          console.error("Failed to add Amazon time", error);
+          errorMessage.textContent = error.message || "Unable to add Amazon time.";
+          errorMessage.hidden = false;
+          statusMessage.textContent = errorMessage.textContent;
+          statusMessage.classList.remove("text-success");
+          statusMessage.classList.add("text-danger");
+          statusMessage.hidden = false;
         } finally {
-          colorSaveStatus.hidden = false;
-          colorPreviewList
-            .querySelectorAll("button")
-            .forEach((colorButton) => (colorButton.disabled = false));
+          submitButton.disabled = false;
         }
       });
-    </script>
-  </body>
+    }
+
+    // sticker stuff below here
+    stickerArchiveButton.addEventListener("click", async function () {
+      stickerArchiveButton.disabled = true;
+      stickerArchiveError.hidden = true;
+      try {
+        const response = await fetch(
+          "/wall_display/person/{{ person.id }}/sticker_archive",
+        );
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Unable to load sticker archive.");
+        }
+        if (
+          !Array.isArray(result.stickers) ||
+          result.stickers.some((sticker) => typeof sticker !== "string")
+        ) {
+          throw new Error("The sticker archive response is invalid.");
+        }
+        stickerArchiveContent.textContent =
+          result.stickers.join(" ") || "No archived stickers yet.";
+        stickerArchiveModal.show();
+      } catch (error) {
+        console.error("Failed to load sticker archive", error);
+        stickerArchiveError.textContent = error.message;
+        stickerArchiveError.hidden = false;
+      } finally {
+        stickerArchiveButton.disabled = false;
+      }
+    });
+
+    if (tradeTimeButton) {
+      tradeTimeButton.addEventListener("click", async function () {
+        tradeTimeButton.disabled = true;
+        tradeTimeStatus.hidden = true;
+
+        try {
+          const response = await fetch("/money/trade_time", {
+            method: "POST",
+            credentials: "same-origin",
+          });
+          const result = await response.json();
+          tradeTimeButton.disabled = false;
+          if (!response.ok) {
+            throw new Error(result.error || "Unable to trade Nintendo time.");
+          }
+
+          document.getElementById("person-money-balance").textContent =
+            `$${result.money}`;
+          document.getElementById("nintendo-time-balance").textContent =
+            result.nintendo_time;
+          tradeTimeStatus.textContent = "Traded 60 minutes for $1.";
+          tradeTimeStatus.classList.remove("text-danger");
+          tradeTimeStatus.classList.add("text-success");
+          if (result.nintendo_time <= 0) {
+            document.getElementById("send-time-to-nintendo-button")?.remove();
+          }
+          if (result.nintendo_time < 60) {
+            tradeTimeButton.remove();
+          }
+        } catch (error) {
+          console.error("Failed to trade Nintendo time", error);
+          tradeTimeStatus.textContent = error.message;
+          tradeTimeStatus.classList.remove("text-success");
+          tradeTimeStatus.classList.add("text-danger");
+          tradeTimeButton.disabled = false;
+        } finally {
+          tradeTimeStatus.hidden = false;
+        }
+      });
+    }
+
+    if (personAddTimeForm) {
+      const addTimeInput = document.getElementById("person-add-time-minutes");
+      const addTimeError = document.getElementById("person-add-time-error");
+      const addTimeSubmit = document.getElementById("person-add-time-submit");
+      const addTimeStatus = document.getElementById("add-person-time-status");
+      const addTimeModal = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById("personAddTimeModal"),
+      );
+
+      personAddTimeForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const minutes = Number(addTimeInput.value);
+        const maxMinutes = Number(addTimeInput.max);
+        if (
+          !Number.isInteger(minutes) ||
+          minutes < 1 ||
+          minutes > maxMinutes
+        ) {
+          addTimeError.textContent = `Enter a whole number from 1 to ${maxMinutes}.`;
+          addTimeError.hidden = false;
+          return;
+        }
+
+        addTimeSubmit.disabled = true;
+        addTimeError.hidden = true;
+        try {
+          const response = await fetch(
+            `/wall_display/add_nintendo_time/{{ person.id }}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ minutes: minutes }),
+            },
+          );
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || "Unable to add Nintendo time.");
+          }
+
+          document.getElementById("nintendo-time-balance").textContent =
+            result.remaining_minutes;
+          addTimeInput.max = String(result.remaining_minutes);
+          addTimeInput.value = "";
+          addTimeStatus.textContent = `${minutes} minutes added to ${result.device_name}.`;
+          addTimeStatus.classList.remove("text-danger");
+          addTimeStatus.classList.add("text-success");
+          addTimeStatus.hidden = false;
+          addTimeModal.hide();
+          if (result.remaining_minutes <= 0) {
+            document.getElementById("send-time-to-nintendo-button")?.remove();
+          }
+          await loadNintendoPlaytime();
+        } catch (error) {
+          console.error("Failed to add Nintendo time", error);
+          addTimeError.textContent = error.message;
+          addTimeError.hidden = false;
+        } finally {
+          addTimeSubmit.disabled = false;
+        }
+      });
+    }
+
+    async function fetchPlaytime(deviceName, endpoint, property) {
+      const response = await fetch(
+        `/nintendo/${endpoint}/${encodeURIComponent(deviceName)}`,
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${endpoint}: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!Number.isFinite(data[property])) {
+        throw new Error(`Invalid ${property} for device ${deviceName}`);
+      }
+      return data[property];
+    }
+
+    async function loadNintendoPlaytime() {
+      const card = document.getElementById("person-nintendo-playtime");
+      if (!card) {
+        return;
+      }
+
+      const deviceName = card.dataset.deviceName;
+      const label = card.querySelector(".playtime-label");
+      const progress = card.querySelector(".progress");
+      const progressBar = card.querySelector(".progress-bar");
+      const errorMessage = card.querySelector('[role="alert"]');
+
+      try {
+        const [played, allowed] = await Promise.all([
+          fetchPlaytime(
+            deviceName,
+            "get_today_playtime_minutes",
+            "today_playtime_minutes",
+          ),
+          fetchPlaytime(
+            deviceName,
+            "get_allowed_playtime_today",
+            "allowed_playtime_today",
+          ),
+        ]);
+        const percentage =
+          allowed > 0
+            ? Math.min(100, Math.max(0, (played / allowed) * 100))
+            : played > 0
+              ? 100
+              : 0;
+        const progressColor =
+          percentage >= 90
+            ? "bg-danger"
+            : percentage >= 70
+              ? "bg-warning"
+              : "bg-success";
+
+        label.textContent = `${played}/${allowed} minutes played today`;
+        progress.setAttribute(
+          "aria-valuenow",
+          String(Math.round(percentage)),
+        );
+        progressBar.style.width = `${percentage}%`;
+        progressBar.classList.add(progressColor);
+      } catch (fetchError) {
+        console.error("Failed to load Nintendo playtime", fetchError);
+        label.hidden = true;
+        progress.hidden = true;
+        errorMessage.hidden = false;
+      }
+    }
+
+    function updateColorPreview(color) {
+      [
+        "primary",
+        "secondary",
+        "success",
+        "danger",
+        "warning",
+        "info",
+        "light",
+        "dark",
+      ].forEach(function (availableColor) {
+        colorPreview.classList.remove(
+          `bg-${availableColor}-subtle`,
+          `border-${availableColor}`,
+        );
+      });
+      colorPreview.classList.add(`bg-${color}-subtle`, `border-${color}`);
+
+      colorPreviewList
+        .querySelectorAll("[data-color]")
+        .forEach(function (button) {
+          const isSelected = button.dataset.color === color;
+          button.setAttribute("aria-pressed", String(isSelected));
+          button.classList.toggle("border-3", isSelected);
+        });
+    }
+
+    loadNintendoPlaytime();
+    updateColorPreview("{{ person.get('color', 'primary') }}");
+    colorPreviewList.addEventListener("click", async function (event) {
+      const button = event.target.closest("[data-color]");
+      if (!button) {
+        return;
+      }
+
+      const color = button.dataset.color;
+      updateColorPreview(color);
+      colorPreviewList
+        .querySelectorAll("button")
+        .forEach((colorButton) => (colorButton.disabled = true));
+      colorSaveStatus.hidden = true;
+
+      try {
+        const response = await fetch(`/wall_display/person/{{ person.id }}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ color: color }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to save color: ${response.status}`);
+        }
+        colorSaveStatus.textContent = "Color saved.";
+        colorSaveStatus.classList.remove("text-danger");
+        colorSaveStatus.classList.add("text-success");
+      } catch (error) {
+        console.error("Failed to save person color", error);
+        colorSaveStatus.textContent =
+          "Unable to save color. Please try again.";
+        colorSaveStatus.classList.remove("text-success");
+        colorSaveStatus.classList.add("text-danger");
+      } finally {
+        colorSaveStatus.hidden = false;
+        colorPreviewList
+          .querySelectorAll("button")
+          .forEach((colorButton) => (colorButton.disabled = false));
+      }
+    });
+</script>
+</body>
 </html>

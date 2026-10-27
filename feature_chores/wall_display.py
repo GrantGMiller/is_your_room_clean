@@ -54,9 +54,10 @@ def setup(a: Application):
         )
         minimum_cleanliness = data.get('minimum_cleanliness', 50)
 
+        ring_user = app.get_current_user().get_ring_user()
         # chromebook stuff
         assigned_devices = (
-            app.get_current_user().get_ring_user().GetItem('chromebook', 'assigned_devices', {})
+            ring_user.GetItem('chromebook', 'assigned_devices', {})
             or {}
         )
         print('assigned_devices=', assigned_devices)
@@ -65,6 +66,11 @@ def setup(a: Application):
             or assigned_devices.get(person_id)
         )
         print('chromebook_assignment:', chromebook_assignment   )
+
+        print('temp=', ring_user.Get('amazon'))
+        amazon_assignment = (ring_user.GetItem('amazon', 'assigned_devices', {}) or {}).get(str(person_id))
+        print('amazon_assignment:', amazon_assignment )
+
         return render_template(
             'chores/wall_display/person_page.html',
             person=person,
@@ -72,6 +78,7 @@ def setup(a: Application):
             current_cleanliness=current_cleanliness,
             minimum_cleanliness=minimum_cleanliness,
             chromebook_assignment=chromebook_assignment,
+            amazon_assignment=amazon_assignment
         )
 
     @app.route('/wall_display/person/<int:person_id>/sticker_archive')
