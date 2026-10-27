@@ -171,6 +171,8 @@ class RingUser(flask_login.UserMixin, BaseTable):
             'expires_at': self['expires_at'],
             'status': self['status'],
             'api_key': '*' * len(self['api_key']),
+            "chromebook_assigned_device": self.GetItem('chromebook', 'assigned_devices', {}) or {},
+            "amazon_assigned_devices": self.GetItem('amazon', 'assigned_devices', {}) or {}
         }
 
     def get_last_login_url(self):

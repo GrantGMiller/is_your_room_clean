@@ -1,185 +1,207 @@
 <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
-  <div class="container">
-    <a class="navbar-brand" href="{{ app_url }}" style="word-spacing: -0.08em"
-      >{{ app_name }}</a
-    >
-
-    <button
-      class="navbar-toggler m-1"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        {% if current_user and current_user.get and current_user.get('access_token', None) and not current_user.is_wall_user %}
-          <a
-            class="btn btn-info m-1"
-            href="ring://"
-            onclick="openRingApp(event)"
-          >
-            Open Ring App
-          </a>
-        {% endif %}
-        {% if current_user and not current_user.is_wall_user and current_user.is_authenticated and current_user.get('access_token', None) %}
-          <a
-            class="nav-item nav-link {% if request.path == '/dashboard' %}active{% endif %}"
-            href="/dashboard"
-          >
-            Dashboard
-          </a>
-        {% endif %}
-        {% if current_user and enabled_features.chores %}
-          {% if current_user.is_wall_user %}
-            <a
-              class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
-              href="/wall_display"
-            >
-              Wall Display
-            </a>
-          {% else %}
-            <a
-              class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
-              href="/chores/wall_display"
-            >
-              Wall Display
-            </a>
-          {% endif %}
-        {% endif %}
-
-        {% if enabled_features.chores and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'chores') and not current_user.is_wall_user %}
-          <a
-            class="nav-item nav-link {% if request.path == '/chores/overview' %}active{% endif %}"
-            href="/chores/overview"
-          >
-            Chores
-          </a>
-        {% endif %}
-
-        {% if current_user and current_user.is_authenticated and not current_user.is_wall_user %}
-          <a
-            class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"
-            href="/my_account"
-          >
-            My Account
-          </a>
-        {% endif %}
-
-        <a
-          class="nav-item nav-link {% if request.path == '/contact' %}active{% endif %}"
-          href="/contact"
+    <div class="container">
+        <a class="navbar-brand" href="{{ app_url }}" style="word-spacing: -0.08em"
+        >{{ app_name }}</a
         >
-          Contact Us
-        </a>
-        <a
-          class="nav-item nav-link {% if request.path == '/privacy' %}active{% endif %}"
-          href="/privacy"
-        >
-          Privacy
-        </a>
-        <a
-          class="nav-item nav-link {% if request.path == '/terms' %}active{% endif %}"
-          href="/terms"
-        >
-          Terms & Conditions
-        </a>
-        {% if current_user and current_user.is_authenticated %}
-          <a class="nav-item nav-link" href="/logout"> Sign Out </a>
-        {% else %}
-          {% if request.path != '/dashboard' %}
-            <a class="nav-item nav-link" href="/"> Sign In </a>
-          {% endif %}
-        {% endif %}
-        {%
-          set show_advanced_features =
-          (enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user)
-          or (enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo'))
-          or (current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user)
-        %}
-        {% if show_advanced_features %}
-          <li class="nav-item dropdown">
-            <button
-              class="nav-link dropdown-toggle"
-              type="button"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              Advanced Features
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              {% set show_email = enabled_features.email_notifications and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user %}
 
-              {% if  show_email %}
-                <li>
-                  <a
-                    class="dropdown-item {% if request.path == '/email' %}active{% endif %}"
-                    href="/email"
-                  >
-                    Email Settings
-                  </a>
+        <button
+                class="navbar-toggler m-1"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                {% if current_user and current_user.get and current_user.get('access_token', None) and not
+                current_user.is_wall_user %}
+                <a
+                        class="btn btn-info m-1"
+                        href="ring://"
+                        onclick="openRingApp(event)"
+                >
+                    Open Ring App
+                </a>
+                {% endif %}
+                {% if current_user and not current_user.is_wall_user and current_user.is_authenticated and
+                current_user.get('access_token', None) %}
+                <a
+                        class="nav-item nav-link {% if request.path == '/dashboard' %}active{% endif %}"
+                        href="/dashboard"
+                >
+                    Dashboard
+                </a>
+                {% endif %}
+                {% if current_user and enabled_features.chores %}
+                {% if current_user.is_wall_user %}
+                <a
+                        class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
+                        href="/wall_display"
+                >
+                    Wall Display
+                </a>
+                {% else %}
+                <a
+                        class="nav-item nav-link {% if request.path == '/wall_display' %}active{% endif %}"
+                        href="/chores/wall_display"
+                >
+                    Wall Display
+                </a>
+                {% endif %}
+                {% endif %}
+
+                {% if enabled_features.chores and current_user and current_user.is_authenticated and
+                current_user.GetItem('enabled_features', 'chores') and not current_user.is_wall_user %}
+                <a
+                        class="nav-item nav-link {% if request.path == '/chores/overview' %}active{% endif %}"
+                        href="/chores/overview"
+                >
+                    Chores
+                </a>
+                {% endif %}
+
+                {% if current_user and current_user.is_authenticated and not current_user.is_wall_user %}
+                <a
+                        class="nav-item nav-link {% if request.path == '/my_account' %}active{% endif %}"
+                        href="/my_account"
+                >
+                    My Account
+                </a>
+                {% endif %}
+
+                <a
+                        class="nav-item nav-link {% if request.path == '/contact' %}active{% endif %}"
+                        href="/contact"
+                >
+                    Contact Us
+                </a>
+                <a
+                        class="nav-item nav-link {% if request.path == '/privacy' %}active{% endif %}"
+                        href="/privacy"
+                >
+                    Privacy
+                </a>
+                <a
+                        class="nav-item nav-link {% if request.path == '/terms' %}active{% endif %}"
+                        href="/terms"
+                >
+                    Terms & Conditions
+                </a>
+                {% if current_user and current_user.is_authenticated %}
+                <a class="nav-item nav-link" href="/logout"> Sign Out </a>
+                {% else %}
+                {% if request.path != '/dashboard' %}
+                <a class="nav-item nav-link" href="/"> Sign In </a>
+                {% endif %}
+                {% endif %}
+                {%
+                set show_advanced_features =
+                (enabled_features.email_notifications and current_user and current_user.is_authenticated and
+                current_user.GetItem('enabled_features', 'email_notifications') and not current_user.is_wall_user)
+                or (enabled_features.nintendo and current_user and current_user.is_authenticated and
+                current_user.GetItem('enabled_features', 'nintendo'))
+                or (current_user and current_user.is_authenticated and current_user.get('email', None) in
+                enabled_features.admins and not current_user.is_wall_user)
+                %}
+                {% if show_advanced_features %}
+                <li class="nav-item dropdown">
+                    <button
+                            class="nav-link dropdown-toggle"
+                            type="button"
+                            role="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                    >
+                        Advanced Features
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% set show_email = enabled_features.email_notifications and current_user and
+                        current_user.is_authenticated and current_user.GetItem('enabled_features',
+                        'email_notifications') and not current_user.is_wall_user %}
+
+                        {% if show_email %}
+                        <li>
+                            <a
+                                    class="dropdown-item {% if request.path == '/email' %}active{% endif %}"
+                                    href="/email"
+                            >
+                                Email Settings
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if enabled_features.nintendo and current_user and current_user.is_authenticated and
+                        current_user.GetItem('enabled_features', 'nintendo') %}
+                        <li>
+                            <a
+                                    class="dropdown-item {% if request.path == '/nintendo' %}active{% endif %}"
+                                    href="/nintendo"
+                            >
+                                Nintendo
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if current_user and current_user.is_authenticated and current_user.get('email', None) in
+                        enabled_features.admins and not current_user.is_wall_user %}
+                        <li>
+                            <a
+                                    class="dropdown-item {% if request.path == '/admin' %}active{% endif %}"
+                                    href="/admin"
+                            >
+                                Admin
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if current_user and current_user.is_authenticated and not current_user.is_wall_user and
+                        current_user.GetItem('enabled_features', 'chromebook')%}
+                        <li>
+                            <a
+                                    class="dropdown-item {% if request.path == '/chromebook' %}active{% endif %}"
+                                    href="/chromebook"
+                            >
+                                Chromebook
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if current_user and current_user.is_authenticated and not current_user.is_wall_user and
+                        current_user.GetItem('enabled_features', 'amazon')%}
+                        <li>
+                            <a
+                                    class="dropdown-item {% if request.path == '/amazon' %}active{% endif %}"
+                                    href="/amazon"
+                            >
+                                Amazon
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
                 </li>
-              {% endif %}
-              {% if enabled_features.nintendo and current_user and current_user.is_authenticated and current_user.GetItem('enabled_features', 'nintendo') %}
-                <li>
-                  <a
-                    class="dropdown-item {% if request.path == '/nintendo' %}active{% endif %}"
-                    href="/nintendo"
-                  >
-                    Nintendo
-                  </a>
-                </li>
-              {% endif %}
-              {% if current_user and current_user.is_authenticated and current_user.get('email', None) in enabled_features.admins and not current_user.is_wall_user %}
-                <li>
-                  <a
-                    class="dropdown-item {% if request.path == '/admin' %}active{% endif %}"
-                    href="/admin"
-                  >
-                    Admin
-                  </a>
-                </li>
-              {% endif %}
-                {% if current_user and current_user.is_authenticated and not current_user.is_wall_user and current_user.GetItem('enabled_features', 'chromebook')%}
-                <li>
-                  <a
-                    class="dropdown-item {% if request.path == '/chromebook' %}active{% endif %}"
-                    href="/chromebook"
-                  >
-                    Chromebook
-                  </a>
-                </li>
-              {% endif %}
+                {% endif %}
             </ul>
-          </li>
-        {% endif %}
-      </ul>
+        </div>
     </div>
-  </div>
 </nav>
 
 <script>
-  function openRingApp(event) {
-    event.preventDefault();
+    function openRingApp(event) {
+      event.preventDefault();
 
-    let appOpened = false;
-    const markAppOpened = () => {
-      appOpened = true;
-    };
+      let appOpened = false;
+      const markAppOpened = () => {
+        appOpened = true;
+      };
 
-    window.addEventListener("blur", markAppOpened, { once: true });
-    window.addEventListener("pagehide", markAppOpened, { once: true });
-    window.location.href = "ring://";
+      window.addEventListener("blur", markAppOpened, { once: true });
+      window.addEventListener("pagehide", markAppOpened, { once: true });
+      window.location.href = "ring://";
 
-    window.setTimeout(() => {
-      if (!appOpened) {
-        window.location.href = "https://ring.com";
-      }
-    }, 1500);
-  }
+      window.setTimeout(() => {
+        if (!appOpened) {
+          window.location.href = "https://ring.com";
+        }
+      }, 1500);
+    }
 </script>

@@ -36,6 +36,7 @@ from feature_email import setup as setup_email
 from feature_money import setup as setup_money
 from feature_nintendo import setup as setup_nintendo
 from feature_chromebook import setup as setup_chromebook
+from feature_amazon_parent_dashboard import setup as setup_amazon_parent_dashboard
 from feature_stickers import setup as setup_stickers, update_archive_sticker_job
 from ring import token_endpoints, webhook, setup as ring_setup
 from ring.token_endpoints import mask_email
@@ -84,6 +85,8 @@ if getattr(config, 'ENABLE_MIGRATE_CHORES', False):
 if getattr(config, 'ENABLE_CHROMEBOOK', False):
     setup_chromebook(app)
 
+if getattr(config, 'ENABLE_AMAZON', False):
+    setup_amazon_parent_dashboard(app)
 
 @app.route("/")
 def index():
@@ -444,7 +447,7 @@ def my_account():
     masked_email = f"{local[:4]}*****@{domain[-9:]}"
 
     if request.method == "POST":
-        for key in ['chores', 'email_notifications', 'nintendo', 'chromebook']:
+        for key in ['chores', 'email_notifications', 'nintendo', 'chromebook', 'amazon']:
             if key in request.form and request.form.get(key, type=bool):
                 new_state = True
             else:
@@ -465,6 +468,10 @@ def my_account():
 
     if getattr(config, 'ENABLE_CHROMEBOOK', False):
         advanced_features['chromebook'] = ring_user.GetItem('enabled_features', 'chromebook')
+
+    if getattr(config, 'ENABLE_AMAZON', False):
+        advanced_features['amazon'] = ring_user.GetItem('enabled_features', 'amazon')
+
 
     return render_template(
         "my_account.html",
@@ -619,6 +626,7 @@ def inject_app_values():
             'email_notifications': getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False),
             'nintendo': getattr(config, 'ENABLE_NINTENDO', False),
             'chromebook': getattr(config, 'ENABLE_CHROMEBOOK', False),
+            'amazon': getattr(config, 'ENABLE_AMAZON', False)
         },
         'app_name': getattr(config, 'APP_NAME', '{{ app_name }}'),
         'app_url': getattr(config, 'APP_URL', '/'),

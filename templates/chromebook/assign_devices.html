@@ -23,7 +23,6 @@
                     <tr>
                       <th scope="col">Person</th>
                       <th scope="col">Chromebook child</th>
-                      <th scope="col">Device name</th>
                       <th scope="col">Actions</th>
                     </tr>
                   </thead>
@@ -35,8 +34,7 @@
                         {% set assignment_count.value = assignment_count.value + 1 %}
                         <tr data-person-id="{{ person['id'] }}">
                           <td>{{ person['name'] }}</td>
-                          <td>{{ assignment[0] }}</td>
-                          <td>{{ assignment[1] }}</td>
+                          <td>{{ assignment }}</td>
                           <td>
                             <div class="d-flex flex-wrap gap-2">
                               <button
