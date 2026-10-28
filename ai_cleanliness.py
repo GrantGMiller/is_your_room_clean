@@ -60,7 +60,7 @@ def evaluate_cleanliness(image_bytes, mime_type='image/jpeg'):
         requests.HTTPError: On a failed API call.
         ValueError: If Gemini's response isn't parseable JSON.
     """
-
+    print('evaluate cleanliness')
     encoded_image = base64.b64encode(image_bytes).decode('utf-8')
 
     payload = {
