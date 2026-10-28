@@ -51,27 +51,12 @@ def setup(a: Application):
         recent_transactions = list(app.db.FindAll(MoneyTransaction, from_id=person['id'], _orderBy='timestamp', _limit=100))
         recent_transactions.extend(list(app.db.FindAll(MoneyTransaction, to_id=person['id'], _orderBy='timestamp', _limit=100)))
 
-        dedup_transactions = {}
-        for transaction in recent_transactions:
-            dedup_transactions[transaction['id']] = transaction
-
-        for transaction in sorted(dedup_transactions.values(), key=lambda tx: tx.get('timestamp', 0) or 0, reverse=True):
-            if transaction.get('from_id') == person['id'] or transaction.get('to_id') == person['id']:
-                transaction_time = transaction.get('timestamp')
-                if transaction_time is not None:
-                    transaction['dt_utc'] = datetime.datetime.fromtimestamp(
-                        float(transaction_time),
-                        tz=datetime.timezone.utc,
-                    )
-                recent_transactions.append(transaction)
-        recent_transactions.sort(key=lambda tx: tx.get('timestamp', 0) or 0, reverse=True)
-
         return render_template(
             'money/send_money.html',
             person=person,
             user=app.get_current_user(),
             all_persons=app.get_all_user_persons(),
-            recent_transactions=recent_transactions[:10],
+            recent_transactions=sorted(recent_transactions, key=lambda tx: tx.get('timestamp', 0) or 0, reverse=True)[:100],
         )
 
     @app.route('/money/process_transaction', methods=['POST'])
