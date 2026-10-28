@@ -50,7 +50,12 @@ def setup(a: Application):
 
         recent_transactions = list(app.db.FindAll(MoneyTransaction, from_id=person['id'], _orderBy='timestamp', _limit=100))
         recent_transactions.extend(list(app.db.FindAll(MoneyTransaction, to_id=person['id'], _orderBy='timestamp', _limit=100)))
-        for transaction in sorted(recent_transactions, key=lambda tx: tx.get('timestamp', 0) or 0, reverse=True):
+
+        dedup_transactions = {}
+        for transaction in recent_transactions:
+            dedup_transactions[transaction['id']] = transaction
+
+        for transaction in sorted(dedup_transactions.values(), key=lambda tx: tx.get('timestamp', 0) or 0, reverse=True):
             if transaction.get('from_id') == person['id'] or transaction.get('to_id') == person['id']:
                 transaction_time = transaction.get('timestamp')
                 if transaction_time is not None:
