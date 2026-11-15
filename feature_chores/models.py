@@ -280,13 +280,15 @@ class Chore(BaseTable):
             return datetime.timedelta(days=least_num_days)
         
         elif self.get('repeat_interval') == 'other':
-            repeat_unit = self.get('repeat_unit', 'days')
-            repeat_value = self.get('repeat_value', 1)
-            if repeat_unit == 'days':
+            repeat_units = self.get('repeat_units', 'days')
+            repeat_value = self.get('repeat_every_number_of', 1)
+            print('285 get_delta: repeat_units:', repeat_units, 'repeat_value:', repeat_value)
+            print('self=', self)
+            if repeat_units == 'days':
                 return datetime.timedelta(days=repeat_value)
-            elif repeat_unit == 'weeks':
+            elif repeat_units == 'weeks':
                 return datetime.timedelta(days=repeat_value * 7)
-            elif repeat_unit == 'months':
+            elif repeat_units == 'month':
                 return datetime.timedelta(days=repeat_value * 30)
             else:
                 return None
