@@ -333,7 +333,7 @@ class Chore(BaseTable):
                 isos = []
                 for person_id, iso in self.Get('last_completed', {}).items():
                     # only look at isos for persons this chore can be assigned to
-                    if person_id in self.get_can_be_assigned_to_ids():
+                    if int(person_id or -1) in self.get_can_be_assigned_to_ids():
                         isos.append(iso)
                 isos = list(filter(None, isos)) # filter out any blank isos
                 print('332 isos=', isos)
@@ -727,7 +727,7 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
             last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(chore.get_last_completed_dt_utc())
             now_dt_utc = datetime.datetime.now(pytz.utc)
             delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
-            if debug: send_slack_message('delta last completed for chore:', chore['name'], delta_last_completed)
+            if debug: send_slack_message('730 delta last completed for chore:', chore['name'], delta_last_completed)
             
             if not delta_last_completed:
                 if debug: send_slack_message('assigning person to chore because no last completed dt for chore:', chore['name'])
@@ -738,7 +738,7 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                     person = random.choice(possible_assignees)
                     chore.assign_to(person)
 
-            elif delta_last_completed >= chore.get_delta():
+            elif delta_last_completed >= chore.get_delta(): # type: ignore
                 if debug: send_slack_message('assigning person to chore because delta last completed is greater than or equal to chore delta for chore:', chore['name'], delta_last_completed, chore.get_delta())
                 if chore.get('assignment_mode') == 'first-done':
                     for person in possible_assignees:
