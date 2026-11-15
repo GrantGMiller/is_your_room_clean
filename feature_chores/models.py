@@ -328,14 +328,23 @@ class Chore(BaseTable):
                 return None
         else:
             if self.get('assignment_mode') == 'all':
-                isos = list(filter(None, (self.Get('last_completed', {}) or {}).values()))
-                
+                isos = []
+                for person_id, iso in self.Get('last_completed', {}).items():
+                    # only look at isos for persons this chore can be assigned to
+                    if person_id in self.get_can_be_assigned_to_ids():
+                        isos.append(iso)
+                isos = list(filter(None, isos)) # filter out any blank isos
+                print('332 isos=', isos)
                 if len(list(isos)) == 0:
+                    print('334 return None')
                     return None
                 last_completed_iso = min(
                     list(isos)
                 )
-                return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+                ret = datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
+                print('340 return {}'.format(ret))
+                return ret
+
             elif self.get('assignment_mode') in ['first-done', 'random']:
                 isos = list(filter(None, (self.Get('last_completed', {}) or {}).values()))
                 # send_slack_message("299 isos=", isos)
@@ -705,7 +714,7 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                 if not delta_last_completed:
                     if debug: send_slack_message('assigning person to chore because no last completed dt:', person['name'], chore['name'])
                     chore.assign_to(person)
-                elif delta_last_completed >= chore.get_delta():
+                elif delta_last_completed >= chore.get_delta(): # type: ignore
                     if debug: send_slack_message('assigning person to chore because delta last completed is greater than or equal to chore delta:', person['name'], chore['name'], delta_last_completed, chore.get_delta())
                     chore.assign_to(person)
 
