@@ -1,14 +1,13 @@
 import calendar
-from curses import flash
 import datetime
 import json
 import random
 import time
+from flask import flash
 from typing import Dict, List, Literal, Optional, cast
 
 import pytz
-from flask import Flask
-from flask_dictabase import BaseTable, Dictabase
+from flask_dictabase import BaseTable
 
 from app_types import Application
 from feature_money.models import MoneyTransaction
@@ -35,7 +34,7 @@ PersonColor = Literal[
 LastCompleted = Dict[int, datetime.datetime.isoformat]
 # LastCompleted is a dictionary where the key is the person_id and the value is the datetime when they last completed the chore.
 
-app: Flask = None
+app: Application
 
 
 def setup(a: Application):
@@ -53,7 +52,6 @@ class Person(BaseTable):
     stickers: List[str] = []
     sticker_archive: List[str] = []
     num_of_completed_chores: int = 0
-    
 
     def inc_completed_chore_count(self):
         self['num_of_completed_chores'] = (self.get('num_of_completed_chores', 0) or 0) + 1
@@ -100,7 +98,7 @@ class Person(BaseTable):
                 num += 1
         return num
 
-    def add_money(self, amount: int,  message: str,from_person_id: int = None):
+    def add_money(self, amount: int, message: str, from_person_id: Optional[int] = None):
         self['money'] = (self.get('money', 0) or 0) + amount
         self.app.db.New(
             MoneyTransaction,
@@ -115,12 +113,12 @@ class Person(BaseTable):
             if from_person:
                 from_person['money'] = (from_person.get('money', 0) or 0) - amount
 
-    def send_money(self, amount: int, message: str, to_person_id: int=None):
+    def send_money(self, amount: int, message: str, to_person_id: Optional[int] = None):
         new_money = (self.get('money', 0) or 0) - amount
         if new_money < 0:
-            flash('You do not have enough money')
+            flash('You do not have enough money','danger')
             return
-        
+
         self['money'] = new_money
         self.app.db.New(
             MoneyTransaction,
@@ -134,6 +132,7 @@ class Person(BaseTable):
             other_person = self.app.get_person(to_person_id)
             if other_person:
                 other_person['money'] = (other_person.get('money', 0) or 0) + amount
+
 
 Assignees = List[Person]
 
@@ -154,9 +153,12 @@ class Chore(BaseTable):
     job_id: Optional[int] = None
     last_completed: LastCompleted
     enabled: bool
-    reward: int = 0 # money reward for completing this chore
+    reward: int = 0  # money reward for completing this chore
 
     def ui_safe(self):
+        next_assignment_dt_utc_iso = self.get_next_start_dt_utc()
+        if next_assignment_dt_utc_iso:
+            next_assignment_dt_utc_iso = next_assignment_dt_utc_iso.isoformat()
         ret = {
             'assigned_to': self.get_assigned_to_ids(),
             'can_be_assigned_to_ids': self.get_can_be_assigned_to_ids(),
@@ -172,7 +174,7 @@ class Chore(BaseTable):
             "repeat_units": self.get('repeat_units', None),
             "schedule_for": self.get('schedule_for', None),
             "tags": self.get('tags', None),
-            "next_assignment_dt_utc_iso": self.get_next_start_dt_utc().isoformat(),
+            "next_assignment_dt_utc_iso": next_assignment_dt_utc_iso,
             "assignment_job_id": self.get('job_id', None),
             "last_completed": self.get('last_completed', {}),
             'enabled': self.get('enabled', False),
@@ -276,9 +278,9 @@ class Chore(BaseTable):
                         diff = abs(day_names.index(selected_day_name1) - day_names.index(selected_day_name2))
                         if diff < least_num_days:
                             least_num_days = diff
-                            
+
             return datetime.timedelta(days=least_num_days)
-        
+
         elif self.get('repeat_interval') == 'other':
             repeat_units = self.get('repeat_units', 'days')
             repeat_value = self.get('repeat_every_number_of', 1)
@@ -335,7 +337,7 @@ class Chore(BaseTable):
                     # only look at isos for persons this chore can be assigned to
                     if int(person_id or -1) in self.get_can_be_assigned_to_ids():
                         isos.append(iso)
-                isos = list(filter(None, isos)) # filter out any blank isos
+                isos = list(filter(None, isos))  # filter out any blank isos
                 print('332 isos=', isos)
                 if len(list(isos)) == 0:
                     print('334 return None')
@@ -357,7 +359,7 @@ class Chore(BaseTable):
                     list(isos)
                 )
                 return datetime.datetime.fromisoformat(last_completed_iso) if last_completed_iso else None
-           
+
             return None
 
     def mark_incomplete_by(self, person_id: int) -> None:
@@ -425,7 +427,7 @@ class Chore(BaseTable):
         user_tz = self.user.get('timezone', 'UTC') or 'UTC'
         now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
         now_dt_utc = datetime.datetime.now(datetime.timezone.utc)
-                    
+
         print('250 get_next_start_dt_utc chore=', self['name'])
         if self.get('kind') == 'one-time':
             dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
@@ -444,11 +446,11 @@ class Chore(BaseTable):
 
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         if self.get('repeat_interval') == 'daily':
-        
+
             # get the last completed time
             # if this is a 'all' chore, then get the smallest last completed and schedule this +2 days
             # if this a first-done, then get the largest last completed
-        
+
             last_completed_dt_utc = self.get_last_completed_dt_utc(person_id)
             if not last_completed_dt_utc:
                 return now_dt_utc
@@ -457,11 +459,11 @@ class Chore(BaseTable):
             if next_day_dt_utc < now_dt_utc:
                 return self.get_next_chore_time_dt_utc(
                     now_dt_utc
-                    )
+                )
             else:
                 return self.get_next_chore_time_dt_utc(
                     next_day_dt_utc
-                    )
+                )
 
         elif self.get('repeat_interval') == 'weekly':
             selected_day_names = self.Get('repeat_day_of_week', []) or []
@@ -481,15 +483,15 @@ class Chore(BaseTable):
                     break
                 else:
                     next_dt_utc += datetime.timedelta(days=1)
-            
+
             if next_dt_utc < now_dt_utc:
                 return self.get_next_chore_time_dt_utc(
                     now_dt_utc
-                    )
+                )
             else:
                 return self.get_next_chore_time_dt_utc(
                     next_dt_utc
-                    )
+                )
 
         elif self.get('repeat_interval') == 'other':
             print('324 repeat_interval=', 'other')
@@ -555,8 +557,6 @@ class Chore(BaseTable):
             return repeat_times
         return []
 
-    
-
     def get_chore_times_usertz(self) -> List[datetime.time]:
         repeat_times = self.get_repeat_time_of_day()
         user_settings = self.user.get_chore_settings()
@@ -597,7 +597,8 @@ class Chore(BaseTable):
         for chore_time_usertz in sorted(chore_times_usertz, reverse=True):
             if dt_usertz.time() >= chore_time_usertz:
                 return get_utc_from_users_time(
-                    dt_usertz.replace(hour=chore_time_usertz.hour, minute=chore_time_usertz.minute, second=chore_time_usertz.second),
+                    dt_usertz.replace(hour=chore_time_usertz.hour, minute=chore_time_usertz.minute,
+                                      second=chore_time_usertz.second),
                     self.user
                 )
         else:
@@ -635,9 +636,6 @@ def get_utc_from_users_time(dt_usertz: datetime.datetime, user):
         print('dt_with_tz=', dt_with_tz)
         print('442 return dt_utc=', dt_utc)
         return dt_utc
-    
-    
-
 
 
 def get_user_local_dt_from_utc(dt: datetime.datetime, user):
@@ -676,12 +674,10 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user):
     return local_dt
 
 
-
 def assign_chore_to_persons(chore_id: int, debug: bool = False):
     print('assign_chore_to_persons(chore_id=', chore_id, ')')
     with app.app_context():
-        app.db = cast(Dictabase, app.db)
-        chore: Chore = app.db.FindOne(Chore, id=chore_id)
+        chore = app.db.FindOne(Chore, id=chore_id)
 
         if chore and chore.get('enabled', False) is False:
             print(f'Chore {chore["name"]} is disbled. No assignment needed.')
@@ -708,29 +704,37 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                 person_last_completed_dt_utc = chore.get_last_completed_dt_utc(person['id'])
                 if not person_last_completed_dt_utc:
                     chore.assign_to(person)
-                if debug: send_slack_message('person last completed dt for chore:', person['name'], person_last_completed_dt_utc)
+                if debug: send_slack_message('person last completed dt for chore:', person['name'],
+                                             person_last_completed_dt_utc)
                 person_last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(person_last_completed_dt_utc)
-                if debug: send_slack_message('person last completed dt rounded down for chore:', person['name'], person_last_completed_dt_utc)
-                delta_last_completed = (now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
+                if debug: send_slack_message('person last completed dt rounded down for chore:', person['name'],
+                                             person_last_completed_dt_utc)
+                delta_last_completed = (
+                            now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
                 if debug: send_slack_message('delta last completed for chore:', person['name'], delta_last_completed)
                 if not delta_last_completed:
-                    if debug: send_slack_message('assigning person to chore because no last completed dt:', person['name'], chore['name'])
+                    if debug: send_slack_message('assigning person to chore because no last completed dt:',
+                                                 person['name'], chore['name'])
                     chore.assign_to(person)
-                elif delta_last_completed >= chore.get_delta(): # type: ignore
-                    if debug: send_slack_message('assigning person to chore because delta last completed is greater than or equal to chore delta:', person['name'], chore['name'], delta_last_completed, chore.get_delta())
+                elif delta_last_completed >= chore.get_delta():  
+                    if debug: send_slack_message(
+                        'assigning person to chore because delta last completed is greater than or equal to chore delta:',
+                        person['name'], chore['name'], delta_last_completed, chore.get_delta())
                     chore.assign_to(person)
 
         elif chore.get('assignment_mode') in ['first-done', 'random']:
             if debug:
-                send_slack_message('assignment mode is "first-done" or "random" for chore:', chore['name'], chore.get('assignment_mode'))
+                send_slack_message('assignment mode is "first-done" or "random" for chore:', chore['name'],
+                                   chore.get('assignment_mode'))
             # if someone completed the chore recently do nothing
             last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(chore.get_last_completed_dt_utc())
             now_dt_utc = datetime.datetime.now(pytz.utc)
             delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
             if debug: send_slack_message('730 delta last completed for chore:', chore['name'], delta_last_completed)
-            
+
             if not delta_last_completed:
-                if debug: send_slack_message('assigning person to chore because no last completed dt for chore:', chore['name'])
+                if debug: send_slack_message('assigning person to chore because no last completed dt for chore:',
+                                             chore['name'])
                 if chore.get('assignment_mode') == 'first-done':
                     for person in possible_assignees:
                         chore.assign_to(person)
@@ -738,8 +742,10 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                     person = random.choice(possible_assignees)
                     chore.assign_to(person)
 
-            elif delta_last_completed >= chore.get_delta(): # type: ignore
-                if debug: send_slack_message('assigning person to chore because delta last completed is greater than or equal to chore delta for chore:', chore['name'], delta_last_completed, chore.get_delta())
+            elif delta_last_completed >= chore.get_delta():  # type: ignore
+                if debug: send_slack_message(
+                    'assigning person to chore because delta last completed is greater than or equal to chore delta for chore:',
+                    chore['name'], delta_last_completed, chore.get_delta())
                 if chore.get('assignment_mode') == 'first-done':
                     for person in possible_assignees:
                         chore.assign_to(person)
@@ -747,5 +753,4 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                     person = random.choice(possible_assignees)
                     chore.assign_to(person)
 
-       
         return chore

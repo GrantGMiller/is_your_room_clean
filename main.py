@@ -679,10 +679,12 @@ app.get_user = get_user
 def get_all_user_persons() -> List[Person]:
     with app.app_context():
         user = get_current_user()
+        if not user:
+            return []
         if user:
             user = user.get_ring_user()
         persons = app.db.FindAll(Person, owner_id=user['id'])
-        return persons
+        return list(persons)
 
 
 app.get_all_user_persons = get_all_user_persons

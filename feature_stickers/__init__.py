@@ -60,10 +60,9 @@ def update_archive_sticker_job():
     with app.app_context():
         # archive the stickers weekly
         job_name = 'archive_stickers_weekly'
-        job: Job = app.jobs.Find(name=job_name)
+        job = app.jobs.Find(name=job_name)
         if job:
             job.Delete()
-        app.jobs = cast(JobScheduler, app.jobs)
         startDT = datetime.datetime.now(pytz.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         for _ in range(7):
             if startDT.weekday() == 6:  # job should run on Sunday
