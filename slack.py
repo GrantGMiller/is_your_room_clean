@@ -8,7 +8,7 @@ from flask_dictabase import BaseTable, Dictabase
 from app_types import Application
 import config
 
-app: Flask
+app: Application
 
 
 def setup(a: Application):
@@ -57,7 +57,7 @@ def send_error(err):
 
 
 def send_slack_error(job):
-    send_slack_message("Error:", job)
+    send_slack_message("Error:", dict(job))
     send_slack_message("Error:", job.get('error', None))
 
 
@@ -68,7 +68,6 @@ class SlackMessage(BaseTable):
 def send_all_slack_messages():
     # print('send_all_slack_messages()')
     with app.app_context():
-        app.db = cast(Dictabase, app.db)
         msg = ''
         for sm in app.db.FindAll(SlackMessage):
             msg += sm.get('message', '') + '\r\n'

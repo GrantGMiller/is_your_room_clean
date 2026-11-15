@@ -255,7 +255,7 @@ class Chore(BaseTable):
                 if person['id'] != person_id:
                     self.unassign(person)
 
-    def get_delta(self):
+    def get_delta(self) -> Optional[datetime.timedelta]:
         # return the timedelta between two assignments
         # for example, if this repeats every 2 days then it will return a timedelta(days=2)
 
@@ -400,7 +400,7 @@ class Chore(BaseTable):
                 old_job.Delete()
 
         if person_ids:
-            dt_utc = min([self.get_next_start_dt_utc(person_id) for person_id in person_ids])
+            dt_utc = min(filter(None, [self.get_next_start_dt_utc(person_id) for person_id in person_ids]))
         else:
             dt_utc = self.get_next_start_dt_utc()
         print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
@@ -712,14 +712,18 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                 delta_last_completed = (
                             now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
                 if debug: send_slack_message('delta last completed for chore:', person['name'], delta_last_completed)
-                if not delta_last_completed:
+                
+                chore_delta = chore.get_delta()
+                if debug: send_slack_message('717 chore delta for chore:', person['name'], chore_delta)
+                                
+                if not delta_last_completed or not chore_delta:
                     if debug: send_slack_message('assigning person to chore because no last completed dt:',
                                                  person['name'], chore['name'])
                     chore.assign_to(person)
-                elif delta_last_completed >= chore.get_delta():  
+                elif delta_last_completed >= chore_delta:  
                     if debug: send_slack_message(
                         'assigning person to chore because delta last completed is greater than or equal to chore delta:',
-                        person['name'], chore['name'], delta_last_completed, chore.get_delta())
+                        person['name'], chore['name'], delta_last_completed, chore_delta)
                     chore.assign_to(person)
 
         elif chore.get('assignment_mode') in ['first-done', 'random']:
@@ -732,7 +736,9 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
             delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
             if debug: send_slack_message('730 delta last completed for chore:', chore['name'], delta_last_completed)
 
-            if not delta_last_completed:
+            chore_delta = chore.get_delta()
+            if debug: send_slack_message('740 chore delta for chore:', chore['name'], chore_delta)
+            if not delta_last_completed or not chore_delta:
                 if debug: send_slack_message('assigning person to chore because no last completed dt for chore:',
                                              chore['name'])
                 if chore.get('assignment_mode') == 'first-done':
@@ -742,10 +748,10 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                     person = random.choice(possible_assignees)
                     chore.assign_to(person)
 
-            elif delta_last_completed >= chore.get_delta():  # type: ignore
+            elif delta_last_completed >= chore_delta:  # type: ignore
                 if debug: send_slack_message(
                     'assigning person to chore because delta last completed is greater than or equal to chore delta for chore:',
-                    chore['name'], delta_last_completed, chore.get_delta())
+                    chore['name'], delta_last_completed, chore_delta)
                 if chore.get('assignment_mode') == 'first-done':
                     for person in possible_assignees:
                         chore.assign_to(person)
