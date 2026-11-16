@@ -3,10 +3,10 @@ import datetime
 import json
 import random
 import time
-from flask import flash
 from typing import Dict, List, Literal, Optional, cast
 
 import pytz
+from flask import flash
 from flask_dictabase import BaseTable
 
 from app_types import Application
@@ -116,7 +116,7 @@ class Person(BaseTable):
     def send_money(self, amount: int, message: str, to_person_id: Optional[int] = None):
         new_money = (self.get('money', 0) or 0) - amount
         if new_money < 0:
-            flash('You do not have enough money','danger')
+            flash('You do not have enough money', 'danger')
             return
 
         self['money'] = new_money
@@ -710,17 +710,17 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                 if debug: send_slack_message('person last completed dt rounded down for chore:', person['name'],
                                              person_last_completed_dt_utc)
                 delta_last_completed = (
-                            now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
+                        now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
                 if debug: send_slack_message('delta last completed for chore:', person['name'], delta_last_completed)
-                
+
                 chore_delta = chore.get_delta()
                 if debug: send_slack_message('717 chore delta for chore:', person['name'], chore_delta)
-                                
+
                 if not delta_last_completed or not chore_delta:
                     if debug: send_slack_message('assigning person to chore because no last completed dt:',
                                                  person['name'], chore['name'])
                     chore.assign_to(person)
-                elif delta_last_completed >= chore_delta:  
+                elif delta_last_completed >= chore_delta:
                     if debug: send_slack_message(
                         'assigning person to chore because delta last completed is greater than or equal to chore delta:',
                         person['name'], chore['name'], delta_last_completed, chore_delta)

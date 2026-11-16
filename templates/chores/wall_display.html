@@ -157,6 +157,8 @@
                     {% for chore in person_chores %}
                       <div
                         class="list-group-item chore-list-item d-flex justify-content-between align-items-center gap-3"
+                        data-chore-id="{{ chore.id }}"
+                        data-person-id="{{ person['id'] }}"
                       >
                         <span
                           >{{ chore.get('name', 'Unnamed chore') }}
@@ -435,7 +437,7 @@
         }
       });
 
-      function playRandomSound() {
+      function playRandomSound(unique_id) {
 
       const sound = new Audio();
         sound.src = "/get_sound?" + Date.now();
@@ -468,6 +470,11 @@
           })
           .then(function (chore) {
             const isCompleted = chore.is_completed;
+            if (chore.assignment_mode === "first-done" && !isCompleted) {
+              window.location.reload();
+              return;
+            }
+
             const completedInput = choreContainer.querySelector(
               'input[name="is_completed"]',
             );
@@ -489,6 +496,53 @@
 
             if (isCompleted && !wasCompleted && undoneCount === 0) {
               confetti.start(5000);
+            }
+
+            if (chore.assignment_mode === "first-done" && isCompleted) {
+              const assignedTo = new Set(chore.assigned_to);
+              document
+                .querySelectorAll(
+                  `.chore-list-item[data-chore-id="${choreContainer.querySelector('input[name="chore_id"]').value}"]`,
+                )
+                .forEach((choreItem) => {
+                  const personId = Number(choreItem.dataset.personId);
+                  if (assignedTo.has(personId)) {
+                    return;
+                  }
+
+                  const otherCompletedInput = choreItem.querySelector(
+                    'input[name="is_completed"]',
+                  );
+                  if (otherCompletedInput.value !== "true") {
+                    const otherBadge = document
+                      .getElementById(`person-heading-${personId}`)
+                      .querySelector(".undone-count-badge");
+                    const otherUndoneCount =
+                      Number(otherBadge.dataset.undoneCount) - 1;
+                    otherBadge.dataset.undoneCount = String(otherUndoneCount);
+                    otherBadge.classList.toggle(
+                      "text-bg-success",
+                      otherUndoneCount === 0,
+                    );
+                    otherBadge.classList.toggle(
+                      "text-bg-secondary",
+                      otherUndoneCount !== 0,
+                    );
+                    otherBadge.textContent =
+                      otherUndoneCount === 0
+                        ? "ALL DONE"
+                        : otherUndoneCount + " undone";
+                  }
+
+                  const listGroup = choreItem.parentElement;
+                  choreItem.remove();
+                  if (!listGroup.querySelector(".chore-list-item")) {
+                    const emptyMessage = document.createElement("p");
+                    emptyMessage.className = "text-muted mb-0";
+                    emptyMessage.textContent = "No chores assigned.";
+                    listGroup.replaceWith(emptyMessage);
+                  }
+                });
             }
 
             completedInput.value = String(isCompleted);
