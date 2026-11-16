@@ -5,7 +5,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, cast
 
 import flask_login
 from flask import (
@@ -240,13 +240,13 @@ def logout():
 
 
 @app.route("/image/<device_id>")
-def image_summary(device_id):
+def image_summary(device_id:int):
     """
     Return the latest summary for device_id
     :param device_id:
     :return:
     """
-    img: RingImage = get_latest_ring_image(device_id)
+    img = get_latest_ring_image(device_id)
     if not img:
         return 'no image found', 404
 
@@ -258,7 +258,7 @@ def image_summary(device_id):
         return jsonify(img), 404
 
 
-def get_latest_ring_image(device_id):
+def get_latest_ring_image(device_id:int)-> Optional[RingImage]:
     ring_user = flask_login.current_user
     if ring_user.is_authenticated:
         images = list(
@@ -279,7 +279,7 @@ def get_latest_ring_image(device_id):
 
 @app.route('/get_sound')
 def get_sound():
-    sound_directory = Path(app.static_folder) / "sounds"
+    sound_directory = Path(app.static_folder or '/') / "sounds"
     sound_extensions = {
         ".aac",
         ".flac",
@@ -512,7 +512,7 @@ def delete_stored_images_endpoint():
         return redirect("/dashboard")
 
     try:
-        deleted_count = delete_stored_images(app, ring_user.get("id"))
+        deleted_count = delete_stored_images(app, ring_user['id'])
         if deleted_count > 0:
             flash(f"Deleted {deleted_count} stored image(s).", "success")
         else:
@@ -546,7 +546,7 @@ def page_not_found(e):
     if not 'installHook' in request.path:
         flash('Page not found: ' + request.path, 'danger')
 
-    user: RingUser = app.get_current_user()
+    user = app.get_current_user()
     if not user:
         return redirect("/dashboard")
     if user.is_wall_user:
@@ -580,21 +580,23 @@ def test():
 def delete_access_token(key):
     if key == config.SELFAPIKEY:
         print('request.json=', request.json)
-        email = request.json.get('email')
-        existing_user: RingUser = app.db.FindOne(RingUser, email=email)
-        existing_user['access_token'] = None
-        return jsonify(existing_user)
+        if request.json:
+            email = request.json.get('email')
+            existing_user = app.db.FindOne(RingUser, email=email)
+            if existing_user:
+                existing_user['access_token'] = None
+                return jsonify(existing_user)
     return 'no user found', 404
 
 
 @app.route('/create_user/<key>')
 def create_user(key):
     # migrate users from beta to prod
-    if key == config.SELFAPIKEY:
+    if key == config.SELFAPIKEY and request.json:
         user_data: RingUser = request.json
         print('user_data=', user_data)
         email = user_data.get('email', None)
-        existing_user: RingUser = app.db.FindOne(RingUser, email=email)
+        existing_user = app.db.FindOne(RingUser, email=email)
         if not existing_user and email:
             user_data.pop('id', None)
             app.db.New(
@@ -608,11 +610,11 @@ def create_user(key):
 
 
 @app.route('/get_user/<key>')
-def get_user(key):
-    if key == config.SELFAPIKEY:
+def get_user_route(key):
+    if key == config.SELFAPIKEY and request.json:
         print('request.json=', request.json)
         email = request.json.get('email')
-        existing_user: RingUser = app.db.FindOne(RingUser, email=email)
+        existing_user = app.db.FindOne(RingUser, email=email)
         return jsonify(existing_user)
     return jsonify({'error': 'nope'})
 
@@ -648,6 +650,7 @@ def get_current_user() -> Optional[RingUser]:
         if user and user.is_anonymous:
             return None
 
+        user = cast(RingUser, user)
         return user
 
 

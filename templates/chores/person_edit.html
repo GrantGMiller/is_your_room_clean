@@ -75,6 +75,15 @@
         <label class="form-label fw-semibold" for="person-money">
           {{ money_name}}
         </label>
+        <button
+          class="btn btn-sm btn-outline-info rounded-circle p-0 ms-1"
+          type="button"
+          title="People can earn {{money_name}}. This is a acts as a mock bank account used to keep track of any money earned for doing chores. People can also send their {{money_name}} to each other. You can seed their account with some {{ money_name}} here."
+          aria-label="About {{ money_name }}"
+          style="width: 1.25rem; height: 1.25rem; line-height: 1;"
+        >
+          i
+        </button>
         <input
           class="form-control"
           type="number"
@@ -82,7 +91,7 @@
           id="person-money"
           min="0"
           step="1"
-          value="{{ person.get('money', 0) or 0}}"
+          value="{{ person and person.get('money', 0) or 0}}"
           required
           onchange="updateChoreBucks(this.value)"
         />
@@ -114,6 +123,7 @@
         <a href="/wall_display/clear_pin/{{ person.id }}" class='btn btn-primary'>Clear PIN</a>
         
         <hr>
+        {% if current_user.GetItem('enabled_features', 'nintendo') %}
         <div class="mt-3">
           <label class="form-label fw-semibold" for="nintendo-device">
             Nintendo device
@@ -152,8 +162,10 @@
             required
           />
         </div>
+
         <hr>
         
+        {% endif %}
         <label
           class="form-label fw-semibold mt-3 d-inline-block px-2 py-1 rounded border"
           id="person-color-label"
@@ -209,10 +221,11 @@
         </div>
         
         {% if mode == 'add' %}
-          <button class="btn btn-primary mt-3" type="submit">Save</button>
+          <button class="btn btn-primary mt-3" type="submit">Save New Person</button>
         {% endif %}
       </form>
 <hr>
+{% if mode == 'edit' %}
 <div class="mt-4 mb-3">
   <h2 class="h4 mb-2">Currently Assigned Chores</h2>
   {% if assigned_chores %}
@@ -240,6 +253,7 @@
   {% endif %}
 </div>
 <hr>
+{% endif%}
       {% if mode == 'edit' %}
         <form
           class="mt-5"
