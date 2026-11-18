@@ -24,9 +24,18 @@
           <div class="card-body">
             <h2 class="h6 text-muted" id="user-count-heading">
               Estimated revenue
+              <button
+                class="btn btn-sm btn-outline-info rounded-circle p-0 ms-1"
+                type="button"
+                title="This only includes users who are past the 30-day free trial window."
+                aria-label="Estimated revenue only includes users past the 30-day free trial window"
+                style="width: 1.25rem; height: 1.25rem; line-height: 1;"
+              >
+                i
+              </button>
             </h2>
             <p class="display-6 mb-0">
-              {{ "${:,.2f}".format((num_devices * 2.99)*0.9) }}/month
+              {{ "${:,.2f}".format((estimated_revenue)) }}/month
             </p>
           </div>
         </section>

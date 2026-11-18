@@ -359,7 +359,9 @@ def admin():
     now_ms = time.time() * 1000
     user_rows = {}
     num_devices = 0
+    estimated_revenue = 0
     for registered_user in app.db.FindAll(RingUser, _limit=100, _orderBy="timestamp_epoch_ms"):
+        
         email = registered_user.get("email")
         if not email:
             continue
@@ -390,6 +392,10 @@ def admin():
             this_num_devices = len(devs)
             num_devices += len(devs)
 
+        created_ago_delta = datetime.datetime.now() - datetime.datetime.fromtimestamp(int(claimed_at_ms or 0)/1000)
+        if this_num_devices and created_ago_delta > datetime.timedelta(days=30):
+            estimated_revenue += this_num_devices * 2.99  # Example revenue calculation
+
         subscription_status = registered_user.get("subscription_status", '')
         if not subscription_status:
             subscription_status = registered_user.get_subscription_status()
@@ -397,11 +403,14 @@ def admin():
 
         user_rows[masked_email] = (created_age, this_num_devices, subscription_status)
 
+
+
     return render_template(
         "admin.html",
         num_of_users=len(user_rows),
         user_rows=user_rows,
-        num_devices=num_devices
+        num_devices=num_devices,
+        estimated_revenue=estimated_revenue * 0.9
     )
 
 
