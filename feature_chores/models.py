@@ -389,25 +389,9 @@ class Chore(BaseTable):
     def clear_completed_by(self) -> None:
         self.Set('completed_by', [])
 
-    def get_scheduled_job_dt_utc(self)->Optional[datetime.datetime]:
+    def get_scheduled_job_dt_utc(self) -> Optional[datetime.datetime]:
         print('393 get_scheduled_job_dt_utc')
         return self.get_next_start_dt_utc()
-
-    def get_scheduled_job_dt_utc_old(self) -> Optional[datetime.datetime]:
-        print('get_scheduled_job_dt name=', self['name'], self.get('job_id', None))
-        if self.get('job_id', None) is not None:
-            job = self.app.jobs.GetJob(self.get('job_id'))
-            print('job=', job)
-            if job is not None:
-                ret = job.get('dt', None)
-                print('ret=', ret)
-                return ret
-            else:
-                self['job_id'] = None
-                return None
-
-        print('225 no job id')
-        return None
 
     def refresh_scheduled_job(self) -> None:
         '''
@@ -528,31 +512,6 @@ class Chore(BaseTable):
 
                     append_job(person_id, new_job)
 
-    def refresh_scheduled_job_old(self, person_ids: Optional[List[int]] = None) -> None:
-        if self.get('job_id', None) is not None:
-            old_job = self.app.jobs.GetJob(self.get('job_id'))
-            if old_job:
-                old_job.Delete()
-
-        if person_ids:
-            dt_utc = min(filter(None, [self.get_next_start_dt_utc(person_id) for person_id in person_ids]))
-        else:
-            dt_utc = self.get_next_start_dt_utc()
-        print('refresh_scheduled_job: dt_utc=', dt_utc, ', name=', self.get('name'))
-        if dt_utc is None:
-            print('no scheduled job', self)
-            return
-
-        new_job = self.app.jobs.ScheduleJob(
-            func=assign_chore_to_persons,
-            args=(self['id'],),
-            dt=dt_utc,
-            errorCallback=send_slack_error,
-            name=f"Assign chore '{self['name']}' to persons",
-        )
-        self['job_id'] = new_job['id']
-        print('new_job=', new_job)
-
     def get_next_start_dt_utc(self, person_id: Optional[int] = None) -> Optional[datetime.datetime]:
         '''
         Get the next start datetime for the chore, based on its repeat settings.
@@ -561,7 +520,7 @@ class Chore(BaseTable):
         '''
         if self.get('kind') == 'one-time':
             return None
-        
+
         all_job_dts = []
         data = (self.Get('jobs', {}) or {})
         print('565 jobs=', data)
@@ -580,122 +539,6 @@ class Chore(BaseTable):
         ret = min(all_job_dts) if all_job_dts else None
         print('578 ret=', ret)
         return ret
-
-    def get_next_start_dt_utc_old(self, person_id: Optional[int] = None) -> Optional[datetime.datetime]:
-        '''
-        Get the next start datetime for the chore, based on its repeat settings.
-        If the chore is a one-time chore, return None.
-        The return datetime is in UTC
-        '''
-        user_tz = self.user.get('timezone', 'UTC') or 'UTC'
-        now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
-        now_dt_utc = datetime.datetime.now(datetime.timezone.utc)
-
-        print('250 get_next_start_dt_utc chore=', self['name'])
-        if self.get('kind') == 'one-time':
-            schedule_for = self.get('schedule_for', None) or datetime.datetime.now().strftime('%Y-%m-%dT%H:%M')
-            dt_usertz = datetime.datetime.strptime(schedule_for, '%Y-%m-%dT%H:%M') if self.get(
-                'schedule_for') else None
-            dt_usertz = get_utc_from_users_time(dt_usertz, self.user) if dt_usertz else None
-            if dt_usertz and dt_usertz > now_dt_usertz:
-                return dt_usertz
-            else:
-                return None  # one-time chore is in the past, no next start datetime
-
-        # For repeat chores, calculate the next start datetime based on the repeat settings
-
-        chore_times_usertz = self.get_chore_times_usertz()
-        if not chore_times_usertz:
-            return None
-
-        now_utc = datetime.datetime.now(datetime.timezone.utc)
-        if self.get('repeat_interval') == 'daily':
-
-            # get the last completed time
-            # if this is a 'all' chore, then get the smallest last completed and schedule this +2 days
-            # if this a first-done, then get the largest last completed
-
-            last_completed_dt_utc = self.get_last_completed_dt_utc(person_id)
-            if not last_completed_dt_utc:
-                return now_dt_utc
-
-            next_day_dt_utc = last_completed_dt_utc + datetime.timedelta(days=1)
-            if next_day_dt_utc < now_dt_utc:
-                return self.get_next_chore_time_dt_utc(
-                    now_dt_utc
-                )
-            else:
-                return self.get_next_chore_time_dt_utc(
-                    next_day_dt_utc
-                )
-
-        elif self.get('repeat_interval') == 'weekly':
-            selected_day_names = self.Get('repeat_day_of_week', []) or []
-
-            if not selected_day_names:
-                return None
-
-            day_names = [
-                'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-            ]
-
-            last_completed_dt_utc = self.get_last_completed_dt_utc(person_id)
-            next_dt_utc = last_completed_dt_utc or now_dt_utc
-            for i in range(7):
-                this_day_index = next_dt_utc.weekday()
-                if day_names[this_day_index] in selected_day_names:
-                    break
-                else:
-                    next_dt_utc += datetime.timedelta(days=1)
-
-            if next_dt_utc < now_dt_utc:
-                return self.get_next_chore_time_dt_utc(
-                    now_dt_utc
-                )
-            else:
-                return self.get_next_chore_time_dt_utc(
-                    next_dt_utc
-                )
-
-        elif self.get('repeat_interval') == 'other':
-            print('324 repeat_interval=', 'other')
-            repeat_every_num_of = max(1, int(self.get('repeat_every_number_of', 1) or 1))
-            print('repeat_every=', repeat_every_num_of)
-            target_date_utc = (self.get_last_completed_dt_utc(person_id) or now_utc).date()
-            print('target_date_utc=', target_date_utc)
-            print('repeat_units=', self.get('repeat_units', ''))
-
-            if self.get('repeat_units') == 'day':
-                target_date_utc += datetime.timedelta(days=repeat_every_num_of)
-            elif self.get('repeat_units') == 'week':
-                target_date_utc += datetime.timedelta(days=repeat_every_num_of * 7)
-            if self.get('repeat_units') == 'month':
-                month_index = target_date_utc.month - 1 + repeat_every_num_of
-                target_year = target_date_utc.year + month_index // 12
-                target_month = month_index % 12 + 1
-                target_day = min(
-                    target_date_utc.day,
-                    calendar.monthrange(target_year, target_month)[1],
-                )
-                target_date_utc = datetime.date(target_year, target_month, target_day)
-
-            candidates = [
-                get_utc_from_users_time(
-                    datetime.datetime.combine(target_date_utc, chore_time), self.user
-                )
-                for chore_time in chore_times_usertz
-            ]
-            print('candidates=', candidates, ', min=', min(candidates))
-            ret_dt_utc = min(candidates)
-
-            if ret_dt_utc > now_utc:
-                print('return ret_dt_utc=', ret_dt_utc)
-                return ret_dt_utc
-            else:
-                print('return now_utc=', now_utc)
-                return now_utc
-
-        return None
 
     @property
     def user(self):
@@ -840,7 +683,7 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user):
     return local_dt
 
 
-def assign_chore_to_persons(chore_id: int, person_id: int=-1, debug: bool = False):
+def assign_chore_to_persons(chore_id: int, person_id: int = -1, debug: bool = False):
     '''
     if this is a random chore, then person_id will be -1
     '''
@@ -865,95 +708,3 @@ def assign_chore_to_persons(chore_id: int, person_id: int=-1, debug: bool = Fals
                 # If no specific person_id is provided, assign the chore to all eligible persons
                 for person in chore.get_can_be_assigned_to_persons():
                     chore.assign_to(person)
-
-
-def assign_chore_to_persons_old(chore_id: int, debug: bool = False):
-    print('assign_chore_to_persons(chore_id=', chore_id, ')')
-    with app.app_context():
-        chore = app.db.FindOne(Chore, id=chore_id)
-
-        if chore and chore.get('enabled', False) is False:
-            print(f'Chore {chore["name"]} is disbled. No assignment needed.')
-            return
-
-        if chore is None:
-            print(f"Chore with id {chore_id} not found.")
-            return
-
-        chore.clear_completed_by()
-        possible_assignees = chore.get_can_be_assigned_to_persons()
-        if debug: send_slack_message('assigning chore to persons for chore:', chore['name'])
-        if debug: send_slack_message('chore get_delta for chore:', chore['name'], chore.get_delta())
-        if debug: send_slack_message('possible assignees for chore:', [p['name'] for p in possible_assignees])
-        if not possible_assignees:
-            print(f"No possible assignees for chore '{chore['name']}' (id: {chore_id}).")
-            return
-
-        if chore.get('assignment_mode') == 'all':
-            if debug:
-                send_slack_message('assignment mode is "all" for chore:', chore['name'])
-            now_dt_utc = datetime.datetime.now(pytz.utc)
-            for person in possible_assignees:
-                person_last_completed_dt_utc = chore.get_last_completed_dt_utc(person['id'])
-                if not person_last_completed_dt_utc:
-                    chore.assign_to(person)
-                if debug: send_slack_message('person last completed dt for chore:', person['name'],
-                                             person_last_completed_dt_utc)
-                person_last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(person_last_completed_dt_utc)
-                if debug: send_slack_message('person last completed dt rounded down for chore:', person['name'],
-                                             person_last_completed_dt_utc)
-                delta_last_completed = (
-                        now_dt_utc - person_last_completed_dt_utc) if person_last_completed_dt_utc else None
-                if debug: send_slack_message('delta last completed for chore:', person['name'], delta_last_completed)
-
-                chore_delta = chore.get_delta()
-                if debug: send_slack_message('717 chore delta for chore:', person['name'], chore_delta)
-
-                if not delta_last_completed or not chore_delta:
-                    if debug: send_slack_message('assigning person to chore because no last completed dt:',
-                                                 person['name'], chore['name'])
-                    chore.assign_to(person)
-                elif delta_last_completed >= chore_delta:
-                    if debug: send_slack_message(
-                        'assigning person to chore because delta last completed is greater than or equal to chore delta:',
-                        person['name'], chore['name'], delta_last_completed, chore_delta)
-                    chore.assign_to(person)
-
-        elif chore.get('assignment_mode') in ['first-done', 'random']:
-            if debug:
-                send_slack_message('assignment mode is "first-done" or "random" for chore:', chore['name'],
-                                   chore.get('assignment_mode'))
-            # if someone completed the chore recently do nothing
-            last_completed_dt_utc = chore.round_down_to_choretime_dt_utc(chore.get_last_completed_dt_utc())
-            now_dt_utc = datetime.datetime.now(pytz.utc)
-            delta_last_completed = (now_dt_utc - last_completed_dt_utc) if last_completed_dt_utc else None
-            if debug: send_slack_message('730 delta last completed for chore:', chore['name'], delta_last_completed)
-
-            chore_delta = chore.get_delta()
-            if debug: send_slack_message('740 chore delta for chore:', chore['name'], chore_delta)
-            if not delta_last_completed or not chore_delta:
-                if debug: send_slack_message('assigning person to chore because no last completed dt for chore:',
-                                             chore['name'])
-                if chore.get('assignment_mode') == 'first-done':
-                    for person in possible_assignees:
-                        chore.assign_to(person)
-                elif chore.get('assignment_mode') == 'random':
-                    person = random.choice(possible_assignees)
-                    chore.assign_to(person)
-
-            # if the chore is set for specific days, consider assigning
-            # for example if its set for every tuesday, and it was last completed on wednesday,
-            # and today is tuesday, we shoud prob assign it
-
-            elif delta_last_completed >= chore_delta:
-                if debug: send_slack_message(
-                    'assigning person to chore because delta last completed is greater than or equal to chore delta for chore:',
-                    chore['name'], delta_last_completed, chore_delta)
-                if chore.get('assignment_mode') == 'first-done':
-                    for person in possible_assignees:
-                        chore.assign_to(person)
-                elif chore.get('assignment_mode') == 'random':
-                    person = random.choice(possible_assignees)
-                    chore.assign_to(person)
-
-        return chore
