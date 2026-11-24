@@ -1,4 +1,3 @@
-import calendar
 import datetime
 import json
 import random
@@ -12,7 +11,7 @@ from flask_jobs import Job
 
 from app_types import Application
 from feature_money.models import MoneyTransaction
-from slack import send_slack_error, send_slack_message
+from slack import send_slack_error
 
 ChoreKind = Literal["one-time", "repeat"]
 AssignmentMode = Literal["all", "random", "first-done"]
@@ -151,7 +150,7 @@ class Chore(BaseTable):
     repeat_units: Optional[RepeatUnit] = None
     owner_id: int
     tags: List[str] = []
-    job_id: Optional[int] = None
+    # job_id: Optional[int] = None # deprecated
     last_completed: LastCompleted
     enabled: bool
     reward: int = 0  # money reward for completing this chore
@@ -403,6 +402,12 @@ class Chore(BaseTable):
         
         '''
         print('refresh_scheduled_job')
+        # delete deprecated job
+        job_id = self.get('job_id', None)
+        if job_id:
+            job = app.jobs.GetJob(job_id)
+            job.Delete()
+
         # Delete all existing jobs for all persons
         for _, job_ids in self.Get('jobs', {}).items():
             for job_id in job_ids:
