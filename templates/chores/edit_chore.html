@@ -309,6 +309,13 @@
           >
             Assign Now
           </button>
+          <button
+            class="btn btn-primary"
+            type="button"
+            id="refresh-job-button"
+          >
+            Refresh Job
+          </button>
         </div>
 <hr>
         <fieldset class="mt-4">
@@ -423,6 +430,7 @@
       const tagList = document.getElementById("tag-list");
       const tagValue = document.getElementById("chore-tags-value");
       const assignNowButton = document.getElementById("assign-now-button");
+      const refreshJobButton = document.getElementById("refresh-job-button");
 
       function updateFields() {
         const isOneTime = form.elements.kind.value === "one-time";
@@ -724,6 +732,28 @@
           console.error("Error assigning chore now:", error);
         } finally {
           assignNowButton.disabled = false;
+        }
+      });
+
+      refreshJobButton.addEventListener("click", async () => {
+        refreshJobButton.disabled = true;
+
+        try {
+          const response = await fetch("/chores/refresh-job", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chore_id: {{ chore.get('id', None) }} }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Unable to refresh chore job");
+          }
+
+          updateFormFromChore(await response.json());
+        } catch (error) {
+          console.error("Error refreshing chore job:", error);
+        } finally {
+          refreshJobButton.disabled = false;
         }
       });
     </script>

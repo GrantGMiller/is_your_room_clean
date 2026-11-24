@@ -8,6 +8,7 @@ from typing import Dict, List, Literal, Optional, cast
 import pytz
 from flask import flash
 from flask_dictabase import BaseTable
+from flask_jobs import Job
 
 from app_types import Application
 from feature_money.models import MoneyTransaction
@@ -154,6 +155,7 @@ class Chore(BaseTable):
     last_completed: LastCompleted
     enabled: bool
     reward: int = 0  # money reward for completing this chore
+    jobs: Dict[int, List[int]] = {}  # {int(person_id): [int(job_id1), int(job_id2)]}
 
     def ui_safe(self):
         next_assignment_dt_utc_iso = self.get_next_start_dt_utc()
@@ -216,11 +218,21 @@ class Chore(BaseTable):
         self.Remove('completed_by', person['id'], removeAll=True)
         print('149 chore.Get("assigned_to")=', self.Get('assigned_to', None))
 
+    def assign_to_person_id(self, person_id: int) -> None:
+        self.Append('assigned_to', person_id, allowDuplicates=False)
+        self.Remove('completed_by', person_id, removeAll=True)
+
     def unassign(self, person: Person) -> None:
         print('chore.unassign', person)
         print('150 chore.Get("assigned_to")=', self.Get('assigned_to', None))
         self.Remove('assigned_to', person['id'], removeAll=True)
         print('152 chore.Get("assigned_to")=', self.Get('assigned_to', None))
+
+    def unassign_all(self) -> None:
+        '''
+        Unassign all persons from the chore.
+        '''
+        self.Set('assigned_to', [])
 
     def is_assigned_to(self, person_id: int) -> bool:
         return person_id in self.Get('assigned_to', [])
@@ -377,7 +389,11 @@ class Chore(BaseTable):
     def clear_completed_by(self) -> None:
         self.Set('completed_by', [])
 
-    def get_scheduled_job_dt_utc(self) -> Optional[datetime.datetime]:
+    def get_scheduled_job_dt_utc(self)->Optional[datetime.datetime]:
+        print('393 get_scheduled_job_dt_utc')
+        return self.get_next_start_dt_utc()
+
+    def get_scheduled_job_dt_utc_old(self) -> Optional[datetime.datetime]:
         print('get_scheduled_job_dt name=', self['name'], self.get('job_id', None))
         if self.get('job_id', None) is not None:
             job = self.app.jobs.GetJob(self.get('job_id'))
@@ -393,7 +409,126 @@ class Chore(BaseTable):
         print('225 no job id')
         return None
 
-    def refresh_scheduled_job(self, person_ids: Optional[List[int]] = None) -> None:
+    def refresh_scheduled_job(self) -> None:
+        '''
+        We will use one job per person/assignments.
+        We will also use one job per day. So if the job repeats on tues/thurs
+          then the self['jobs'] will look like {
+            person_id: [job_id1, job_id2]
+                }
+        
+        '''
+        print('refresh_scheduled_job')
+        # Delete all existing jobs for all persons
+        for _, job_ids in self.Get('jobs', {}).items():
+            for job_id in job_ids:
+                job = self.app.jobs.GetJob(job_id)
+                if job:
+                    print('deleting old job=', job)
+                    job.Delete()
+        self.Set('jobs', {})
+
+        def append_job(person_id: int, job: Job):
+            print('append_job person_id=', person_id, ', job=', job)
+            these_job_ids = (self.Get('jobs', {}) or {}).get(str(person_id), [])
+            these_job_ids.append(job['id'])
+            self.SetItem('jobs', str(person_id), these_job_ids)
+
+        # if this is a AssignmentMode 'all' or 'first-done', then we make
+        #  one job per person
+
+        person_ids = []
+        if self.get('assignment_mode') in ['all', 'first-done']:
+            person_ids = [person['id'] for person in self.get_can_be_assigned_to_persons()]
+        elif self.get('assignment_mode') == 'random':
+            person_ids = [-1]  # this means we will pick the person to assign it to later
+
+        # create new job(s)
+        for person_id in person_ids:
+            if self.get('repeat_interval') == 'daily':
+                for chore_time_usertz in self.get_chore_times_usertz():
+                    this_day_of_week_date = datetime.datetime.today()
+                    start_dt_usertz = datetime.datetime.combine(this_day_of_week_date.date(), chore_time_usertz)
+                    start_dt_utc = get_utc_from_users_time(start_dt_usertz, self.user)
+
+                    new_job = self.app.jobs.RepeatJob(
+                        func=assign_chore_to_persons,
+                        kwargs={
+                            'chore_id': self['id'],
+                            'person_id': person_id
+                        },
+                        startDT=start_dt_utc,
+                        errorCallback=send_slack_error,
+                        name=f"Assign chore '{self['name']}' to person_id={person_id} at {start_dt_usertz}",
+                        days=1,
+                    )
+
+                    append_job(person_id, new_job)
+
+            elif self.get('repeat_interval') == 'weekly':
+                day_names = [
+                    'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
+                ]
+                for day_of_week in self.Get('repeat_day_of_week', []) or []:
+                    this_day_of_week_date = datetime.datetime.today()
+                    for _ in range(7):
+                        if day_names[this_day_of_week_date.weekday()] != day_of_week:
+                            this_day_of_week_date -= datetime.timedelta(days=1)
+                        else:
+                            break
+
+                    for chore_time_usertz in self.get_chore_times_usertz():
+                        start_dt_usertz = datetime.datetime.combine(this_day_of_week_date.date(), chore_time_usertz)
+                        start_dt_utc = get_utc_from_users_time(start_dt_usertz, self.user)
+
+                        new_job = self.app.jobs.RepeatJob(
+                            func=assign_chore_to_persons,
+                            kwargs={
+                                'chore_id': self['id'],
+                                'person_id': person_id
+                            },
+                            startDT=start_dt_utc,
+                            errorCallback=send_slack_error,
+                            name=f"Assign chore '{self['name']}' to person_id={person_id} at {start_dt_usertz}",
+                            days=7,
+                        )
+
+                        append_job(person_id, new_job)
+
+            elif self.get('repeat_interval') == 'other':
+                repeat_every_num_of = max(1, int(self.get('repeat_every_number_of', 1) or 1))
+
+                interval_days = 1
+
+                if self.get('repeat_units') == 'day':
+                    interval_days = 1 * repeat_every_num_of
+
+                elif self.get('repeat_units') == 'week':
+                    interval_days = 7 * repeat_every_num_of
+
+                elif self.get('repeat_units') == 'month':
+                    interval_days = 30 * repeat_every_num_of
+
+                this_day_of_week_date = datetime.datetime.today()
+                for chore_time_usertz in self.get_chore_times_usertz():
+                    start_dt_usertz = datetime.datetime.combine(this_day_of_week_date.date(), chore_time_usertz)
+                    start_dt_utc = get_utc_from_users_time(start_dt_usertz, self.user)
+
+                    new_job = self.app.jobs.RepeatJob(
+                        func=assign_chore_to_persons,
+                        kwargs={
+                            'chore_id': self['id'],
+                            'person_id': person_id
+                        },
+                        startDT=start_dt_utc,
+                        errorCallback=send_slack_error,
+                        name=f"Assign chore '{self['name']}' to person_id={person_id} at {start_dt_usertz}",
+                        days=interval_days,
+                    )
+
+                    append_job(person_id, new_job)
+
+    def refresh_scheduled_job_old(self, person_ids: Optional[List[int]] = None) -> None:
         if self.get('job_id', None) is not None:
             old_job = self.app.jobs.GetJob(self.get('job_id'))
             if old_job:
@@ -424,13 +559,42 @@ class Chore(BaseTable):
         If the chore is a one-time chore, return None.
         The return datetime is in UTC
         '''
+        if self.get('kind') == 'one-time':
+            return None
+        
+        all_job_dts = []
+        data = (self.Get('jobs', {}) or {})
+        print('565 jobs=', data)
+        for this_person_id, job_ids in data.items():
+            print('565 this_person_id=', this_person_id, 'job_ids=', job_ids)
+            if person_id is not None and int(person_id) != this_person_id:
+                print('571 continue')
+                continue
+            for job_id in job_ids:
+                print('574 job_id=', job_id)
+                job = self.app.jobs.GetJob(job_id)
+                print('574 found job=', job)
+                if job and job['dt']:
+                    all_job_dts.append(job['dt'])
+        print('576 all_job_dts=', all_job_dts)
+        ret = min(all_job_dts) if all_job_dts else None
+        print('578 ret=', ret)
+        return ret
+
+    def get_next_start_dt_utc_old(self, person_id: Optional[int] = None) -> Optional[datetime.datetime]:
+        '''
+        Get the next start datetime for the chore, based on its repeat settings.
+        If the chore is a one-time chore, return None.
+        The return datetime is in UTC
+        '''
         user_tz = self.user.get('timezone', 'UTC') or 'UTC'
         now_dt_usertz = datetime.datetime.now(tz=pytz.timezone(user_tz))
         now_dt_utc = datetime.datetime.now(datetime.timezone.utc)
 
         print('250 get_next_start_dt_utc chore=', self['name'])
         if self.get('kind') == 'one-time':
-            dt_usertz = datetime.datetime.strptime(self.get('schedule_for'), '%Y-%m-%dT%H:%M') if self.get(
+            schedule_for = self.get('schedule_for', None) or datetime.datetime.now().strftime('%Y-%m-%dT%H:%M')
+            dt_usertz = datetime.datetime.strptime(schedule_for, '%Y-%m-%dT%H:%M') if self.get(
                 'schedule_for') else None
             dt_usertz = get_utc_from_users_time(dt_usertz, self.user) if dt_usertz else None
             if dt_usertz and dt_usertz > now_dt_usertz:
@@ -549,10 +713,12 @@ class Chore(BaseTable):
             try:
                 repeat_times = json.loads(repeat_times)
             except json.JSONDecodeError:
-                return [repeat_times]
+                pass
 
         if isinstance(repeat_times, str):
-            return [repeat_times]
+            if repeat_times in ('morning', 'afternoon', 'evening', 'specific'):
+                return [cast(RepeatTimeOfDay, repeat_times)]
+            return []
         if isinstance(repeat_times, list):
             return repeat_times
         return []
@@ -674,7 +840,34 @@ def get_user_local_dt_from_utc(dt: datetime.datetime, user):
     return local_dt
 
 
-def assign_chore_to_persons(chore_id: int, debug: bool = False):
+def assign_chore_to_persons(chore_id: int, person_id: int=-1, debug: bool = False):
+    '''
+    if this is a random chore, then person_id will be -1
+    '''
+    with app.app_context():
+        chore = app.db.FindOne(Chore, id=chore_id)
+        if chore is None:
+            print(f"Chore with id {chore_id} not found.")
+            return
+        if chore.get('enabled', False) == False:
+            print(f'Chore {chore["name"]} is disbled. No assignment needed.')
+            return
+
+        if chore.get('assignment_mode') == 'random':
+            potential_persons = chore.get_can_be_assigned_to_persons()
+            assign_to_person = random.choice(potential_persons)
+            chore.assign_to(assign_to_person)
+
+        else:  # assignment_mode is 'all' or 'first-done'
+            if person_id > 0:
+                chore.assign_to_person_id(person_id)
+            else:
+                # If no specific person_id is provided, assign the chore to all eligible persons
+                for person in chore.get_can_be_assigned_to_persons():
+                    chore.assign_to(person)
+
+
+def assign_chore_to_persons_old(chore_id: int, debug: bool = False):
     print('assign_chore_to_persons(chore_id=', chore_id, ')')
     with app.app_context():
         chore = app.db.FindOne(Chore, id=chore_id)
@@ -748,7 +941,11 @@ def assign_chore_to_persons(chore_id: int, debug: bool = False):
                     person = random.choice(possible_assignees)
                     chore.assign_to(person)
 
-            elif delta_last_completed >= chore_delta:  # type: ignore
+            # if the chore is set for specific days, consider assigning
+            # for example if its set for every tuesday, and it was last completed on wednesday,
+            # and today is tuesday, we shoud prob assign it
+
+            elif delta_last_completed >= chore_delta:
                 if debug: send_slack_message(
                     'assigning person to chore because delta last completed is greater than or equal to chore delta for chore:',
                     chore['name'], delta_last_completed, chore_delta)

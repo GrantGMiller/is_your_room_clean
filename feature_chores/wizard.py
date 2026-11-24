@@ -34,7 +34,7 @@ def setup(app: Application):
                         "repeat_units": request.form.get("repeat_units"),
                     }
                 )
-
+            print('creating new chore')
             chore = app.db.New(
                 Chore,
                 owner_id=app.get_current_user()["id"],
@@ -47,7 +47,6 @@ def setup(app: Application):
                 )
             chore.Set('repeat_day_of_week', request.form.getlist("repeat_day_of_week"))
 
-            chore.refresh_scheduled_job()
             return redirect(f'/chores/wizard/2/{chore["id"]}')
 
         return render_template(
@@ -67,6 +66,7 @@ def setup(app: Application):
             ]
             chore.Set('can_be_assigned_to', selected_person_ids)
             chore["assignment_mode"] = request.form.get("assignment_mode")
+            chore.refresh_scheduled_job()
             return redirect("/chores/overview")
 
         return render_template(

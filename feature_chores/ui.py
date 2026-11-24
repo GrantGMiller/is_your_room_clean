@@ -24,7 +24,7 @@ from feature_chores.models import (
 from ring.user import RingUser, get_current_wall_user
 from feature_nintendo import get_device_names
 
-global app
+app: Application
 
 
 def setup(a: Application):
@@ -164,6 +164,8 @@ def setup(a: Application):
     @app.route("/chores/edit", methods=["GET", "POST"])
     def edit_chore():
         chore_id = request.args.get("id", type=int)
+        if not chore_id:
+            return 'chore not found', 404
         chore = helpers.get_current_user_chore(chore_id)
 
         if chore is None:
@@ -257,8 +259,10 @@ def setup(a: Application):
 
     @app.route('/chores/settings', methods=["GET", "POST"])
     def chores_settings():
-        user: RingUser = app.get_current_user()
-
+        user = app.get_current_user()
+        if not user:
+            return redirect('/dashboard')
+        
         if request.method == "POST":
             print('request.form=', request.form)
             should_refresh_chores = False
@@ -330,14 +334,17 @@ def setup(a: Application):
     @app.route('/chores/unassign/<int:person_id>/<int:chore_id>/', methods=['POST'])
     def chore_unassign(person_id, chore_id):
         chore = helpers.get_current_user_chore(chore_id)
-        if not chore:
+        if not chore :
             return 'chore not found', 404
 
+        person = helpers.get_current_user_person(person_id)
+        if not person:
+            return 'person not found', 404
+        
         chore.unassign(
-            helpers.get_current_user_person(
-                person_id
-                )
+            person
             )
+        
         return jsonify(chore.ui_safe())
 
     @app.route('/chores/assignable', methods=['POST'])
@@ -376,10 +383,28 @@ def setup(a: Application):
             return jsonify({"error": "chore not found"}), 404
         return jsonify(updated_chore.ui_safe())
 
+    @app.route('/chores/refresh-job', methods=['POST'])
+    def chore_refresh_job():
+        data = request.get_json(silent=True) or {}
+        chore_id = data.get("chore_id")
+
+        if chore_id is None:
+            return jsonify({"error": "chore not found"}), 404
+
+        chore = helpers.get_current_user_chore(int(chore_id))
+        if chore is None:
+            return jsonify({"error": "chore not found"}), 404
+
+        chore.refresh_scheduled_job()
+        return jsonify(chore.ui_safe())
+
     @app.route('/chores/complete', methods=['POST'])
     def chore_complete():
         chore_id = request.form.get('chore_id', type=int)
         person_id = request.form.get('person_id', type=int)
+        if not chore_id or not person_id:
+            return 'chore or person not found', 400
+        
         chore = helpers.get_current_user_chore(chore_id)
         person = helpers.get_current_user_person(person_id)
 
