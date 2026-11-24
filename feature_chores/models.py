@@ -406,7 +406,8 @@ class Chore(BaseTable):
         job_id = self.get('job_id', None)
         if job_id:
             job = app.jobs.GetJob(job_id)
-            job.Delete()
+            if job:
+                job.Delete()
 
         # Delete all existing jobs for all persons
         for _, job_ids in self.Get('jobs', {}).items():
