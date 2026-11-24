@@ -441,6 +441,9 @@ class Chore(BaseTable):
                     start_dt_usertz = datetime.datetime.combine(this_day_of_week_date.date(), chore_time_usertz)
                     start_dt_utc = get_utc_from_users_time(start_dt_usertz, self.user)
 
+                    while start_dt_utc < datetime.datetime.now(datetime.timezone.utc):
+                        start_dt_utc += datetime.timedelta(days=1)
+
                     new_job = self.app.jobs.RepeatJob(
                         func=assign_chore_to_persons,
                         kwargs={
@@ -470,6 +473,9 @@ class Chore(BaseTable):
                     for chore_time_usertz in self.get_chore_times_usertz():
                         start_dt_usertz = datetime.datetime.combine(this_day_of_week_date.date(), chore_time_usertz)
                         start_dt_utc = get_utc_from_users_time(start_dt_usertz, self.user)
+
+                        while start_dt_utc < datetime.datetime.now(datetime.timezone.utc):
+                            start_dt_utc += datetime.timedelta(days=7)
 
                         new_job = self.app.jobs.RepeatJob(
                             func=assign_chore_to_persons,
@@ -503,6 +509,9 @@ class Chore(BaseTable):
                 for chore_time_usertz in self.get_chore_times_usertz():
                     start_dt_usertz = datetime.datetime.combine(this_day_of_week_date.date(), chore_time_usertz)
                     start_dt_utc = get_utc_from_users_time(start_dt_usertz, self.user)
+
+                    while start_dt_utc < datetime.datetime.now(datetime.timezone.utc):
+                        start_dt_utc += datetime.timedelta(days=1)
 
                     new_job = self.app.jobs.RepeatJob(
                         func=assign_chore_to_persons,
