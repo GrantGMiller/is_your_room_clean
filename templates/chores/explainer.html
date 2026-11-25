@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chores guide | {{ app_name }}</title>
+    {% include "js_css.html" %}
+    <style>
+      .guide-step {
+        scroll-margin-top: 1rem;
+      }
+
+      .screen-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.75rem;
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.06);
+      }
+
+      .preview-topbar {
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .preview-field {
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .guide-number {
+        width: 2rem;
+        height: 2rem;
+        flex: 0 0 2rem;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
+    <main class="container py-5">
+      <header class="mb-5">
+        <a class="btn btn-outline-secondary btn-sm mb-3" href="/chores/overview">
+          &larr; Back to chores
+        </a>
+        <p class="text-uppercase text-muted small fw-semibold mb-2">
+          Getting started
+        </p>
+        <h1 class="display-6 fw-bold">A simple guide to chores</h1>
+        <p class="lead text-muted mb-0">
+          Add people, set up repeating chores, and use tags to switch groups of
+          chores on or off.
+        </p>
+      </header>
+
+      <section class="card shadow-sm mb-5" aria-labelledby="quick-start-heading">
+        <div class="card-body p-4">
+          <h2 class="h4" id="quick-start-heading">In this guide</h2>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" href="#people">1. Add people</a>
+            <a class="btn btn-outline-primary" href="#schedules">2. Set schedules</a>
+            <a class="btn btn-outline-primary" href="#tags">3. Add a tag</a>
+            <a class="btn btn-outline-primary" href="#tag-breaks">4. Pause tagged chores</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="guide-step mb-5" id="people" aria-labelledby="people-heading">
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold">1</span>
+          <div>
+            <h2 class="h3" id="people-heading">Add at least two people</h2>
+            <p class="text-muted">
+              From the chores overview, choose <strong>Add person</strong>.
+              Enter a name, optionally choose a color or starting
+              {{ money_name }}, then select <strong>Save New Person</strong>.
+              Repeat for each person in your household.
+            </p>
+          </div>
+        </div>
+        <div class="screen-preview p-3 p-md-4" role="img" aria-label="Illustration of the Add Person form">
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Add Person</span>
+            <span class="text-muted small">Chores / People</span>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Name</label>
+              <div class="preview-field">Alex</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ money_name }}</label>
+              <div class="preview-field">0</div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <span class="btn btn-primary btn-sm">Save New Person</span>
+          </div>
+        </div>
+        <p class="form-text mt-2">Illustration of the form; no sample person is saved.</p>
+      </section>
+
+      <section class="guide-step mb-5" id="schedules" aria-labelledby="schedules-heading">
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold">2</span>
+          <div>
+            <h2 class="h3" id="schedules-heading">Create repeating chores</h2>
+            <p class="text-muted">
+              Select <strong>Add chore</strong>, enter a name, and choose
+              <strong>Repeat</strong>. Configure the interval and time of day,
+              then continue to choose who can be assigned the chore.
+            </p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <article class="card h-100 shadow-sm border-start border-4 border-success">
+              <div class="card-body">
+                <span class="badge text-bg-success mb-2">Daily</span>
+                <h3 class="h5">Clean room</h3>
+                <ol class="mb-0">
+                  <li>Name: <strong>Clean room</strong></li>
+                  <li>Choose <strong>Repeat</strong> and <strong>Daily</strong>.</li>
+                  <li>Choose <strong>Evening</strong>.</li>
+                  <li>Continue and select the people for this chore.</li>
+                </ol>
+              </div>
+            </article>
+          </div>
+          <div class="col-lg-4">
+            <article class="card h-100 shadow-sm border-start border-4 border-warning">
+              <div class="card-body">
+                <span class="badge text-bg-warning mb-2">Weekly</span>
+                <h3 class="h5">Take out trash</h3>
+                <ol class="mb-0">
+                  <li>Name: <strong>Take out trash</strong></li>
+                  <li>Choose <strong>Repeat</strong> and <strong>Weekly</strong>.</li>
+                  <li>Select <strong>Tuesday</strong> and <strong>Afternoon</strong>.</li>
+                  <li>Continue and select the people for this chore.</li>
+                </ol>
+              </div>
+            </article>
+          </div>
+          <div class="col-lg-4">
+            <article class="card h-100 shadow-sm border-start border-4 border-info">
+              <div class="card-body">
+                <span class="badge text-bg-info mb-2">Monthly</span>
+                <h3 class="h5">Replace water filter</h3>
+                <ol class="mb-0">
+                  <li>Name: <strong>Replace water filter</strong></li>
+                  <li>Choose <strong>Repeat</strong>.</li>
+                  <li>Choose <strong>Another interval</strong>.</li>
+                  <li>Set <strong>Every 1 month</strong>, then continue and assign it.</li>
+                </ol>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="screen-preview p-3 p-md-4 mt-4" role="img" aria-label="Illustration of repeating schedule controls">
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Create a New Chore</span>
+            <span class="text-muted small">Repeat schedule</span>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-5">
+              <label class="form-label fw-semibold">How often?</label>
+              <div class="preview-field">Weekly</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">What time of day?</label>
+              <div class="preview-field">Afternoon</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Which day?</label>
+              <div class="preview-field">Tuesday &#10003;</div>
+            </div>
+          </div>
+        </div>
+        <p class="form-text mt-2">Illustration of the schedule controls.</p>
+      </section>
+
+      <section class="guide-step mb-5" id="tags" aria-labelledby="tags-heading">
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold">3</span>
+          <div>
+            <h2 class="h3" id="tags-heading">Add a tag such as “school”</h2>
+            <p class="text-muted">
+              After creating a chore, open it from the overview to edit it.
+              Find <strong>Tags</strong>, type <strong>school</strong>, and
+              press <strong>Enter</strong>. Save the chore. Add the same tag to
+              each chore you want to manage together.
+            </p>
+            <a class="btn btn-outline-primary btn-sm" href="/chores/overview">
+              Go to chores overview
+            </a>
+          </div>
+        </div>
+        <div class="screen-preview p-3 p-md-4" role="img" aria-label="Illustration of adding the school tag to a chore">
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Edit chore</span>
+            <span class="text-muted small">Tags</span>
+          </div>
+          <label class="form-label fw-semibold">Tags</label>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge text-bg-secondary p-2">school &times;</span>
+          </div>
+          <div class="preview-field text-muted">Type a tag and press Enter</div>
+        </div>
+        <p class="form-text mt-2">Illustration of the tag editor.</p>
+      </section>
+
+      <section class="guide-step mb-5" id="tag-breaks" aria-labelledby="tag-breaks-heading">
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold">4</span>
+          <div>
+            <h2 class="h3" id="tag-breaks-heading">Pause school chores for a break</h2>
+            <p class="text-muted">
+              On the chores overview, choose <strong>Tag Manager</strong>.
+              Find <strong>school</strong> and select <strong>DISABLE ALL</strong>
+              when holiday break starts. The tagged chores are disabled and
+              unassigned. When school resumes, choose <strong>ENABLE ALL</strong>
+              for that tag to enable the chores again.
+            </p>
+          </div>
+        </div>
+        <div class="screen-preview p-3 p-md-4" role="img" aria-label="Illustration of disabling school chores in Tag Manager">
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Tag Manager</span>
+            <span class="text-muted small">Actions</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center border rounded bg-white p-3">
+            <span class="fw-semibold">school</span>
+            <span class="d-flex gap-2">
+              <span class="btn btn-success btn-sm">ENABLE ALL</span>
+              <span class="btn btn-danger btn-sm">DISABLE ALL</span>
+            </span>
+          </div>
+        </div>
+        <p class="form-text mt-2">Illustration of the Tag Manager controls.</p>
+      </section>
+
+      <div class="text-center py-4">
+        <a class="btn btn-primary" href="/chores/overview">Back to chores</a>
+      </div>
+    </main>
+  </body>
+</html>
