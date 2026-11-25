@@ -301,6 +301,7 @@ def setup(a: Application):
             for chore in helpers.get_current_user_chores():
                 if tag_name in chore.get('tags', []) or []:
                     chore['enabled'] = False
+                    chore.unassign_all()
 
         return jsonify({"tag_name": tag_name, "enabled": enabled})
 
