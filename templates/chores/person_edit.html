@@ -123,7 +123,7 @@
         <a href="/wall_display/clear_pin/{{ person.id }}" class='btn btn-primary'>Clear PIN</a>
         
         <hr>
-        {% if current_user.GetItem('enabled_features', 'nintendo') %}
+        {% if enabled_features.nintendo and current_user.GetItem('enabled_features', 'nintendo') %}
         <div class="mt-3">
           <label class="form-label fw-semibold" for="nintendo-device">
             Nintendo device

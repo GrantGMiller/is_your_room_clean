@@ -51,7 +51,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
     latest_events: dict  # {device_id: timestamp_ms}
     wall_display_url: str
     wall_link_expires_at: float
-    is_wall_user: bool
+    # is_wall_user: bool
     enabled_features: dict  # {str(feature_name): bool(enabled)}
     last_clean_score: str
     subscription_status: str  # latest subscription status

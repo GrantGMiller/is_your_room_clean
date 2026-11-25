@@ -75,7 +75,8 @@
               <thead>
                 <tr>
                   <th scope="col">Key</th>
-                  <th scope="col">Value</th>
+                  <th scope="col">User value</th>
+                  <th scope="col">App value</th>
                 </tr>
               </thead>
               <tbody>
@@ -83,10 +84,11 @@
                   <tr>
                     <td>{{ key }}</td>
                     <td>{{ value }}</td>
+                    <td>{{ enabled_features.get(key, 'Not configured') }}</td>
                   </tr>
                 {% else %}
                   <tr>
-                    <td class="text-muted" colspan="2">No enabled features found.</td>
+                    <td class="text-muted" colspan="3">No enabled features found.</td>
                   </tr>
                 {% endfor %}
               </tbody>
