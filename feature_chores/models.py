@@ -52,6 +52,16 @@ class Person(BaseTable):
     stickers: List[str] = []
     sticker_archive: List[str] = []
     num_of_completed_chores: int = 0
+    tags_enabled: Dict[str, bool] = {}
+
+    def enable_tag(self, tag: str):
+        self.SetItem('tags_enabled', tag, True)
+
+    def disable_tag(self, tag: str):
+        self.SetItem('tags_enabled', tag, False)
+
+    def is_tag_enabled(self, tag: str) -> bool:
+        return self.Get('tags_enabled', {}).get(tag, False)
 
     def inc_completed_chore_count(self):
         self['num_of_completed_chores'] = (self.get('num_of_completed_chores', 0) or 0) + 1
@@ -155,6 +165,7 @@ class Chore(BaseTable):
     enabled: bool
     reward: int = 0  # money reward for completing this chore
     jobs: Dict[int, List[int]] = {}  # {int(person_id): [int(job_id1), int(job_id2)]}
+    
 
     def ui_safe(self):
         next_assignment_dt_utc_iso = self.get_next_start_dt_utc()

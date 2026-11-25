@@ -85,3 +85,11 @@ def refresh_all_current_user_chores():
 
         for chore in get_current_user_chores():
             chore.refresh_scheduled_job()
+
+def get_all_user_tags() -> List[str]:
+    with app.app_context():
+        tags = set()
+        for chore in get_current_user_chores():
+            for tag in chore.Get('tags', []):
+                tags.add(tag)
+        return list(tags)

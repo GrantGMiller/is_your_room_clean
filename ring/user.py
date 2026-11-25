@@ -56,6 +56,15 @@ class RingUser(flask_login.UserMixin, BaseTable):
     last_clean_score: str
     subscription_status: str  # latest subscription status
 
+    def enabled_tag(self, tag_name: str) -> None:
+        self.SetItem('tags_enabled', tag_name, True)
+
+    def disable_tag(self, tag_name: str) -> None:
+        self.SetItem('tags_enabled', tag_name, False)
+
+    def is_tag_enabled(self, tag_name: str) -> bool:
+        return (self.Get('tags_enabled', {}) or {}).get(tag_name, False)
+
     def log_cleanliness_score(self, device_id: str, cleanliness_score: float):
         print('log_cleanliness_score', device_id[:10], cleanliness_score)
 

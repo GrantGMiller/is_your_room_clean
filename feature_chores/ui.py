@@ -257,6 +257,53 @@ def setup(a: Application):
             user=app.get_current_user(),
         )
 
+    @app.route("/chores/tags")
+    def tag_manager():
+        user = app.get_current_user()
+        if not user:
+            return redirect("/dashboard")
+        tags = sorted(helpers.get_all_user_tags())
+        return render_template(
+            "chores/tag_manager.html",
+            tags=tags,
+            user=user,
+        )
+
+    @app.route("/chores/tags/toggle", methods=["POST"])
+    def toggle_tag():
+        user = app.get_current_user()
+        if not user:
+            return jsonify({"error": "Authentication required"}), 401
+
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"error": "Expected a JSON object"}), 400
+
+        tag_name = payload.get("tag_name")
+        enabled = payload.get("enabled")
+        if (
+            not isinstance(tag_name, str)
+            or not tag_name.strip()
+            or not isinstance(enabled, bool)
+        ):
+            return jsonify({"error": "A tag name and enabled state are required"}), 400
+
+        if tag_name not in helpers.get_all_user_tags():
+            return jsonify({"error": "Tag not found"}), 404
+
+        if enabled:
+            user.enabled_tag(tag_name)
+            for chore in helpers.get_current_user_chores():
+                if tag_name in chore.get('tags', []):
+                    chore['enabled'] = True
+        else:
+            user.disable_tag(tag_name)
+            for chore in helpers.get_current_user_chores():
+                if tag_name in chore.get('tags', []):
+                    chore['enabled'] = False
+
+        return jsonify({"tag_name": tag_name, "enabled": enabled})
+
     @app.route('/chores/settings', methods=["GET", "POST"])
     def chores_settings():
         user = app.get_current_user()
@@ -272,7 +319,7 @@ def setup(a: Application):
                         'chore_settings',
                         key,
                         # convert the string from the form into a datetime.time object
-                        datetime.datetime.strptime(request.form.get(key), "%H:%M").time().isoformat()
+                        datetime.datetime.strptime(request.form.get(key, ''), "%H:%M").time().isoformat()
                         # datetime.datetime.now().time().isoformat()
                     )
                     should_refresh_chores = True
@@ -313,7 +360,7 @@ def setup(a: Application):
     def chore_assign():
         chore_id = request.args.get("chore_id", type=int)
         person_id = request.args.get("person_id", type=int)
-        new_state = bool(request.json.get('is_assigned', None))
+        new_state = request.json and bool(request.json.get('is_assigned', None))
 
         user = app.get_current_user()
         print('new_state=', new_state)
@@ -457,7 +504,7 @@ def setup(a: Application):
     @app.route('/wall/<code>', methods=['GET', 'POST'])
     def chores_wall(code):
         url = f'{config.SERVER_HOST_URL}wall/{code}'
-        user: RingUser = app.db.FindOne(RingUser, wall_display_url=url)
+        user = app.db.FindOne(RingUser, wall_display_url=url)
         if not user:
             flash('User not found. Please try again.', 'danger')
             return redirect('/wall_display')
@@ -509,3 +556,4 @@ def setup(a: Application):
         clear_completed_chores(user['id'])
         flash('Completed chores have been cleared.', 'success')
         return redirect('/chores/settings')
+
