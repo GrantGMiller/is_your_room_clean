@@ -30,7 +30,7 @@
           <thead>
             <tr>
               <th scope="col">Tag name</th>
-              <th class="text-center" scope="col">Status</th>
+              <th class="text-center" scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -39,13 +39,20 @@
                 <td>{{ tag }}</td>
                 <td class="text-center">
                   <button
-                    class="btn btn-sm {{ 'btn-success' if user.is_tag_enabled(tag) else 'btn-danger' }}"
+                    class="btn btn-sm btn-success me-1"
                     type="button"
+                    data-enabled="true"
                     data-tag-name="{{ tag }}"
-                    data-enabled="{{ 'true' if user.is_tag_enabled(tag) else 'false' }}"
-                    onclick="toggleTagEnabled(this)"
                   >
-                    {{ 'Enabled' if user.is_tag_enabled(tag) else 'Disabled' }}
+                    ENABLE ALL
+                  </button>
+                  <button
+                    class="btn btn-sm btn-danger"
+                    type="button"
+                    data-enabled="false"
+                    data-tag-name="{{ tag }}"
+                  >
+                    DISABLE ALL
                   </button>
                 </td>
               </tr>
@@ -59,9 +66,42 @@
       </div>
     </main>
 
+    <div
+      class="toast-container position-fixed top-0 end-0 p-3"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div
+        id="tag-update-toast"
+        class="toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <strong class="me-auto">Tag Manager</strong>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body" id="tag-update-toast-message"></div>
+      </div>
+    </div>
+
     <script>
-      async function toggleTagEnabled(button) {
-        const enabled = button.dataset.enabled !== "true";
+      document
+        .querySelectorAll("[data-tag-name][data-enabled]")
+        .forEach((button) => {
+          button.addEventListener("click", () =>
+            setTagEnabled(button, button.dataset.tagName),
+          );
+        });
+
+      async function setTagEnabled(button, tagName) {
+        const enabled = button.dataset.enabled === "true";
         button.disabled = true;
 
         try {
@@ -69,7 +109,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              tag_name: button.dataset.tagName,
+              tag_name: tagName,
               enabled,
             }),
           });
@@ -78,10 +118,11 @@
             throw new Error(result.error || "Unable to update tag");
           }
 
-          button.dataset.enabled = String(result.enabled);
-          button.textContent = result.enabled ? "Enabled" : "Disabled";
-          button.classList.toggle("btn-success", result.enabled);
-          button.classList.toggle("btn-danger", !result.enabled);
+          document.getElementById("tag-update-toast-message").textContent =
+            `Tag "${result.tag_name}" ${result.enabled ? "enabled" : "disabled"}.`;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("tag-update-toast"),
+          ).show();
         } catch (error) {
           console.error("Error updating tag:", error);
           window.alert("Unable to update tag. Please try again.");
