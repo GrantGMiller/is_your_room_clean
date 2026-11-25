@@ -149,7 +149,9 @@
         </div>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-info" href="/chores/explainer">How to use chores</a>
-            <a class="btn btn-outline-secondary" href="/chores/tags">Tag Manager</a>
+            {% if chores %}
+                <a class="btn btn-outline-secondary" href="/chores/tags">Tag Manager</a>
+            {% endif %}
             <a
                     class="btn btn-outline-secondary"
                     href="/chores/settings"
