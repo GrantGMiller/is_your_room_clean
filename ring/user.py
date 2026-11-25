@@ -55,6 +55,15 @@ class RingUser(flask_login.UserMixin, BaseTable):
     enabled_features: dict  # {str(feature_name): bool(enabled)}
     last_clean_score: str
     subscription_status: str  # latest subscription status
+    unsubscibe_code:str
+    is_unsubscribed:bool = False
+
+    def get_unsubscribe_code(self):
+        code = self.get('unsubscribe_code', '')
+        if not code:
+            code = str(uuid.uuid4())
+            self['unsubscribe_code'] = code
+        return code
 
     def enabled_tag(self, tag_name: str) -> None:
         self.SetItem('tags_enabled', tag_name, True)
@@ -198,6 +207,7 @@ class RingUser(flask_login.UserMixin, BaseTable):
         # link is only valid for X seconds
         self['login_url_expires_at'] = time.time() + (10 * 60)
         return self['login_url']
+    
 
     def get_email(self):
         if self.get('email', None):

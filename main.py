@@ -355,6 +355,12 @@ def admin():
     if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
         return redirect("/dashboard")
 
+    email_templates = sorted(
+        template
+        for template in app.jinja_env.list_templates()
+        if template.startswith("email/") and template.endswith(".html")
+    )
+
     now_ms = time.time() * 1000
     user_rows = {}
     num_devices = 0
@@ -409,8 +415,61 @@ def admin():
         num_of_users=len(user_rows),
         user_rows=user_rows,
         num_devices=num_devices,
-        estimated_revenue=estimated_revenue * 0.9
+        estimated_revenue=estimated_revenue * 0.9,
+        email_templates=email_templates,
     )
+
+
+@app.route("/admin/email-preview/<path:template_name>")
+def admin_email_preview(template_name):
+    user = app.get_current_user()
+    if not user or user.get("email", None) not in getattr(config, "ADMINS", []):
+        abort(403)
+
+    allowed_templates = {
+        template
+        for template in app.jinja_env.list_templates()
+        if template.startswith("email/") and template.endswith(".html")
+    }
+    if template_name not in allowed_templates:
+        abort(404)
+
+    preview_context = {
+        "app_name": getattr(config, "APP_NAME", "DidYouCleanYourRoom.com"),
+        "app_url": getattr(config, "SERVER_HOST_URL", "").rstrip("/"),
+        "current_user": user,
+        "user": user,
+        "settings": {
+            "email_when_all_rooms_clean": True,
+            "email_when_rooms_dirty": True,
+            "daily_chore_summary": True,
+            "daily_chore_summary_time": "08:00",
+        },
+        "cleanliness_threshold": 70,
+        "rooms": [
+            {
+                "name": "Kitchen",
+                "cleanliness": 86,
+                "summary": "Counters are clear and the floor looks tidy.",
+                "image_url": "/static/favicon.ico",
+            },
+            {
+                "name": "Living Room",
+                "cleanliness": 58,
+                "summary": "A few items could be put away.",
+                "image_url": "/static/favicon.ico",
+            },
+        ],
+    }
+    if template_name == "email/daily_summary.html":
+        preview_context["data"] = {
+            "Alex": ["Clean room", "Put away laundry"],
+            "Sam": ["Take out trash"],
+        }
+    else:
+        preview_context["data"] = {"Kitchen": 86, "Living Room": 58}
+
+    return render_template(template_name, **preview_context)
 
 
 @app.route("/admin/unassign_all_chores", methods=["POST"])

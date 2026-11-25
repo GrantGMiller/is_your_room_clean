@@ -95,6 +95,47 @@
             </table>
           </div>
         </section>
+        <section class="mt-4" aria-labelledby="email-template-previews-heading">
+          <h2 class="h5" id="email-template-previews-heading">
+            Email template previews
+          </h2>
+          <p class="text-muted">
+            Open a template with sample data in a new tab.
+          </p>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th scope="col">Template</th>
+                  <th class="text-end" scope="col">Preview</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for template in email_templates %}
+                  <tr>
+                    <td>{{ template[6:] }}</td>
+                    <td class="text-end">
+                      <a
+                        class="btn btn-outline-primary btn-sm"
+                        href="/admin/email-preview/{{ template }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Preview
+                      </a>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td class="text-muted" colspan="2">
+                      No email templates found.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
       {% endif %}
     </main>
   </body>

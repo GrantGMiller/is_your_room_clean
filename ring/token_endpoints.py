@@ -199,6 +199,17 @@ def setup(a: Application):
         """
         return redirect("/dashboard")
 
+    @app.route("/unsubscribe/<code>")
+    def unsubscribe(code):
+        user = app.db.FindOne(RingUser, unsubscribe_code=code)
+        if not user:
+            flash("Unsubscribe link is invalid.", "danger")
+            return redirect("/")
+
+        user["is_unsubscribed"] = True
+        flash("the user has been unsubscribed", "success")
+        return redirect("/")
+
     @app.route("/magic_link/<uid>")
     def magic_link(uid):
         send_slack_message("incoming magic link=" + uid)
