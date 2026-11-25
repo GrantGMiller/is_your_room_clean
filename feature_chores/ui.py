@@ -257,6 +257,13 @@ def setup(a: Application):
             user=app.get_current_user(),
         )
 
+    @app.route("/chores/explainer")
+    def chores_explainer():
+        user = app.get_current_user()
+        if not user:
+            return redirect("/dashboard")
+        return render_template("chores/explainer.html")
+
     @app.route("/chores/tags")
     def tag_manager():
         user = app.get_current_user()

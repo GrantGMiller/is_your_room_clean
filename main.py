@@ -73,8 +73,7 @@ ui.setup(app)
 setup_chores(app)
 setup_stickers(app)
 setup_money(app)
-if getattr(config, 'ENABLE_NINTENDO', False):
-    setup_nintendo(app)
+setup_nintendo(app)
 
 if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
     setup_email(app)
