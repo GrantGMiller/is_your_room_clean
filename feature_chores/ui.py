@@ -509,6 +509,15 @@ def setup(a: Application):
             wall_display_image=wall_display_image,
         )
 
+    @app.route('/chores/wall_display/explainer')
+    def chores_wall_display_explainer():
+        user = app.get_current_user()
+        if not user:
+            flash('You must be logged in to view the wall display guide.', 'danger')
+            return redirect('/')
+
+        return render_template("chores/wall_display_explainer.html")
+
     @app.route('/wall/<code>', methods=['GET', 'POST'])
     def chores_wall(code):
         url = f'{config.SERVER_HOST_URL}wall/{code}'

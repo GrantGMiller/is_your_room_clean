@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wall Display guide | {{ app_name }}</title>
+    {% include "js_css.html" %}
+    <style>
+      .guide-step {
+        scroll-margin-top: 1rem;
+      }
+
+      .screen-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.75rem;
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.06);
+      }
+
+      .preview-topbar {
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .preview-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+      }
+
+      .guide-number {
+        width: 2rem;
+        height: 2rem;
+        flex: 0 0 2rem;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    {% include "flash_messages.html" %} {% include "navbar.html" %}
+    <main class="container py-5">
+      <header class="mb-5">
+        <a
+          class="btn btn-outline-secondary btn-sm mb-3"
+          href="/chores/wall_display"
+        >
+          &larr; Back to Wall Display link
+        </a>
+        <p class="text-uppercase text-muted small fw-semibold mb-2">
+          Wall Display
+        </p>
+        <h1 class="display-6 fw-bold">Set up a shared chore screen</h1>
+        <p class="lead text-muted mb-0">
+          Open the Wall Display on a parent device, then share its secure link
+          with a child or another browser.
+        </p>
+      </header>
+
+      <section
+        class="guide-step mb-5"
+        id="open-wall-display"
+        aria-labelledby="open-wall-display-heading"
+      >
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span
+            class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold"
+            >1</span
+          >
+          <div>
+            <h2 class="h3" id="open-wall-display-heading">
+              On the parent device, open Wall Display
+            </h2>
+            <p class="text-muted">
+              Go to the chores overview and select
+              <strong>Open wall display</strong>. The page that opens contains
+              a QR code and a link for the shared device.
+            </p>
+            <a class="btn btn-outline-primary btn-sm" href="/chores/overview">
+              Go to chores overview
+            </a>
+          </div>
+        </div>
+        <div
+          class="screen-preview p-3 p-md-4"
+          role="img"
+          aria-label="Illustration of the chores overview with an Open wall display button"
+        >
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Your chore list</span>
+            <span class="text-muted small">Parent device</span>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="btn btn-outline-success btn-sm">Open wall display</span>
+            <span class="btn btn-outline-secondary btn-sm">Tag Manager</span>
+            <span class="btn btn-primary btn-sm">Add chore</span>
+          </div>
+        </div>
+        <p class="form-text mt-2">Illustration of the chores overview controls.</p>
+      </section>
+
+      <section
+        class="guide-step mb-5"
+        id="open-on-shared-device"
+        aria-labelledby="open-on-shared-device-heading"
+      >
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span
+            class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold"
+            >2</span
+          >
+          <div>
+            <h2 class="h3" id="open-on-shared-device-heading">
+              Open it on the child&apos;s device
+            </h2>
+            <p class="text-muted">
+              Use the child&apos;s device or any device with a web browser. It
+              does not need to be logged in as the parent.
+            </p>
+          </div>
+        </div>
+        <div
+          class="screen-preview p-3 p-md-4"
+          role="img"
+          aria-label="Illustration of a tablet browser ready to open the Wall Display"
+        >
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Browser on shared device</span>
+            <span class="text-muted small">Child&apos;s tablet</span>
+          </div>
+          <div class="preview-card p-3 text-center">
+            <div class="display-6" aria-hidden="true">&#128241;</div>
+            <p class="mb-0 text-muted">
+              Open the camera to scan, or type the shared address in this
+              browser.
+            </p>
+          </div>
+        </div>
+        <p class="form-text mt-2">Illustration of a shared browser device.</p>
+      </section>
+
+      <section
+        class="guide-step mb-5"
+        id="scan-or-enter-link"
+        aria-labelledby="scan-or-enter-link-heading"
+      >
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span
+            class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold"
+            >3</span
+          >
+          <div>
+            <h2 class="h3" id="scan-or-enter-link-heading">
+              Scan the QR code or enter the link
+            </h2>
+            <p class="text-muted">
+              On the parent device&apos;s Wall Display page, scan the QR code
+              with the child device&apos;s camera. If scanning is not available,
+              type the address shown on that page into the browser instead.
+              The link is specific to your shared display, so share it only with
+              people who should access the chores.
+            </p>
+          </div>
+        </div>
+        <div
+          class="screen-preview p-3 p-md-4"
+          role="img"
+          aria-label="Illustration of the Wall Display QR code and manually entered link"
+        >
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Open Wall Display</span>
+            <span class="text-muted small">Parent device</span>
+          </div>
+          <div class="row g-3 align-items-center">
+            <div class="col-sm-5 text-center">
+              <div
+                class="border rounded bg-white d-inline-flex align-items-center justify-content-center"
+                style="width: 9rem; height: 9rem"
+                aria-hidden="true"
+              >
+                <span class="display-4">&#9638;</span>
+              </div>
+              <div class="small text-muted mt-2">Scan this code</div>
+            </div>
+            <div class="col-sm-7">
+              <label class="form-label fw-semibold">Or enter this address</label>
+              <div class="preview-card p-2 text-break text-muted">
+                https://example.com/wall_display/your-private-link
+              </div>
+              <p class="small text-muted mt-2 mb-0">
+                The actual link is generated for your account.
+              </p>
+            </div>
+          </div>
+        </div>
+        <p class="form-text mt-2">
+          Illustration only; it does not contain your actual QR code or link.
+        </p>
+      </section>
+
+      <section
+        class="guide-step mb-5"
+        id="use-wall-display"
+        aria-labelledby="use-wall-display-heading"
+      >
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span
+            class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold"
+            >4</span
+          >
+          <div>
+            <h2 class="h3" id="use-wall-display-heading">
+              Check chores off on the shared screen
+            </h2>
+            <p class="text-muted">
+              The child can choose their name, view assigned chores, and mark
+              chores done. The Wall Display is limited: it cannot add, edit, or
+              remove chores or people, and it cannot access parent settings.
+            </p>
+          </div>
+        </div>
+        <div
+          class="screen-preview p-3 p-md-4"
+          role="img"
+          aria-label="Illustration of a shared chore list with check-off buttons"
+        >
+          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+            <span class="fw-semibold">Chores</span>
+            <span class="text-muted small">Shared display</span>
+          </div>
+          <div class="preview-card p-3 mb-2">
+            <div class="fw-semibold mb-2">&#128100; Alex</div>
+            <div class="d-flex justify-content-between align-items-center border-top pt-2">
+              <span>Clean room</span>
+              <span class="btn btn-primary btn-sm">Done</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+              <span>Take out trash</span>
+              <span class="btn btn-success btn-sm">Done &#10004;</span>
+            </div>
+          </div>
+          <div class="small text-muted">
+            Chores can be checked off here. Parent editing controls are not shown.
+          </div>
+        </div>
+        <p class="form-text mt-2">Illustration of the shared chore checklist.</p>
+      </section>
+
+      <div class="text-center py-4">
+        <a class="btn btn-primary" href="/chores/wall_display">
+          Open Wall Display link
+        </a>
+      </div>
+    </main>
+  </body>
+</html>
