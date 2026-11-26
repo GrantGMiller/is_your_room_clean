@@ -2,20 +2,19 @@ import datetime
 import re
 import sys
 from html.parser import HTMLParser
-from typing import List
 
-from flask import Flask, abort, flash, jsonify, redirect, render_template, request
+from flask import abort, flash, jsonify, redirect, render_template, request
 from flask_tools import SendEmail_SMTP
 
-from app_types import Application
 import config
-from ring import user as ring_user
+from app_types import Application
 from feature_email.jobs import (
     get_summary_data,
     render_daily_summary,
     update_email_job,
     setup as setup_email_jobs, send_daily_email_summary,
 )
+from ring import user as ring_user
 from slack import send_slack_message, send_slack_error
 
 SETTINGS_KEY = 'email_notification_settings'
@@ -98,6 +97,7 @@ def html_email_to_text(html):
 
 app: Application
 
+
 def setup(a: Application):
     global app
     app = a
@@ -179,14 +179,14 @@ def setup(a: Application):
     def send_template():
         current_user = app.get_current_user()
         if not current_user or current_user.get('email') not in getattr(config, 'ADMINS', []):
-            abort(403)
+            return 'current user not admin', 403
 
         template_name = request.args.get('template_name')
         subject = request.args.get('subject')
         frm_email = request.args.get('frm_email') or config.ADMINS[0]
         admin_emails = getattr(config, 'ADMINS', [])
         if not template_name or frm_email not in admin_emails:
-            abort(400)
+            return f'template not found or frm email not admin. template_name={template_name}, frm_email={frm_email}', 403
 
         users = list(get_test_subscribed_users())
         send_email_template_to_list(
@@ -198,7 +198,8 @@ def setup(a: Application):
     def send_template_live():
         current_user = app.get_current_user()
         if not current_user or current_user.get('email') not in getattr(config, 'ADMINS', []):
-            abort(403)
+            return 'current user not admin', 403
+
 
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
@@ -231,14 +232,16 @@ def render_room_clean_email(data):
         app_url=config.SERVER_HOST_URL.rstrip('/'),
     )
 
+
 def get_subscribed_users():
     block_list = ['amazon', 'ring.com']
     with app.app_context():
         for user in app.db.FindAll(ring_user.RingUser):
             if not user.get('is_unsubscribed', False) and \
-                user['email'] and \
+                    user['email'] and \
                     not any(blocked_domain in user['email'] for blocked_domain in block_list):
                 yield user
+
 
 def get_test_subscribed_users():
     with app.app_context():
@@ -248,7 +251,7 @@ def get_test_subscribed_users():
 
 
 def send_email_template_to_list(
-    users, template_name: str, frm_email=config.ADMINS[0], subject=None
+        users, template_name: str, frm_email=config.ADMINS[0], subject=None
 ):
     with app.app_context():
         email_subject = (
@@ -280,8 +283,8 @@ def send_email_template_to_list(
                     errorCallback=send_slack_error,
                 )
                 send_slack_message(
-                                    f'Sending email template "{template_name}" to {user["email"]}'
-                                )
+                    f'Sending email template "{template_name}" to {user["email"]}'
+                )
             else:
                 send_slack_message(
                     f'skipping Sending email template "{template_name}" to {user["email"]}'
