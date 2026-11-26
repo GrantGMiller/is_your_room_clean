@@ -279,7 +279,10 @@ def send_email_template_to_list(
                     },
                     errorCallback=send_slack_error,
                 )
+                send_slack_message(
+                                    f'Sending email template "{template_name}" to {user["email"]}'
+                                )
             else:
                 send_slack_message(
-                    f'Sending email template "{template_name}" to {user["email"]}'
+                    f'skipping Sending email template "{template_name}" to {user["email"]}'
                 )
