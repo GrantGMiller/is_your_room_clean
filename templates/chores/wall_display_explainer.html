@@ -109,85 +109,61 @@
           >
           <div>
             <h2 class="h3" id="open-on-shared-device-heading">
-              Open it on the child&apos;s device
+              Open Wall Display on the parent&apos;s device, then connect the
+              child&apos;s device
             </h2>
             <p class="text-muted">
-              Use the child&apos;s device or any device with a web browser. It
-              does not need to be logged in as the parent.
+              On the parent&apos;s device, open the
+              <a href="{{ app_url }}/chores/wall_display" target="_blank"
+                >Wall Display page</a
+              >. On the child&apos;s device (or any device with a web browser),
+              scan the QR code with its camera. If you can&apos;t scan it, type
+              the link shown on the parent&apos;s page into the browser. The
+              shared device will be logged in automatically.
             </p>
           </div>
         </div>
         <div
           class="screen-preview p-3 p-md-4"
           role="img"
-          aria-label="Illustration of a tablet browser ready to open the Wall Display"
+          aria-label="Illustration of the parent Wall Display QR code and link, and a child device browser"
         >
-          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
-            <span class="fw-semibold">Browser on shared device</span>
-            <span class="text-muted small">Child&apos;s tablet</span>
-          </div>
-          <div class="preview-card p-3 text-center">
-            <div class="display-6" aria-hidden="true">&#128241;</div>
-            <p class="mb-0 text-muted">
-              Open the camera to scan, or type the shared address in this
-              browser.
-            </p>
-          </div>
-        </div>
-        <p class="form-text mt-2">Illustration of a shared browser device.</p>
-      </section>
-
-      <section
-        class="guide-step mb-5"
-        id="scan-or-enter-link"
-        aria-labelledby="scan-or-enter-link-heading"
-      >
-        <div class="d-flex gap-3 align-items-start mb-3">
-          <span
-            class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold"
-            >3</span
-          >
-          <div>
-            <h2 class="h3" id="scan-or-enter-link-heading">
-              Scan the QR code or enter the link
-            </h2>
-            <p class="text-muted">
-              On the parent device&apos;s Wall Display page, scan the QR code
-              with the child device&apos;s camera. If scanning is not available,
-              type the address shown on that page into the browser instead.
-              The link is specific to your shared display, so share it only with
-              people who should access the chores.
-            </p>
-          </div>
-        </div>
-        <div
-          class="screen-preview p-3 p-md-4"
-          role="img"
-          aria-label="Illustration of the Wall Display QR code and manually entered link"
-        >
-          <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
-            <span class="fw-semibold">Open Wall Display</span>
-            <span class="text-muted small">Parent device</span>
-          </div>
           <div class="row g-3 align-items-center">
-            <div class="col-sm-5 text-center">
-              <div
-                class="border rounded bg-white d-inline-flex align-items-center justify-content-center"
-                style="width: 9rem; height: 9rem"
-                aria-hidden="true"
-              >
-                <span class="display-4">&#9638;</span>
+            <div class="col-md-7">
+              <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+                <span class="fw-semibold">Open Wall Display</span>
+                <span class="text-muted small">Parent device</span>
               </div>
-              <div class="small text-muted mt-2">Scan this code</div>
+              <div class="row g-3 align-items-center">
+                <div class="col-sm-5 text-center">
+                  <div
+                    class="border rounded bg-white d-inline-flex align-items-center justify-content-center"
+                    style="width: 7rem; height: 7rem"
+                    aria-hidden="true"
+                  >
+                    <span class="display-4">&#9638;</span>
+                  </div>
+                  <div class="small text-muted mt-2">Scan this code</div>
+                </div>
+                <div class="col-sm-7">
+                  <label class="form-label fw-semibold">Or enter this address</label>
+                  <div class="preview-card p-2 text-break text-muted small">
+                    https://example.com/wall_display/your-private-link
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-sm-7">
-              <label class="form-label fw-semibold">Or enter this address</label>
-              <div class="preview-card p-2 text-break text-muted">
-                https://example.com/wall_display/your-private-link
+            <div class="col-md-5">
+              <div class="preview-topbar pb-2 mb-3 d-flex justify-content-between">
+                <span class="fw-semibold">Browser</span>
+                <span class="text-muted small">Child&apos;s device</span>
               </div>
-              <p class="small text-muted mt-2 mb-0">
-                The actual link is generated for your account.
-              </p>
+              <div class="preview-card p-3 text-center">
+                <div class="display-6" aria-hidden="true">&#128241;</div>
+                <p class="mb-0 text-muted">
+                  Scan the QR or enter the shared address.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -204,7 +180,7 @@
         <div class="d-flex gap-3 align-items-start mb-3">
           <span
             class="guide-number rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center fw-bold"
-            >4</span
+            >3</span
           >
           <div>
             <h2 class="h3" id="use-wall-display-heading">

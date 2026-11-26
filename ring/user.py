@@ -65,6 +65,10 @@ class RingUser(flask_login.UserMixin, BaseTable):
             self['unsubscribe_code'] = code
         return code
 
+    def get_unsubscribe_url(self):
+        code = self.get_unsubscribe_code()
+        return f"{config.SERVER_HOST_URL.rstrip('/')}/unsubscribe/{code}"
+
     def enabled_tag(self, tag_name: str) -> None:
         self.SetItem('tags_enabled', tag_name, True)
 

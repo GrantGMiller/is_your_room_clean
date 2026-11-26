@@ -123,6 +123,29 @@
                       >
                         Preview
                       </a>
+                      <select
+                        class="form-select form-select-sm d-inline-block w-auto test-email-from"
+                        aria-label="From email for {{ template[6:] }}"
+                      >
+                        {% for admin_email in admin_emails %}
+                          <option value="{{ admin_email }}">{{ admin_email }}</option>
+                        {% endfor %}
+                      </select>
+                      <button
+                        class="btn btn-warning btn-sm send-test-email"
+                        type="button"
+                        data-template-name="{{ template[6:-5] }}"
+                      >
+                        Send Test Email
+                      </button>
+                      <button
+                        class="btn btn-danger btn-sm send-live-email"
+                        type="button"
+                        data-template-name="{{ template[6:-5] }}"
+                        disabled
+                      >
+                        Send Live Email
+                      </button>
                     </td>
                   </tr>
                 {% else %}
@@ -138,5 +161,170 @@
         </section>
       {% endif %}
     </main>
+    <div
+      class="modal fade"
+      id="send-live-confirmation-modal"
+      tabindex="-1"
+      aria-labelledby="send-live-confirmation-title"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="send-live-confirmation-title">
+              Confirm live email
+            </h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              To confirm, enter this 6-digit number:
+              <strong id="send-live-confirmation-code"></strong>
+            </p>
+            <label class="form-label" for="send-live-confirmation-input">
+              Confirmation number
+            </label>
+            <input
+              class="form-control"
+              type="text"
+              id="send-live-confirmation-input"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="6"
+            />
+            <p
+              class="text-danger mt-2 mb-0"
+              id="send-live-confirmation-error"
+              hidden
+            >
+              The number does not match. Please try again.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              class="btn btn-danger"
+              type="button"
+              id="confirm-send-live-email"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.querySelectorAll(".send-test-email").forEach((testButton) => {
+        testButton.addEventListener("click", async () => {
+          testButton.disabled = true;
+          try {
+            const query = new URLSearchParams({
+              template_name: testButton.dataset.templateName,
+              frm_email: testButton
+                .closest("tr")
+                .querySelector(".test-email-from").value,
+            });
+            const response = await fetch(
+              `/email/send_template_test?${query.toString()}`,
+            );
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+              throw new Error(result.error || "Unable to send test email");
+            }
+
+            testButton
+              .closest("tr")
+              .querySelector(".send-live-email").disabled = false;
+            window.alert("Test email sent successfully.");
+          } catch (error) {
+            console.error("Error sending test email:", error);
+            window.alert("Unable to send test email. Please try again.");
+          } finally {
+            testButton.disabled = false;
+          }
+        });
+      });
+
+      const sendLiveModalElement = document.getElementById(
+        "send-live-confirmation-modal",
+      );
+      const sendLiveModal = bootstrap.Modal.getOrCreateInstance(
+        sendLiveModalElement,
+      );
+      const confirmationInput = document.getElementById(
+        "send-live-confirmation-input",
+      );
+      const confirmationError = document.getElementById(
+        "send-live-confirmation-error",
+      );
+      let confirmationCode = "";
+      let activeLiveEmailButton = null;
+
+      document.querySelectorAll(".send-live-email").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeLiveEmailButton = button;
+          confirmationCode = String(
+            Math.floor(Math.random() * 1000000),
+          ).padStart(6, "0");
+          document.getElementById(
+            "send-live-confirmation-code",
+          ).textContent = confirmationCode;
+          confirmationInput.value = "";
+          confirmationError.hidden = true;
+          sendLiveModal.show();
+        });
+      });
+
+      document
+        .getElementById("confirm-send-live-email")
+        .addEventListener("click", async () => {
+          if (confirmationInput.value === confirmationCode) {
+            const row = activeLiveEmailButton.closest("tr");
+            const confirmButton = document.getElementById(
+              "confirm-send-live-email",
+            );
+            confirmButton.disabled = true;
+            try {
+              const response = await fetch("/email/send_template_live", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  template_name: activeLiveEmailButton.dataset.templateName,
+                  frm_email: row.querySelector(".test-email-from").value,
+                }),
+              });
+              const result = await response.json();
+              if (!response.ok || !result.success) {
+                throw new Error(result.error || "Unable to send live email");
+              }
+
+              sendLiveModal.hide();
+              window.alert(
+                `Live email queued for ${result.recipient_count} subscribers.`,
+              );
+            } catch (error) {
+              console.error("Error sending live email:", error);
+              window.alert("Unable to send live email. Please try again.");
+            } finally {
+              confirmButton.disabled = false;
+            }
+            return;
+          }
+
+          confirmationError.hidden = false;
+          confirmationInput.focus();
+        });
+    </script>
   </body>
 </html>

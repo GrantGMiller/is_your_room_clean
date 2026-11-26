@@ -17,3 +17,5 @@ def send_email(to, subject, body, html, **kwargs):
         smtpUsername=config.SES_USERNAME,
         smtpPassword=config.SES_PASSWORD,
     )
+
+

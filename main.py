@@ -417,6 +417,7 @@ def admin():
         num_devices=num_devices,
         estimated_revenue=estimated_revenue * 0.9,
         email_templates=email_templates,
+        admin_emails=getattr(config, "ADMINS", []),
     )
 
 

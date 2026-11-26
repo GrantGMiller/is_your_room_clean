@@ -403,7 +403,7 @@ class Chore(BaseTable):
         print('393 get_scheduled_job_dt_utc')
         return self.get_next_start_dt_utc()
 
-    def refresh_scheduled_job(self) -> None:
+    def refresh_scheduled_job(self, delete_old=False) -> None:
         '''
         We will use one job per person/assignments.
         We will also use one job per day. So if the job repeats on tues/thurs
@@ -419,6 +419,9 @@ class Chore(BaseTable):
             job = app.jobs.GetJob(job_id)
             if job:
                 job.Delete()
+
+        if not delete_old:
+            return
 
         # Delete all existing jobs for all persons
         for _, job_ids in self.Get('jobs', {}).items():
