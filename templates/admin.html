@@ -107,13 +107,22 @@
               <thead>
                 <tr>
                   <th scope="col">Template</th>
-                  <th class="text-end" scope="col">Preview</th>
+                  <th scope="col">Email subject</th>
+                  <th class="text-end" scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for template in email_templates %}
                   <tr>
                     <td>{{ template[6:] }}</td>
+                    <td>
+                      <input
+                        class="form-control form-control-sm email-subject"
+                        type="text"
+                        value="{{ template[6:-5]|capitalize }}"
+                        aria-label="Email subject for {{ template[6:] }}"
+                      />
+                    </td>
                     <td class="text-end">
                       <a
                         class="btn btn-outline-primary btn-sm"
@@ -150,7 +159,7 @@
                   </tr>
                 {% else %}
                   <tr>
-                    <td class="text-muted" colspan="2">
+                    <td class="text-muted" colspan="3">
                       No email templates found.
                     </td>
                   </tr>
@@ -231,6 +240,9 @@
           try {
             const query = new URLSearchParams({
               template_name: testButton.dataset.templateName,
+              subject: testButton
+                .closest("tr")
+                .querySelector(".email-subject").value,
               frm_email: testButton
                 .closest("tr")
                 .querySelector(".test-email-from").value,
@@ -301,6 +313,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   template_name: activeLiveEmailButton.dataset.templateName,
+                  subject: row.querySelector(".email-subject").value,
                   frm_email: row.querySelector(".test-email-from").value,
                 }),
               });

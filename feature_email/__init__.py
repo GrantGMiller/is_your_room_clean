@@ -182,13 +182,16 @@ def setup(a: Application):
             abort(403)
 
         template_name = request.args.get('template_name')
+        subject = request.args.get('subject')
         frm_email = request.args.get('frm_email') or config.ADMINS[0]
         admin_emails = getattr(config, 'ADMINS', [])
         if not template_name or frm_email not in admin_emails:
             abort(400)
 
         users = list(get_test_subscribed_users())
-        send_email_template_to_list(users, template_name, frm_email=frm_email)
+        send_email_template_to_list(
+            users, template_name, frm_email=frm_email, subject=subject
+        )
         return jsonify({'success': True})
 
     @app.route('/email/send_template_live', methods=['POST'])
@@ -202,6 +205,7 @@ def setup(a: Application):
             return jsonify({'success': False, 'error': 'Expected a JSON object.'}), 400
 
         template_name = payload.get('template_name')
+        subject = payload.get('subject')
         frm_email = payload.get('frm_email') or config.ADMINS[0]
         allowed_templates = {
             template[6:-5]
@@ -213,7 +217,9 @@ def setup(a: Application):
             return jsonify({'success': False, 'error': 'Invalid template or sender.'}), 400
 
         users = list(get_subscribed_users())
-        send_email_template_to_list(users, template_name, frm_email=frm_email)
+        send_email_template_to_list(
+            users, template_name, frm_email=frm_email, subject=subject
+        )
         return jsonify({'success': True, 'recipient_count': len(users)})
 
 
@@ -241,8 +247,15 @@ def get_test_subscribed_users():
             yield user
 
 
-def send_email_template_to_list(users, template_name:str, frm_email=config.ADMINS[0]):
+def send_email_template_to_list(
+    users, template_name: str, frm_email=config.ADMINS[0], subject=None
+):
     with app.app_context():
+        email_subject = (
+            subject.strip()
+            if isinstance(subject, str) and subject.strip()
+            else template_name.capitalize()
+        )
         # Implement the logic to send an email using the specified template
         # This is a placeholder implementation
         send_slack_message(f'Sending email template "{template_name}" to {len(users)} users from {frm_email}')
@@ -260,7 +273,7 @@ def send_email_template_to_list(users, template_name:str, frm_email=config.ADMIN
                         "smtpPassword": config.SES_PASSWORD,
                         "to": user['email'],
                         "frm": frm_email,
-                        "subject": "Login with a Magic Link",
+                        "subject": email_subject,
                         "body": html_email_to_text(html_body),
                         "html": html_body
                     },
