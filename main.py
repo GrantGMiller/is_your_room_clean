@@ -406,7 +406,13 @@ def admin():
             subscription_status = registered_user.get_subscription_status()
             
 
-        user_rows[masked_email] = (created_age, this_num_devices, subscription_status)
+        user_rows[masked_email] = (
+            created_age,
+            this_num_devices,
+            subscription_status,
+            registered_user["id"],
+            registered_user.get("is_unsubscribed", False),
+        )
 
 
 
@@ -419,6 +425,21 @@ def admin():
         email_templates=email_templates,
         admin_emails=getattr(config, "ADMINS", []),
     )
+
+
+@app.route("/admin/users/<int:user_id>/clear-unsubscribed", methods=["POST"])
+def admin_clear_user_unsubscribed(user_id):
+    current_user = app.get_current_user()
+    if not current_user or current_user.get("email") not in getattr(config, "ADMINS", []):
+        abort(403)
+
+    user = app.db.FindOne(RingUser, id=user_id)
+    if not user:
+        abort(404)
+
+    user["is_unsubscribed"] = False
+    flash("User's unsubscribe status has been cleared.", "success")
+    return redirect("/admin")
 
 
 @app.route("/admin/email-preview/<path:template_name>")

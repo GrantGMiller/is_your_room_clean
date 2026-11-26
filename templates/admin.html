@@ -49,19 +49,34 @@
                   <th scope="col">Account created</th>
                   <th scope="col">Number of devices</th>
                   <th scope="col">Subscription status</th>
+                  <th scope="col">Unsubscribed</th>
                 </tr>
               </thead>
               <tbody>
-                {% for email, (created_age, num_devices, subscription_status) in user_rows.items() %}
+                {% for email, (created_age, num_devices, subscription_status, user_id, is_unsubscribed) in user_rows.items() %}
                   <tr>
                     <td>{{ email }}</td>
                     <td>{{ created_age }}</td>
                     <td>{{ num_devices }}</td>
                     <td>{{ subscription_status }}</td>
+                    <td>
+                      {{ is_unsubscribed }}
+                      {% if is_unsubscribed %}
+                        <form
+                          class="d-inline"
+                          method="post"
+                          action="{{ url_for('admin_clear_user_unsubscribed', user_id=user_id) }}"
+                        >
+                          <button class="btn btn-warning btn-sm" type="submit">
+                            Clear status
+                          </button>
+                        </form>
+                      {% endif %}
+                    </td>
                   </tr>
                 {% else %}
                   <tr>
-                    <td class="text-muted" colspan="2">No users found.</td>
+                    <td class="text-muted" colspan="5">No users found.</td>
                   </tr>
                 {% endfor %}
               </tbody>
