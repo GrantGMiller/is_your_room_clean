@@ -632,6 +632,18 @@ def no_events():
 
 @app.errorhandler(404)
 def page_not_found(e):
+    test_email_route_registered = any(
+        rule.rule == "/email/send_template_test"
+        for rule in app.url_map.iter_rules()
+    )
+    app.logger.warning(
+        "HTTP 404: method=%s path=%s email_test_route_registered=%s. "
+        "If the route is not registered, check feature_email.setup(app) "
+        "and the deployed Gunicorn worker version.",
+        request.method,
+        request.path,
+        test_email_route_registered,
+    )
     if not 'installHook' in request.path:
         flash('Page not found: ' + request.path, 'danger')
 

@@ -179,6 +179,9 @@ def setup(a: Application):
     def send_template():
         current_user = app.get_current_user()
         if not current_user or current_user.get('email') not in getattr(config, 'ADMINS', []):
+            app.logger.warning(
+                "Rejected test email request: requester is not an administrator."
+            )
             return 'current user not admin', 403
 
         template_name = request.args.get('template_name')
@@ -186,6 +189,12 @@ def setup(a: Application):
         frm_email = request.args.get('frm_email') or config.ADMINS[0]
         admin_emails = getattr(config, 'ADMINS', [])
         if not template_name or frm_email not in admin_emails:
+            app.logger.warning(
+                "Rejected test email request: template_name_present=%s "
+                "sender_is_admin=%s",
+                bool(template_name),
+                frm_email in admin_emails,
+            )
             return f'template not found or frm email not admin. template_name={template_name}, frm_email={frm_email}', 403
 
         users = list(get_test_subscribed_users())
@@ -193,6 +202,10 @@ def setup(a: Application):
             users, template_name, frm_email=frm_email, subject=subject
         )
         return jsonify({'success': True})
+
+    app.logger.info(
+        "Registered email test-send endpoint: GET /email/send_template_test"
+    )
 
     @app.route('/email/send_template_live', methods=['POST'])
     def send_template_live():
