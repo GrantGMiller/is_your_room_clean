@@ -32,7 +32,10 @@ from feature_chores import setup as setup_chores
 from feature_chores import ui
 from feature_chores.helpers import get_current_user_chores
 from feature_chores.models import Person, get_user_local_dt_from_utc
-from feature_email import setup as setup_email
+from feature_email import (
+    setup as setup_email,
+    setup_admin_email_routes,
+)
 from feature_money import setup as setup_money
 from feature_nintendo import setup as setup_nintendo
 from feature_chromebook import setup as setup_chromebook
@@ -74,9 +77,9 @@ setup_chores(app)
 setup_stickers(app)
 setup_money(app)
 setup_nintendo(app)
+setup_email(app)
 
-if getattr(config, 'ENABLE_FEATURE_EMAIL_NOTIFICATIONS', False):
-    setup_email(app)
+setup_admin_email_routes(app)
 
 if getattr(config, 'ENABLE_MIGRATE_CHORES', False):
     migrate_helper.setup(app)

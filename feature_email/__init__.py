@@ -175,6 +175,37 @@ def setup(a: Application):
         data = current_user.Get('last_clean_score', {})
         return render_room_clean_email(data)
 
+
+def render_room_clean_email(data):
+    send_slack_message('render room clean email data=', data)
+    return render_template(
+        'email/room_clean_email.html',
+        data=data,
+        app_url=config.SERVER_HOST_URL.rstrip('/'),
+    )
+
+
+def get_subscribed_users():
+    block_list = ['amazon', 'ring.com']
+    with app.app_context():
+        for user in app.db.FindAll(ring_user.RingUser):
+            if not user.get('is_unsubscribed', False) and \
+                    user['email'] and \
+                    not any(blocked_domain in user['email'] for blocked_domain in block_list):
+                yield user
+
+
+def get_test_subscribed_users():
+    with app.app_context():
+        for email in config.ADMINS:
+            user = app.db.NewOrFind(ring_user.RingUser, email=email)
+            yield user
+
+
+def setup_admin_email_routes(a: Application):
+    global app
+    app = a
+
     @app.route('/email/send_template_test')
     def send_template():
         current_user = app.get_current_user()
@@ -203,16 +234,11 @@ def setup(a: Application):
         )
         return jsonify({'success': True})
 
-    app.logger.info(
-        "Registered email test-send endpoint: GET /email/send_template_test"
-    )
-
     @app.route('/email/send_template_live', methods=['POST'])
     def send_template_live():
         current_user = app.get_current_user()
         if not current_user or current_user.get('email') not in getattr(config, 'ADMINS', []):
             return 'current user not admin', 403
-
 
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
@@ -236,31 +262,10 @@ def setup(a: Application):
         )
         return jsonify({'success': True, 'recipient_count': len(users)})
 
-
-def render_room_clean_email(data):
-    send_slack_message('render room clean email data=', data)
-    return render_template(
-        'email/room_clean_email.html',
-        data=data,
-        app_url=config.SERVER_HOST_URL.rstrip('/'),
+    app.logger.info(
+        "Registered admin email routes: GET /email/send_template_test, "
+        "POST /email/send_template_live"
     )
-
-
-def get_subscribed_users():
-    block_list = ['amazon', 'ring.com']
-    with app.app_context():
-        for user in app.db.FindAll(ring_user.RingUser):
-            if not user.get('is_unsubscribed', False) and \
-                    user['email'] and \
-                    not any(blocked_domain in user['email'] for blocked_domain in block_list):
-                yield user
-
-
-def get_test_subscribed_users():
-    with app.app_context():
-        for email in config.ADMINS:
-            user = app.db.NewOrFind(ring_user.RingUser, email=email)
-            yield user
 
 
 def send_email_template_to_list(
